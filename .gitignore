@@ -1,0 +1,15 @@
+﻿# Build and IDE artifacts
+*.autosave
+*.o
+*.so
+Makefile*
+*.qmake.stash
+*.tar.bz2
+.sfdk/
+RPMS/
+BUILD/
+BUILDROOT/
+SOURCES/
+SPECS/
+SRPMS/
+*.user*
