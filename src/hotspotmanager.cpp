@@ -1,4 +1,4 @@
-﻿#include "hotspotmanager.h"
+#include "hotspotmanager.h"
 #include <QtDBus/QDBusInterface>
 #include <QtDBus/QDBusReply>
 #include <QDebug>

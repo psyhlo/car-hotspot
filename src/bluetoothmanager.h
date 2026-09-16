@@ -1,4 +1,4 @@
-﻿#ifndef BLUETOOTHMANAGER_H
+#ifndef BLUETOOTHMANAGER_H
 #define BLUETOOTHMANAGER_H
 
 #include <QObject>
@@ -6,6 +6,7 @@
 #include <QVariantMap>
 #include <QtDBus/QDBusConnection>
 #include <QtDBus/QDBusMessage>
+#include <QtDBus/QDBusObjectPath>
 
 class BluetoothManager : public QObject
 {

@@ -1,4 +1,4 @@
-﻿#include <sailfishapp.h>
+#include <sailfishapp.h>
 #include <QtQuick>
 #include <QGuiApplication>
 #include "appcontroller.h"

@@ -1,4 +1,4 @@
-﻿Name:       harbour-hotspotincar
+Name:       harbour-hotspotincar
 Summary:    Hotspot in car for Sailfish OS
 Version:    0.1.0
 Release:    1

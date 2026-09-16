@@ -1,4 +1,4 @@
-﻿#include "appcontroller.h"
+#include "appcontroller.h"
 #include <QDateTime>
 #include <QDebug>
 

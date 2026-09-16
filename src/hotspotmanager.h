@@ -1,9 +1,10 @@
-﻿#ifndef HOTSPOTMANAGER_H
+#ifndef HOTSPOTMANAGER_H
 #define HOTSPOTMANAGER_H
 
 #include <QObject>
 #include <QtDBus/QDBusConnection>
 #include <QtDBus/QDBusMessage>
+#include <QtDBus/QDBusVariant>
 
 class HotspotManager : public QObject
 {

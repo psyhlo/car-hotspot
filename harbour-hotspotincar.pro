@@ -1,4 +1,4 @@
-﻿TARGET = harbour-hotspotincar
+TARGET = harbour-hotspotincar
 
 CONFIG += sailfishapp c++17
 QT += core gui qml quick dbus

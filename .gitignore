@@ -1,4 +1,4 @@
-﻿# Build and IDE artifacts
+# Build and IDE artifacts
 *.autosave
 *.o
 *.so

@@ -1,4 +1,4 @@
-﻿#ifndef APPCONTROLLER_H
+#ifndef APPCONTROLLER_H
 #define APPCONTROLLER_H
 
 #include <QObject>

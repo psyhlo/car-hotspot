@@ -1,4 +1,4 @@
-﻿#include "bluetoothmanager.h"
+#include "bluetoothmanager.h"
 #include <QtDBus/QDBusInterface>
 #include <QtDBus/QDBusReply>
 #include <QtDBus/QDBusArgument>
