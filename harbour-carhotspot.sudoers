@@ -1,0 +1,4 @@
+defaultuser ALL=(ALL) NOPASSWD: /usr/bin/dbus-send --system --print-reply --dest=net.connman /net/connman/technology/wifi net.connman.Technology.SetProperty string:Tethering variant:boolean:true
+defaultuser ALL=(ALL) NOPASSWD: /usr/bin/dbus-send --system --print-reply --dest=net.connman /net/connman/technology/wifi net.connman.Technology.SetProperty string:Tethering variant:boolean:false
+defaultuser ALL=(ALL) NOPASSWD: /usr/bin/dbus-send --system --dest=net.connman /net/connman/technology/wifi net.connman.Technology.SetProperty string:Tethering variant:boolean:true
+defaultuser ALL=(ALL) NOPASSWD: /usr/bin/dbus-send --system --dest=net.connman /net/connman/technology/wifi net.connman.Technology.SetProperty string:Tethering variant:boolean:false

@@ -1,6 +1,7 @@
 #include "hotspotmanager.h"
 #include <QtDBus/QDBusInterface>
 #include <QtDBus/QDBusReply>
+#include <QProcess>
 #include <QDebug>
 
 HotspotManager::HotspotManager(QObject *parent)
@@ -21,6 +22,7 @@ HotspotManager::HotspotManager(QObject *parent)
 
 void HotspotManager::checkStatus()
 {
+    // Direct QDBusInterface to ConnMan WiFi Technology
     QDBusInterface wifiTech(
         "net.connman",
         "/net/connman/technology/wifi",
@@ -28,20 +30,51 @@ void HotspotManager::checkStatus()
         QDBusConnection::systemBus()
     );
 
-    if (!wifiTech.isValid()) {
-        m_statusMessage = "ConnMan WiFi technology unavailable";
-        emit statusMessageChanged(m_statusMessage);
-        return;
+    if (wifiTech.isValid()) {
+        QDBusReply<QVariantMap> reply = wifiTech.call("GetProperties");
+        if (reply.isValid()) {
+            bool tethering = reply.value().value("Tethering", false).toBool();
+            if (m_isHotspotActive != tethering) {
+                m_isHotspotActive = tethering;
+                emit hotspotActiveChanged(m_isHotspotActive);
+            }
+            m_statusMessage = m_isHotspotActive ? "Hotspot is ON" : "Hotspot is OFF";
+            emit statusMessageChanged(m_statusMessage);
+            return;
+        }
     }
 
-    QDBusReply<QVariantMap> reply = wifiTech.call("GetProperties");
-    if (reply.isValid()) {
-        QVariantMap props = reply.value();
-        bool tethering = props.value("Tethering", false).toBool();
-        if (m_isHotspotActive != tethering) {
-            m_isHotspotActive = tethering;
-            emit hotspotActiveChanged(m_isHotspotActive);
+    // Fallback: query via dbus-send
+    QProcess p;
+    p.start("dbus-send", QStringList() 
+        << "--system" 
+        << "--print-reply" 
+        << "--dest=net.connman" 
+        << "/net/connman/technology/wifi" 
+        << "net.connman.Technology.GetProperties"
+    );
+
+    if (p.waitForFinished(2000)) {
+        QString out = p.readAllStandardOutput();
+        int tIdx = out.indexOf("\"Tethering\"");
+        if (tIdx != -1) {
+            QString snippet = out.mid(tIdx, 80);
+            bool tethering = snippet.contains("boolean true", Qt::CaseInsensitive);
+            if (m_isHotspotActive != tethering) {
+                m_isHotspotActive = tethering;
+                emit hotspotActiveChanged(m_isHotspotActive);
+            }
+            m_statusMessage = m_isHotspotActive ? "Hotspot is ON" : "Hotspot is OFF";
+            emit statusMessageChanged(m_statusMessage);
         }
+    }
+}
+
+void HotspotManager::updateHotspotState(bool active)
+{
+    if (m_isHotspotActive != active) {
+        m_isHotspotActive = active;
+        emit hotspotActiveChanged(m_isHotspotActive);
         m_statusMessage = m_isHotspotActive ? "Hotspot is ON" : "Hotspot is OFF";
         emit statusMessageChanged(m_statusMessage);
     }
@@ -49,39 +82,27 @@ void HotspotManager::checkStatus()
 
 void HotspotManager::setHotspotActive(bool active)
 {
-    QDBusInterface wifiTech(
-        "net.connman",
-        "/net/connman/technology/wifi",
-        "net.connman.Technology",
-        QDBusConnection::systemBus()
-    );
-
-    if (!wifiTech.isValid()) {
-        m_statusMessage = "Error: ConnMan service unreachable";
-        emit statusMessageChanged(m_statusMessage);
-        return;
-    }
-
     m_statusMessage = active ? "Enabling Hotspot..." : "Disabling Hotspot...";
     emit statusMessageChanged(m_statusMessage);
 
-    // Call SetProperty("Tethering", QDBusVariant(bool))
-    QDBusMessage msg = wifiTech.call(
-        "SetProperty",
-        "Tethering",
-        QVariant::fromValue(QDBusVariant(active))
+    // 1. Trigger QML declarative ConnectionAgent (in-process)
+    emit hotspotToggleRequested(active);
+
+    // 2. Also call com.jolla.Connectiond via D-Bus session bus as backup
+    QDBusInterface connDaemon(
+        "com.jolla.Connectiond",
+        "/Connectiond",
+        "com.jolla.Connectiond",
+        QDBusConnection::sessionBus()
     );
 
-    if (msg.type() == QDBusMessage::ErrorMessage) {
-        qWarning() << "Failed to set Tethering:" << msg.errorMessage();
-        m_statusMessage = QString("Failed: %1").arg(msg.errorMessage());
-        emit statusMessageChanged(m_statusMessage);
-    } else {
-        m_isHotspotActive = active;
-        emit hotspotActiveChanged(m_isHotspotActive);
-        m_statusMessage = active ? "Hotspot enabled" : "Hotspot disabled";
-        emit statusMessageChanged(m_statusMessage);
+    if (connDaemon.isValid()) {
+        QString method = active ? "startTethering" : "stopTethering";
+        connDaemon.asyncCall(method, QString("wifi"));
     }
+
+    // Verify status after brief delay
+    checkStatus();
 }
 
 void HotspotManager::onPropertyChanged(const QString &name, const QDBusVariant &value)
@@ -91,7 +112,7 @@ void HotspotManager::onPropertyChanged(const QString &name, const QDBusVariant &
         if (m_isHotspotActive != tethering) {
             m_isHotspotActive = tethering;
             emit hotspotActiveChanged(m_isHotspotActive);
-            m_statusMessage = m_isHotspotActive ? "Hotspot turned ON" : "Hotspot turned OFF";
+            m_statusMessage = m_isHotspotActive ? "Hotspot is ON" : "Hotspot is OFF";
             emit statusMessageChanged(m_statusMessage);
         }
     }

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+X-Nemo-Application-Type=silica-qt5
+Icon=harbour-carhotspot
+Exec=/usr/bin/harbour-carhotspot
+Name=Car Hotspot
+Name[bg]=Хотспот за кола
+[X-Sailjail]
+Sandboxing=Disabled

@@ -2,11 +2,21 @@
 #include <QtDBus/QDBusInterface>
 #include <QtDBus/QDBusReply>
 #include <QtDBus/QDBusArgument>
+#include <QtDBus/QDBusMetaType>
 #include <QDebug>
+
+// Type definition for BlueZ GetManagedObjects
+typedef QMap<QString, QVariantMap> InterfaceMap;
+typedef QMap<QDBusObjectPath, InterfaceMap> ManagedObjectList;
+Q_DECLARE_METATYPE(InterfaceMap)
+Q_DECLARE_METATYPE(ManagedObjectList)
 
 BluetoothManager::BluetoothManager(QObject *parent)
     : QObject(parent)
 {
+    qDBusRegisterMetaType<InterfaceMap>();
+    qDBusRegisterMetaType<ManagedObjectList>();
+
     // Connect to BlueZ ObjectManager signals
     QDBusConnection::systemBus().connect(
         "org.bluez",
@@ -41,38 +51,52 @@ BluetoothManager::BluetoothManager(QObject *parent)
 
 void BluetoothManager::refreshDevices()
 {
-    QDBusInterface manager(
+    QDBusMessage msg = QDBusMessage::createMethodCall(
         "org.bluez",
         "/",
         "org.freedesktop.DBus.ObjectManager",
-        QDBusConnection::systemBus()
+        "GetManagedObjects"
     );
 
-    if (!manager.isValid()) {
-        qWarning() << "BluetoothManager: Cannot access org.bluez ObjectManager";
+    QDBusMessage reply = QDBusConnection::systemBus().call(msg);
+    if (reply.type() == QDBusMessage::ErrorMessage) {
+        qWarning() << "BluetoothManager: GetManagedObjects call failed:" << reply.errorMessage();
         return;
     }
 
-    QDBusReply<QMap<QDBusObjectPath, QMap<QString, QVariantMap>>> reply = manager.call("GetManagedObjects");
-    if (!reply.isValid()) {
-        qWarning() << "BluetoothManager: GetManagedObjects failed:" << reply.error().message();
+    if (reply.arguments().isEmpty()) {
+        qWarning() << "BluetoothManager: GetManagedObjects returned empty reply";
         return;
     }
 
+    const QDBusArgument &arg = reply.arguments().at(0).value<QDBusArgument>();
     QVariantList list;
-    const auto objects = reply.value();
-    for (auto it = objects.constBegin(); it != objects.constEnd(); ++it) {
-        const auto &interfaces = it.value();
-        if (interfaces.contains("org.bluez.Device1")) {
-            const QVariantMap props = interfaces.value("org.bluez.Device1");
-            QVariantMap item;
-            item["path"] = it.key().path();
-            item["address"] = props.value("Address").toString();
-            item["name"] = props.value("Alias", props.value("Name", props.value("Address"))).toString();
-            item["connected"] = props.value("Connected", false).toBool();
-            item["paired"] = props.value("Paired", false).toBool();
-            list.append(item);
+
+    // Parse array of dict of {object_path, dict of {string, dict of {string, variant}}}
+    if (arg.currentType() == QDBusArgument::MapType) {
+        arg.beginMap();
+        while (!arg.atEnd()) {
+            arg.beginMapEntry();
+            QDBusObjectPath path;
+            arg >> path;
+            
+            QMap<QString, QVariantMap> interfaces;
+            arg >> interfaces;
+            
+            if (interfaces.contains("org.bluez.Device1")) {
+                const QVariantMap props = interfaces.value("org.bluez.Device1");
+                QVariantMap item;
+                item["path"] = path.path();
+                item["address"] = props.value("Address").toString();
+                item["name"] = props.value("Alias", props.value("Name", props.value("Address"))).toString();
+                item["connected"] = props.value("Connected", false).toBool();
+                item["paired"] = props.value("Paired", false).toBool();
+                list.append(item);
+                qDebug() << "Found Bluetooth device:" << item["name"] << item["address"];
+            }
+            arg.endMapEntry();
         }
+        arg.endMap();
     }
 
     m_devices = list;

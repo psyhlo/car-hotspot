@@ -21,10 +21,12 @@ public:
 public slots:
     void setHotspotActive(bool active);
     void checkStatus();
+    void updateHotspotState(bool active);
 
 signals:
     void hotspotActiveChanged(bool active);
     void statusMessageChanged(const QString &msg);
+    void hotspotToggleRequested(bool active);
 
 private slots:
     void onPropertyChanged(const QString &name, const QDBusVariant &value);

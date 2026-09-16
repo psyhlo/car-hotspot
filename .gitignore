@@ -13,3 +13,7 @@ SOURCES/
 SPECS/
 SRPMS/
 *.user*
+moc_*
+harbour-carhotspot
+harbour-hotspotincar
+translations/*.qm

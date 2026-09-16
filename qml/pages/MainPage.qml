@@ -11,12 +11,13 @@ Page {
 
         PullDownMenu {
             MenuItem {
-                text: qsTr("Refresh Bluetooth devices")
-                onClicked: bluetoothManager.refreshDevices()
-            }
-            MenuItem {
-                text: qsTr("Check Hotspot status")
-                onClicked: hotspotManager.checkStatus()
+                text: qsTr("Refresh Status & Devices")
+                onClicked: {
+                    bluetoothManager.refreshDevices()
+                    hotspotManager.checkStatus()
+                    systemMonitor.refreshStatus()
+                    appController.checkDaemonStatus()
+                }
             }
         }
 
@@ -26,7 +27,8 @@ Page {
             spacing: Theme.paddingMedium
 
             PageHeader {
-                title: qsTr("Hotspot in car")
+                title: qsTr("Car Hotspot")
+                description: qsTr("v0.1.25")
             }
 
             // Status Overview Banner
@@ -76,11 +78,59 @@ Page {
                             font.pixelSize: Theme.fontSizeSmall
                         }
                     }
+
+                    Row {
+                        spacing: Theme.paddingMedium
+                        Rectangle {
+                            width: Theme.itemSizeExtraSmall / 3
+                            height: width
+                            radius: width / 2
+                            color: systemMonitor.isBatteryCharging ? "#00FF66" : (systemMonitor.batteryChargePercentage <= appController.minBatteryLevel ? "#FF4444" : Theme.highlightColor)
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Label {
+                            text: qsTr("Battery: %1%%2").arg(systemMonitor.batteryChargePercentage).arg(systemMonitor.isBatteryCharging ? qsTr(" (Charging)") : "")
+                            color: Theme.secondaryColor
+                            font.pixelSize: Theme.fontSizeExtraSmall
+                        }
+                    }
+
+                    Row {
+                        spacing: Theme.paddingMedium
+                        Rectangle {
+                            width: Theme.itemSizeExtraSmall / 3
+                            height: width
+                            radius: width / 2
+                            color: systemMonitor.isRoaming ? "#FF9900" : Theme.secondaryColor
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Label {
+                            text: qsTr("Roaming: ") + (systemMonitor.isRoaming ? qsTr("YES (Active)") : qsTr("No"))
+                            color: systemMonitor.isRoaming ? "#FF9900" : Theme.secondaryColor
+                            font.pixelSize: Theme.fontSizeExtraSmall
+                        }
+                    }
+
+                    Row {
+                        spacing: Theme.paddingMedium
+                        Rectangle {
+                            width: Theme.itemSizeExtraSmall / 3
+                            height: width
+                            radius: width / 2
+                            color: (appController.isDaemonActive || appController.autostartService) ? "#00FF66" : Theme.secondaryColor
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Label {
+                            text: qsTr("Background Service: ") + (appController.isDaemonActive ? qsTr("RUNNING (Active)") : (appController.autostartService ? qsTr("Enabled") : qsTr("Stopped")))
+                            color: appController.isDaemonActive ? "#00FF66" : Theme.secondaryColor
+                            font.pixelSize: Theme.fontSizeExtraSmall
+                        }
+                    }
                 }
             }
 
             SectionHeader {
-                text: qsTr("Automation settings")
+                text: qsTr("Automation & Safety")
             }
 
             TextSwitch {
@@ -90,8 +140,95 @@ Page {
                 onCheckedChanged: appController.autoToggle = checked
             }
 
+            TextSwitch {
+                text: qsTr("Run in background & Autostart")
+                description: qsTr("Keep monitoring car in background and start automatically on phone reboot")
+                checked: appController.autostartService
+                onCheckedChanged: appController.autostartService = checked
+            }
+
+            TextSwitch {
+                text: qsTr("Auto-enable Mobile Data")
+                description: qsTr("Ensure cellular data connection is active when starting Hotspot")
+                checked: appController.enableCellularAuto
+                onCheckedChanged: appController.enableCellularAuto = checked
+            }
+
+            TextSwitch {
+                text: qsTr("Vibration feedback")
+                description: qsTr("Vibrate to confirm when car connects and Hotspot starts")
+                checked: appController.vibrateOnConnect
+                onCheckedChanged: appController.vibrateOnConnect = checked
+            }
+
+            TextSwitch {
+                text: qsTr("System notifications")
+                description: qsTr("Show banner notification and lockscreen events when car connects/disconnects")
+                checked: appController.showNotifications
+                onCheckedChanged: appController.showNotifications = checked
+            }
+
+            TextSwitch {
+                text: qsTr("Block Hotspot in Roaming")
+                description: qsTr("Prevent starting Hotspot when abroad/roaming to avoid high cellular data charges")
+                checked: appController.blockInRoaming
+                onCheckedChanged: appController.blockInRoaming = checked
+            }
+
+            Slider {
+                width: parent.width
+                label: qsTr("Delayed turn off: %1 min").arg(value)
+                minimumValue: 0
+                maximumValue: 10
+                stepSize: 1
+                value: appController.stopDelayMinutes
+                valueText: value === 0 ? qsTr("Instantly") : qsTr("%1 min").arg(value)
+                onValueChanged: {
+                    if (appController.stopDelayMinutes !== value) {
+                        appController.stopDelayMinutes = value
+                    }
+                }
+            }
+
+            Label {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.leftMargin: Theme.horizontalPageMargin
+                anchors.rightMargin: Theme.horizontalPageMargin
+                text: qsTr("Wait a grace period before stopping Hotspot in case of temporary Bluetooth disconnect.")
+                color: Theme.secondaryColor
+                wrapMode: Text.Wrap
+                font.pixelSize: Theme.fontSizeTiny
+            }
+
+            Slider {
+                width: parent.width
+                label: qsTr("Minimum battery level: %1%").arg(value)
+                minimumValue: 5
+                maximumValue: 50
+                stepSize: 5
+                value: appController.minBatteryLevel
+                valueText: value + "%"
+                onValueChanged: {
+                    if (appController.minBatteryLevel !== value) {
+                        appController.minBatteryLevel = value
+                    }
+                }
+            }
+
+            Label {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.leftMargin: Theme.horizontalPageMargin
+                anchors.rightMargin: Theme.horizontalPageMargin
+                text: qsTr("If battery is below this level and phone is not charging, Hotspot will not start (or will automatically turn off) to protect the battery.")
+                color: Theme.secondaryColor
+                wrapMode: Text.Wrap
+                font.pixelSize: Theme.fontSizeTiny
+            }
+
             SectionHeader {
-                text: qsTr("Select Car Device")
+                text: qsTr("Select Car Bluetooth Device")
             }
 
             Label {
@@ -100,25 +237,71 @@ Page {
                 anchors.leftMargin: Theme.horizontalPageMargin
                 anchors.rightMargin: Theme.horizontalPageMargin
                 text: appController.targetAddress !== "" 
-                      ? qsTr("Target: %1\n(%2)").arg(appController.targetName !== "" ? appController.targetName : qsTr("Unknown")).arg(appController.targetAddress)
-                      : qsTr("No car Bluetooth device selected")
-                color: Theme.highlightColor
+                      ? qsTr("Selected Car: %1\n(%2)").arg(appController.targetName !== "" ? appController.targetName : qsTr("Car BT")).arg(appController.targetAddress)
+                      : qsTr("No car Bluetooth device selected yet. Choose from list below:")
+                color: appController.targetAddress !== "" ? Theme.highlightColor : Theme.secondaryColor
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.fontSizeSmall
             }
 
+            // Manual MAC input option for full flexibility
+            Row {
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: Theme.paddingMedium
+
+                TextField {
+                    id: customMacField
+                    width: parent.width - setBtn.width - Theme.paddingMedium
+                    placeholderText: qsTr("Or enter MAC (e.g. AA:BB:CC:DD:EE:FF)")
+                    label: qsTr("Custom Bluetooth MAC")
+                    text: appController.targetAddress
+                    EnterKey.onClicked: {
+                        if (text.trim().length > 0) {
+                            appController.selectDevice(text.trim(), qsTr("Car Bluetooth"))
+                        }
+                    }
+                }
+
+                Button {
+                    id: setBtn
+                    text: qsTr("Save")
+                    anchors.verticalCenter: customMacField.verticalCenter
+                    onClicked: {
+                        if (customMacField.text.trim().length > 0) {
+                            appController.selectDevice(customMacField.text.trim(), qsTr("Car Bluetooth"))
+                        }
+                    }
+                }
+            }
+
+            SectionHeader {
+                text: qsTr("Paired / Detected Devices (%1)").arg(bluetoothManager.devices.length)
+            }
+
+            Label {
+                visible: bluetoothManager.devices.length === 0
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.leftMargin: Theme.horizontalPageMargin
+                anchors.rightMargin: Theme.horizontalPageMargin
+                text: qsTr("No paired devices found yet. Pull down to refresh or pair your car in Settings -> Bluetooth.")
+                color: Theme.secondaryColor
+                wrapMode: Text.Wrap
+                font.pixelSize: Theme.fontSizeExtraSmall
+            }
+
             Repeater {
                 model: bluetoothManager.devices
-                delegate: BackgroundItem {
+                delegate: ListItem {
                     id: deviceItem
-                    width: column.width
-                    height: Theme.itemSizeMedium
+                    contentHeight: Theme.itemSizeMedium
 
-                    property bool isSelected: appController.targetAddress === modelData.address
+                    property bool isSelected: appController.targetAddress.toUpperCase() === modelData.address.toUpperCase()
 
                     Rectangle {
                         anchors.fill: parent
-                        color: Theme.rgba(Theme.highlightBackgroundColor, isSelected ? 0.3 : 0.0)
+                        color: Theme.rgba(Theme.highlightBackgroundColor, isSelected ? 0.35 : 0.0)
                     }
 
                     Column {
@@ -137,7 +320,15 @@ Page {
                                 color: isSelected ? Theme.highlightColor : Theme.primaryColor
                                 font.bold: isSelected
                                 truncationMode: TruncationMode.Fade
-                                width: parent.width - (modelData.connected ? 120 : 0)
+                                width: parent.width - (modelData.connected ? 140 : (isSelected ? 100 : 0))
+                            }
+
+                            Label {
+                                visible: isSelected
+                                text: qsTr("[CAR]")
+                                color: Theme.highlightColor
+                                font.bold: true
+                                font.pixelSize: Theme.fontSizeExtraSmall
                             }
 
                             Label {
@@ -156,6 +347,7 @@ Page {
                     }
 
                     onClicked: {
+                        customMacField.text = modelData.address
                         appController.selectDevice(modelData.address, modelData.name)
                     }
                 }

@@ -9,7 +9,7 @@ CoverBackground {
 
         Label {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: qsTr("Hotspot in car")
+            text: qsTr("Car Hotspot")
             font.bold: true
             font.pixelSize: Theme.fontSizeSmall
             color: Theme.highlightColor
