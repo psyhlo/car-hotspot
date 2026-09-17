@@ -198,7 +198,7 @@ bool AppController::checkSafetyConditions(QString &reason)
 void AppController::checkDaemonStatus()
 {
     QProcess p;
-    p.start("systemctl", QStringList() << "--user" << "is-active" << "harbour-hotspotincar.service");
+    p.start("systemctl", QStringList() << "--user" << "is-active" << "harbour-carhotspot.service");
     if (p.waitForFinished(1000)) {
         QString out = p.readAllStandardOutput().trimmed();
         bool active = (out == "active");
@@ -322,30 +322,42 @@ void AppController::triggerFeedback()
     if (!m_vibrateOnConnect)
         return;
 
-    // 1. Trigger Sailfish OS NGF (Non-Graphical Feedback) on SESSION bus
+    // 1. Direct hardware vibrator sysfs (/sys/class/leds/vibrator/) used by Sony Xperia & Sailfish OS
+    QFile vibDuration("/sys/class/leds/vibrator/duration");
+    QFile vibActivate("/sys/class/leds/vibrator/activate");
+    if (vibDuration.open(QIODevice::WriteOnly | QIODevice::Text) &&
+        vibActivate.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream durStream(&vibDuration);
+        durStream << "350\n";
+        vibDuration.close();
+
+        QTextStream actStream(&vibActivate);
+        actStream << "1\n";
+        vibActivate.close();
+    } else {
+        // Fallback for devices with legacy timed_output vibrator
+        QFile legacyVib("/sys/class/timed_output/vibrator/enable");
+        if (legacyVib.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream out(&legacyVib);
+            out << "350\n";
+            legacyVib.close();
+        }
+    }
+
+    // 2. Trigger Sailfish OS NGF (Non-Graphical Feedback) on SYSTEM bus
     QDBusInterface ngf(
-        "com.nokia.NonGraphicalFeedback.Server",
-        "/org/freedesktop/Feedback",
-        "com.nokia.NonGraphicalFeedback.Server",
-        QDBusConnection::sessionBus()
+        "com.nokia.NonGraphicFeedback1.Backend",
+        "/",
+        "com.nokia.NonGraphicFeedback1.Backend",
+        QDBusConnection::systemBus()
     );
 
     if (ngf.isValid()) {
-        // "vibra" and "theme_strong" / "notification_sound"
         ngf.call("Play", "vibra", QVariantMap());
-        ngf.call("Play", "theme_strong", QVariantMap());
     }
 
-    // 2. Direct timedclient vibration fallback (300ms)
-    QProcess::startDetached("timedclient-qt5", QStringList() << "--vibrate" << "300");
-
-    // 3. Direct Linux kernel vibrator sysfs fallback
-    QFile vibFile("/sys/class/timed_output/vibrator/enable");
-    if (vibFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QTextStream out(&vibFile);
-        out << "300\n";
-        vibFile.close();
-    }
+    // 3. Direct timedclient vibration fallback
+    QProcess::startDetached("timedclient-qt5", QStringList() << "--vibrate" << "350");
 }
 
 void AppController::ensureCellularConnected()
