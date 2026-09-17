@@ -107,6 +107,7 @@ private:
     SystemMonitor m_systemMonitor;
     QSettings m_settings;
     QTimer *m_delayedStopTimer = nullptr;
+    QTimer *m_pollTimer = nullptr;
 
     QString m_targetAddress;
     QString m_targetName;

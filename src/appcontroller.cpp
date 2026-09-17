@@ -39,6 +39,14 @@ AppController::AppController(QObject *parent)
     m_delayedStopTimer->setSingleShot(true);
     connect(m_delayedStopTimer, &QTimer::timeout, this, &AppController::onDelayedStopTimeout);
 
+    // Periodic watchdog timer: keeps monitoring Bluetooth and Hotspot even if system D-Bus signals are missed in background/lockscreen
+    m_pollTimer = new QTimer(this);
+    connect(m_pollTimer, &QTimer::timeout, this, [this]() {
+        m_bluetooth.refreshDevices();
+        m_hotspot.checkStatus();
+    });
+    m_pollTimer->start(3000); // Poll every 3s
+
     appendLog(QString("[%1] Service started").arg(QDateTime::currentDateTime().toString("hh:mm:ss")));
     checkDaemonStatus();
 }

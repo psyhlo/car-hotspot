@@ -85,10 +85,7 @@ void HotspotManager::setHotspotActive(bool active)
     m_statusMessage = active ? "Enabling Hotspot..." : "Disabling Hotspot...";
     emit statusMessageChanged(m_statusMessage);
 
-    // 1. Trigger QML declarative ConnectionAgent (in-process)
-    emit hotspotToggleRequested(active);
-
-    // 2. Also call com.jolla.Connectiond via D-Bus session bus as backup
+    // 1. Always send D-Bus call to com.jolla.Connectiond (works in background, locked screen, daemon)
     QDBusInterface connDaemon(
         "com.jolla.Connectiond",
         "/Connectiond",
@@ -97,11 +94,18 @@ void HotspotManager::setHotspotActive(bool active)
     );
 
     if (connDaemon.isValid()) {
-        QString method = active ? "startTethering" : "stopTethering";
-        connDaemon.asyncCall(method, QString("wifi"));
+        if (active) {
+            connDaemon.asyncCall("startTethering", QString("wifi"));
+        } else {
+            // stopTethering expects (QString type, bool force)
+            connDaemon.asyncCall("stopTethering", QString("wifi"), true);
+        }
     }
 
-    // Verify status after brief delay
+    // 2. Also trigger QML declarative ConnectionAgent if GUI is alive
+    emit hotspotToggleRequested(active);
+
+    // 3. Verify status after brief delay
     checkStatus();
 }
 

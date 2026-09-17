@@ -28,7 +28,7 @@ Page {
 
             PageHeader {
                 title: qsTr("Car Hotspot")
-                description: qsTr("v0.1.25")
+                description: qsTr("v0.1.26")
             }
 
             // Status Overview Banner
