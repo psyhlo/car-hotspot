@@ -28,7 +28,7 @@ class AppController : public QObject
     Q_PROPERTY(QString logStatus READ logStatus NOTIFY logStatusChanged)
 
 public:
-    explicit AppController(QObject *parent = nullptr);
+    explicit AppController(bool isDaemon = false, QObject *parent = nullptr);
 
     BluetoothManager* bluetooth() { return &m_bluetooth; }
     HotspotManager* hotspot() { return &m_hotspot; }
@@ -70,6 +70,7 @@ public slots:
     void selectDevice(const QString &address, const QString &name);
     void toggleHotspotManual(bool active);
     void appendLog(const QString &text);
+    void reloadSharedLog();
     void sendNotification(const QString &summary, const QString &body);
     void triggerFeedback();
     void ensureCellularConnected();
@@ -102,6 +103,8 @@ private:
     void syncSystemdService(bool enable);
     bool checkSafetyConditions(QString &reason);
 
+    bool m_isDaemon = false;
+
     BluetoothManager m_bluetooth;
     HotspotManager m_hotspot;
     SystemMonitor m_systemMonitor;
@@ -112,7 +115,7 @@ private:
     QString m_targetAddress;
     QString m_targetName;
     bool m_autoToggle = true;
-    bool m_autostartService = false;
+    bool m_autostartService = true;
     bool m_isDaemonActive = false;
     bool m_showNotifications = true;
     bool m_blockInRoaming = true;

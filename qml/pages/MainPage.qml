@@ -17,6 +17,7 @@ Page {
                     hotspotManager.checkStatus()
                     systemMonitor.refreshStatus()
                     appController.checkDaemonStatus()
+                    appController.reloadSharedLog()
                 }
             }
         }
@@ -28,7 +29,7 @@ Page {
 
             PageHeader {
                 title: qsTr("Car Hotspot")
-                description: "v" + (typeof appVersion !== "undefined" ? appVersion : "0.1.28")
+                description: "v" + (typeof appVersion !== "undefined" ? appVersion : "0.1.29")
             }
 
             // Status Overview Banner

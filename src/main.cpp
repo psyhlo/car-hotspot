@@ -17,12 +17,16 @@ int main(int argc, char *argv[])
     if (isDaemon) {
         // Headless background daemon mode
         QCoreApplication app(argc, argv);
-        AppController controller;
+        QCoreApplication::setOrganizationName("harbour-carhotspot");
+        QCoreApplication::setApplicationName("harbour-carhotspot");
+        AppController controller(true);
         return app.exec();
     }
 
     // Normal GUI mode
     QScopedPointer<QGuiApplication> app(SailfishApp::application(argc, argv));
+    QGuiApplication::setOrganizationName("harbour-carhotspot");
+    QGuiApplication::setApplicationName("harbour-carhotspot");
 
     // Install translator according to system locale
     QScopedPointer<QTranslator> translator(new QTranslator);
@@ -48,7 +52,7 @@ int main(int argc, char *argv[])
     QScopedPointer<QQuickView> view(SailfishApp::createView());
 
     AppController controller;
-    view->rootContext()->setContextProperty("appVersion", "0.1.28");
+    view->rootContext()->setContextProperty("appVersion", "0.1.29");
     view->rootContext()->setContextProperty("appController", &controller);
     view->rootContext()->setContextProperty("bluetoothManager", controller.bluetooth());
     view->rootContext()->setContextProperty("hotspotManager", controller.hotspot());

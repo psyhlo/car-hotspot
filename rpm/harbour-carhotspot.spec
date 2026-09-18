@@ -1,6 +1,6 @@
 Name:       harbour-carhotspot
 Summary:    Car Hotspot for Sailfish OS
-Version:    0.1.28
+Version:    0.1.29
 Release:    1
 License:    GPLv3
 URL:        https://github.com
@@ -36,13 +36,14 @@ mkdir -p %{buildroot}%{_datadir}/icons/hicolor/108x108/apps
 mkdir -p %{buildroot}%{_datadir}/icons/hicolor/128x128/apps
 mkdir -p %{buildroot}%{_datadir}/icons/hicolor/172x172/apps
 mkdir -p %{buildroot}%{_sysconfdir}/sudoers.d
+mkdir -p %{buildroot}%{_userunitdir}
 
 install -m 755 harbour-carhotspot %{buildroot}%{_bindir}/%{name}
 cp -r qml/* %{buildroot}%{_datadir}/%{name}/qml/
 install -m 644 translations/*.qm %{buildroot}%{_datadir}/%{name}/translations/
 install -m 644 translations/*.qm %{buildroot}%{_datadir}/translations/
 install -m 644 harbour-carhotspot.desktop %{buildroot}%{_datadir}/applications/
-install -m 644 harbour-carhotspot.service %{buildroot}%{_datadir}/%{name}/
+install -m 644 harbour-carhotspot.service %{buildroot}%{_userunitdir}/%{name}.service
 install -m 440 harbour-carhotspot.sudoers %{buildroot}%{_sysconfdir}/sudoers.d/harbour-carhotspot
 install -m 644 icons/86x86/harbour-carhotspot.png %{buildroot}%{_datadir}/icons/hicolor/86x86/apps/
 install -m 644 icons/108x108/harbour-carhotspot.png %{buildroot}%{_datadir}/icons/hicolor/108x108/apps/
@@ -51,6 +52,16 @@ install -m 644 icons/172x172/harbour-carhotspot.png %{buildroot}%{_datadir}/icon
 
 %post
 chmod 440 %{_sysconfdir}/sudoers.d/harbour-carhotspot || true
+systemctl-user daemon-reload >/dev/null 2>&1 || true
+systemctl-user enable %{name}.service >/dev/null 2>&1 || true
+systemctl-user restart %{name}.service >/dev/null 2>&1 || true
+
+%preun
+if [ $1 -eq 0 ]; then
+    systemctl-user stop %{name}.service >/dev/null 2>&1 || true
+    systemctl-user disable %{name}.service >/dev/null 2>&1 || true
+    systemctl-user daemon-reload >/dev/null 2>&1 || true
+fi
 
 %files
 %defattr(-,root,root,-)
@@ -59,4 +70,5 @@ chmod 440 %{_sysconfdir}/sudoers.d/harbour-carhotspot || true
 %{_datadir}/translations/%{name}*.qm
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
+%{_userunitdir}/%{name}.service
 %config %{_sysconfdir}/sudoers.d/harbour-carhotspot

@@ -11,8 +11,9 @@
 #include <QtDBus/QDBusInterface>
 #include <QDebug>
 
-AppController::AppController(QObject *parent)
+AppController::AppController(bool isDaemon, QObject *parent)
     : QObject(parent)
+    , m_isDaemon(isDaemon)
     , m_settings("harbour-carhotspot", "harbour-carhotspot")
 {
     // Migrate old settings if present
@@ -44,10 +45,19 @@ AppController::AppController(QObject *parent)
     connect(m_pollTimer, &QTimer::timeout, this, [this]() {
         m_bluetooth.refreshDevices();
         m_hotspot.checkStatus();
+        if (!m_isDaemon) {
+            reloadSharedLog();
+        }
     });
     m_pollTimer->start(3000); // Poll every 3s
 
-    appendLog(QString("[%1] Service started").arg(QDateTime::currentDateTime().toString("hh:mm:ss")));
+    if (m_isDaemon) {
+        appendLog(QString("[%1] Background daemon started").arg(QDateTime::currentDateTime().toString("hh:mm:ss")));
+    } else {
+        reloadSharedLog();
+        appendLog(QString("[%1] UI connected to service").arg(QDateTime::currentDateTime().toString("hh:mm:ss")));
+    }
+
     checkDaemonStatus();
 }
 
@@ -56,7 +66,7 @@ void AppController::loadSettings()
     m_targetAddress = m_settings.value("targetAddress", "").toString();
     m_targetName = m_settings.value("targetName", "").toString();
     m_autoToggle = m_settings.value("autoToggle", true).toBool();
-    m_autostartService = m_settings.value("autostartService", false).toBool();
+    m_autostartService = m_settings.value("autostartService", true).toBool();
     m_showNotifications = m_settings.value("showNotifications", true).toBool();
     m_blockInRoaming = m_settings.value("blockInRoaming", true).toBool();
     m_minBatteryLevel = m_settings.value("minBatteryLevel", 20).toInt();
@@ -212,15 +222,12 @@ void AppController::checkDaemonStatus()
 void AppController::syncSystemdService(bool enable)
 {
     QString configDir = QDir::homePath() + "/.config/systemd/user";
-    QDir().mkpath(configDir);
-
-    QString servicePath = configDir + "/harbour-carhotspot.service";
-    QString systemServicePath = "/usr/share/harbour-carhotspot/harbour-carhotspot.service";
+    QString legacyServicePath = configDir + "/harbour-carhotspot.service";
+    if (QFile::exists(legacyServicePath)) {
+        QFile::remove(legacyServicePath);
+    }
 
     if (enable) {
-        if (!QFile::exists(servicePath) && QFile::exists(systemServicePath)) {
-            QFile::copy(systemServicePath, servicePath);
-        }
         QProcess::execute("systemctl", QStringList() << "--user" << "daemon-reload");
         QProcess::execute("systemctl", QStringList() << "--user" << "enable" << "harbour-carhotspot.service");
         QProcess::execute("systemctl", QStringList() << "--user" << "restart" << "harbour-carhotspot.service");
@@ -229,7 +236,6 @@ void AppController::syncSystemdService(bool enable)
     } else {
         QProcess::execute("systemctl", QStringList() << "--user" << "stop" << "harbour-carhotspot.service");
         QProcess::execute("systemctl", QStringList() << "--user" << "disable" << "harbour-carhotspot.service");
-        QFile::remove(servicePath);
         QProcess::execute("systemctl", QStringList() << "--user" << "daemon-reload");
         checkDaemonStatus();
         sendNotification("Car Hotspot", "Background service STOPPED");
@@ -304,17 +310,33 @@ void AppController::toggleHotspotManual(bool active)
 
 void AppController::appendLog(const QString &text)
 {
+    // Reload latest shared log first so events from both daemon and GUI merge properly
+    reloadSharedLog();
+
     if (!m_logStatus.isEmpty()) {
         m_logStatus = text + "\n" + m_logStatus;
         QStringList lines = m_logStatus.split("\n");
-        if (lines.size() > 20) {
-            lines = lines.mid(0, 20);
+        if (lines.size() > 40) {
+            lines = lines.mid(0, 40);
             m_logStatus = lines.join("\n");
         }
     } else {
         m_logStatus = text;
     }
+
+    m_settings.setValue("activityLog", m_logStatus);
+    m_settings.sync();
     emit logStatusChanged(m_logStatus);
+}
+
+void AppController::reloadSharedLog()
+{
+    m_settings.sync();
+    QString diskLog = m_settings.value("activityLog", "").toString();
+    if (m_logStatus != diskLog && !diskLog.isEmpty()) {
+        m_logStatus = diskLog;
+        emit logStatusChanged(m_logStatus);
+    }
 }
 
 void AppController::triggerFeedback()

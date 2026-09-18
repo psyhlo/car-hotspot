@@ -1,6 +1,6 @@
 [Unit]
 Description=Car Hotspot background service
-After=dbus.service connman.service bluetooth.service
+After=pre-user-session.target dbus.service connman.service bluetooth.service
 
 [Service]
 Type=simple
@@ -9,4 +9,4 @@ Restart=always
 RestartSec=5
 
 [Install]
-WantedBy=post-user-session.target
+WantedBy=user-session.target

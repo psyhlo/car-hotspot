@@ -32,7 +32,10 @@ private slots:
     void onPropertyChanged(const QString &name, const QDBusVariant &value);
 
 private:
+    void restoreWifiStateIfNeeded();
+
     bool m_isHotspotActive = false;
+    bool m_wifiWasPowered = false;
     QString m_statusMessage = "Ready";
 };
 
