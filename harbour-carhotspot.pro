@@ -42,6 +42,8 @@ icon128.path = /usr/share/icons/hicolor/128x128/apps
 icon172.files = icons/172x172/harbour-carhotspot.png
 icon172.path = /usr/share/icons/hicolor/172x172/apps
 
+TRANSLATIONS += $$files(translations/*.ts)
+
 translations.files = translations/*.qm
 translations.path = /usr/share/TARGET/translations
 

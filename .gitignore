@@ -19,3 +19,8 @@ harbour-hotspotincar
 translations/*.qm
 debug*.list
 elfbins.list
+yes
+yes.pub
+__pycache__/
+*.pyc
+
