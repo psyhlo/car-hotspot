@@ -96,6 +96,7 @@ private slots:
     void onBatteryChanged(int percentage, bool charging);
     void onRoamingChanged(bool roaming);
     void onDelayedStopTimeout();
+    void onDisconnectDebounceTimeout();
 
 private:
     void loadSettings();
@@ -110,7 +111,9 @@ private:
     SystemMonitor m_systemMonitor;
     QSettings m_settings;
     QTimer *m_delayedStopTimer = nullptr;
+    QTimer *m_disconnectDebounceTimer = nullptr;
     QTimer *m_pollTimer = nullptr;
+    qint64 m_lastFeedbackTime = 0;
 
     QString m_targetAddress;
     QString m_targetName;

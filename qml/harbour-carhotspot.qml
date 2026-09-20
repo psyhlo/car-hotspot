@@ -35,6 +35,8 @@ ApplicationWindow {
                 connAgent.stopTethering("wifi", true)
             }
         }
+        onRestoreWifiRequested: {
+            wifiTech.powered = powered
+        }
     }
 }
-

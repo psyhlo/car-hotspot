@@ -51,8 +51,12 @@ int main(int argc, char *argv[])
 
     QScopedPointer<QQuickView> view(SailfishApp::createView());
 
+#ifndef APP_VERSION
+#define APP_VERSION "0.1.0"
+#endif
+
     AppController controller;
-    view->rootContext()->setContextProperty("appVersion", "0.1.29");
+    view->rootContext()->setContextProperty("appVersion", QStringLiteral(APP_VERSION));
     view->rootContext()->setContextProperty("appController", &controller);
     view->rootContext()->setContextProperty("bluetoothManager", controller.bluetooth());
     view->rootContext()->setContextProperty("hotspotManager", controller.hotspot());

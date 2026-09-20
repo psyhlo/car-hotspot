@@ -40,6 +40,10 @@ AppController::AppController(bool isDaemon, QObject *parent)
     m_delayedStopTimer->setSingleShot(true);
     connect(m_delayedStopTimer, &QTimer::timeout, this, &AppController::onDelayedStopTimeout);
 
+    m_disconnectDebounceTimer = new QTimer(this);
+    m_disconnectDebounceTimer->setSingleShot(true);
+    connect(m_disconnectDebounceTimer, &QTimer::timeout, this, &AppController::onDisconnectDebounceTimeout);
+
     // Periodic watchdog timer: keeps monitoring Bluetooth and Hotspot even if system D-Bus signals are missed in background/lockscreen
     m_pollTimer = new QTimer(this);
     connect(m_pollTimer, &QTimer::timeout, this, [this]() {
@@ -284,7 +288,10 @@ void AppController::selectDevice(const QString &address, const QString &name)
 
 void AppController::toggleHotspotManual(bool active)
 {
-    // If manual toggle occurs, stop any running grace timer
+    // If manual toggle occurs, stop any running grace or debounce timer
+    if (m_disconnectDebounceTimer && m_disconnectDebounceTimer->isActive()) {
+        m_disconnectDebounceTimer->stop();
+    }
     if (m_delayedStopTimer && m_delayedStopTimer->isActive()) {
         m_delayedStopTimer->stop();
     }
@@ -343,6 +350,13 @@ void AppController::triggerFeedback()
 {
     if (!m_vibrateOnConnect)
         return;
+
+    qint64 now = QDateTime::currentMSecsSinceEpoch();
+    if (now - m_lastFeedbackTime < 30000) {
+        qDebug() << "AppController: Skipping vibration feedback due to 30s cooldown";
+        return;
+    }
+    m_lastFeedbackTime = now;
 
     // 1. Direct hardware vibrator sysfs (/sys/class/leds/vibrator/) used by Sony Xperia & Sailfish OS
     QFile vibDuration("/sys/class/leds/vibrator/duration");
@@ -406,12 +420,28 @@ void AppController::onTargetConnectionChanged(bool connected)
     QString carLabel = !m_targetName.isEmpty() ? m_targetName : "Car";
 
     if (connected) {
-        // If a delayed shutdown timer was ticking, cancel it
-        if (m_delayedStopTimer && m_delayedStopTimer->isActive()) {
-            m_delayedStopTimer->stop();
-            appendLog(QString("[%1] Reconnected to %2: Cancelled delayed shutdown.").arg(timestamp, carLabel));
+        // 1. If disconnect debounce timer was active (micro-disconnect flutter < 5s), cancel it!
+        if (m_disconnectDebounceTimer && m_disconnectDebounceTimer->isActive()) {
+            m_disconnectDebounceTimer->stop();
+            appendLog(QString("[%1] %2 reconnected (flutter absorbed, no spam).").arg(timestamp, carLabel));
+            return;
         }
 
+        // 2. If a delayed shutdown grace timer was ticking (driver returned within grace period):
+        if (m_delayedStopTimer && m_delayedStopTimer->isActive()) {
+            m_delayedStopTimer->stop();
+            appendLog(QString("[%1] Reconnected to %2 within grace period. Hotspot maintained.").arg(timestamp, carLabel));
+            // Hotspot was already active! Do NOT vibrate, do NOT send annoying popup notification.
+            return;
+        }
+
+        // 3. If Hotspot is ALREADY active:
+        if (m_hotspot.isHotspotActive()) {
+            appendLog(QString("[%1] %2 connected (Hotspot already active).").arg(timestamp, carLabel));
+            return;
+        }
+
+        // 4. Genuine NEW connection event when Hotspot was OFF
         appendLog(QString("[%1] %2 connected!").arg(timestamp, carLabel));
 
         if (m_autoToggle) {
@@ -433,20 +463,34 @@ void AppController::onTargetConnectionChanged(bool connected)
             sendNotification("Car Hotspot", QString("%1 connected").arg(carLabel));
         }
     } else {
-        appendLog(QString("[%1] %2 disconnected.").arg(timestamp, carLabel));
-
+        // Bluetooth reported disconnected:
         if (m_autoToggle && m_hotspot.isHotspotActive()) {
-            if (m_stopDelayMinutes > 0) {
-                appendLog(QString("[%1] Starting turn-off grace timer (%2 min)...").arg(timestamp).arg(m_stopDelayMinutes));
-                sendNotification("Car Hotspot", QString("%1 disconnected. Hotspot will turn OFF in %2 min").arg(carLabel).arg(m_stopDelayMinutes));
-                m_delayedStopTimer->start(m_stopDelayMinutes * 60 * 1000);
-            } else {
-                appendLog(QString("[%1] Auto-disabling Hotspot immediately...").arg(timestamp));
-                m_hotspot.setHotspotActive(false);
-                sendNotification("Car Hotspot", QString("%1 disconnected: Wi-Fi Hotspot turned OFF").arg(carLabel));
-            }
+            // Debounce for 5 seconds to filter out brief BlueZ/handshake drops
+            appendLog(QString("[%1] %2 link dropped. Filtering brief drop (5s)...").arg(timestamp, carLabel));
+            m_disconnectDebounceTimer->start(5000);
         } else {
+            appendLog(QString("[%1] %2 disconnected.").arg(timestamp, carLabel));
             sendNotification("Car Hotspot", QString("%1 disconnected").arg(carLabel));
+        }
+    }
+}
+
+void AppController::onDisconnectDebounceTimeout()
+{
+    QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss");
+    QString carLabel = !m_targetName.isEmpty() ? m_targetName : "Car";
+
+    appendLog(QString("[%1] %2 disconnect confirmed.").arg(timestamp, carLabel));
+
+    if (m_autoToggle && m_hotspot.isHotspotActive()) {
+        if (m_stopDelayMinutes > 0) {
+            appendLog(QString("[%1] Starting turn-off grace timer (%2 min)...").arg(timestamp).arg(m_stopDelayMinutes));
+            sendNotification("Car Hotspot", QString("%1 disconnected. Hotspot will turn OFF in %2 min").arg(carLabel).arg(m_stopDelayMinutes));
+            m_delayedStopTimer->start(m_stopDelayMinutes * 60 * 1000);
+        } else {
+            appendLog(QString("[%1] Auto-disabling Hotspot immediately...").arg(timestamp));
+            m_hotspot.setHotspotActive(false);
+            sendNotification("Car Hotspot", QString("%1 disconnected: Wi-Fi Hotspot turned OFF").arg(carLabel));
         }
     }
 }

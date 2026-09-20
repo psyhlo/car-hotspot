@@ -17,3 +17,5 @@ moc_*
 harbour-carhotspot
 harbour-hotspotincar
 translations/*.qm
+debug*.list
+elfbins.list

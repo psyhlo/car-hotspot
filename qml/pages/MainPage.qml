@@ -29,7 +29,7 @@ Page {
 
             PageHeader {
                 title: qsTr("Car Hotspot")
-                description: "v" + (typeof appVersion !== "undefined" ? appVersion : "0.1.29")
+                description: (typeof appVersion !== "undefined" && appVersion.length > 0) ? ("v" + appVersion) : ""
             }
 
             // Status Overview Banner

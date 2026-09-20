@@ -1,0 +1,23 @@
+#!/bin/sh
+# harbour-carhotspot-helper
+# Helper script for Car Hotspot on Sailfish OS
+# Provides privileged ConnMan technology management
+
+case "$1" in
+    wifi-off)
+        /usr/bin/dbus-send --system --dest=net.connman /net/connman/technology/wifi net.connman.Technology.SetProperty string:Powered variant:boolean:false
+        ;;
+    wifi-on)
+        /usr/bin/dbus-send --system --dest=net.connman /net/connman/technology/wifi net.connman.Technology.SetProperty string:Powered variant:boolean:true
+        ;;
+    tethering-off)
+        /usr/bin/dbus-send --system --dest=net.connman /net/connman/technology/wifi net.connman.Technology.SetProperty string:Tethering variant:boolean:false
+        ;;
+    tethering-on)
+        /usr/bin/dbus-send --system --dest=net.connman /net/connman/technology/wifi net.connman.Technology.SetProperty string:Tethering variant:boolean:true
+        ;;
+    *)
+        echo "Usage: $0 {wifi-off|wifi-on|tethering-off|tethering-on}"
+        exit 1
+        ;;
+esac

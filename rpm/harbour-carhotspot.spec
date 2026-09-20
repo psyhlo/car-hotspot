@@ -1,6 +1,6 @@
 Name:       harbour-carhotspot
 Summary:    Car Hotspot for Sailfish OS
-Version:    0.1.29
+Version:    0.1.30
 Release:    1
 License:    GPLv3
 URL:        https://github.com
@@ -22,6 +22,7 @@ Automatically toggles Wi-Fi hotspot when connecting to a designated car Bluetoot
 
 %build
 %qmake5
+lrelease translations/*.ts
 %make_build
 
 %install
@@ -39,6 +40,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/sudoers.d
 mkdir -p %{buildroot}%{_userunitdir}
 
 install -m 755 harbour-carhotspot %{buildroot}%{_bindir}/%{name}
+install -m 755 harbour-carhotspot-helper %{buildroot}%{_bindir}/harbour-carhotspot-helper
 cp -r qml/* %{buildroot}%{_datadir}/%{name}/qml/
 install -m 644 translations/*.qm %{buildroot}%{_datadir}/%{name}/translations/
 install -m 644 translations/*.qm %{buildroot}%{_datadir}/translations/
@@ -66,9 +68,11 @@ fi
 %files
 %defattr(-,root,root,-)
 %{_bindir}/%{name}
+%{_bindir}/harbour-carhotspot-helper
 %{_datadir}/%{name}
 %{_datadir}/translations/%{name}*.qm
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 %{_userunitdir}/%{name}.service
 %config %{_sysconfdir}/sudoers.d/harbour-carhotspot
+
