@@ -133,6 +133,14 @@ void BluetoothManager::updateTargetStatus()
 void BluetoothManager::onPropertiesChanged(const QString &interface, const QVariantMap &changedProperties, const QStringList &invalidatedProperties)
 {
     Q_UNUSED(invalidatedProperties);
+
+    if (interface == "org.bluez.Adapter1") {
+        if (changedProperties.contains("Powered")) {
+            refreshDevices();
+        }
+        return;
+    }
+
     if (interface != "org.bluez.Device1")
         return;
 
