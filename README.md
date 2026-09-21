@@ -1,5 +1,7 @@
 # 🚗 Car Hotspot (`harbour-carhotspot`) for Sailfish OS
 
+[![OpenRepos](https://img.shields.io/badge/OpenRepos-car--hotspot-blue.svg)](https://openrepos.net/content/psyhlo/car-hotspot)
+
 **Car Hotspot** is an intelligent, automated Wi-Fi hotspot management utility for Sailfish OS. It seamlessly turns your smartphone into an in-car Wi-Fi router by activating mobile tethering the moment your phone connects to your car's Bluetooth hands-free / infotainment system, and safely turning it off when you leave.
 
 ---
@@ -20,10 +22,16 @@
 
 ### 📥 Installation & Usage
 
-1. Copy the RPM package to your device and install via terminal or File Manager:
-   ```bash
-   devel-su pkcon update harbour-carhotspot-0.1.25-1.aarch64.rpm
-   ```
-2. Open **Car Hotspot** from the app launcher.
-3. Select your car's Bluetooth device from the list (or manually enter its MAC address).
-4. Enable **Auto-toggle Hotspot** and configure your preferred grace period timer.
+- **OpenRepos / Storeman**:
+  Install or update directly via [OpenRepos](https://openrepos.net/content/psyhlo/car-hotspot) or the Storeman client.
+
+- **Manual RPM Installation**:
+  1. Download or copy the RPM package for your architecture (`aarch64` or `armv7hl`) from [OpenRepos](https://openrepos.net/content/psyhlo/car-hotspot) to your device.
+  2. Install via terminal or File Manager:
+     ```bash
+     devel-su pkcon update harbour-carhotspot-*.rpm
+     ```
+  3. Open **Car Hotspot** from the app launcher.
+  4. Select your car's Bluetooth device from the list (or manually enter its MAC address).
+  5. Enable **Auto-toggle Hotspot** and configure your preferred grace period timer.
+
