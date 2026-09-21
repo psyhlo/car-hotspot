@@ -49,7 +49,11 @@ AppController::AppController(bool isDaemon, QObject *parent)
     connect(m_pollTimer, &QTimer::timeout, this, [this]() {
         m_bluetooth.refreshDevices();
         m_hotspot.checkStatus();
-        if (!m_isDaemon) {
+        if (m_isDaemon) {
+            m_settings.sync();
+            loadSettings();
+        } else {
+            checkDaemonStatus();
             reloadSharedLog();
         }
     });
@@ -416,6 +420,12 @@ void AppController::ensureCellularConnected()
 
 void AppController::onTargetConnectionChanged(bool connected)
 {
+    // If background systemd daemon is active, it handles the connection automation.
+    // The GUI should not duplicate actions, timers, vibrations or notifications.
+    if (!m_isDaemon && m_isDaemonActive) {
+        return;
+    }
+
     QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss");
     QString carLabel = !m_targetName.isEmpty() ? m_targetName : "Car";
 
@@ -477,6 +487,10 @@ void AppController::onTargetConnectionChanged(bool connected)
 
 void AppController::onDisconnectDebounceTimeout()
 {
+    if (!m_isDaemon && m_isDaemonActive) {
+        return;
+    }
+
     QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss");
     QString carLabel = !m_targetName.isEmpty() ? m_targetName : "Car";
 
@@ -497,6 +511,10 @@ void AppController::onDisconnectDebounceTimeout()
 
 void AppController::onDelayedStopTimeout()
 {
+    if (!m_isDaemon && m_isDaemonActive) {
+        return;
+    }
+
     QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss");
     appendLog(QString("[%1] Grace period (%2 min) expired. Auto-disabling Hotspot.").arg(timestamp).arg(m_stopDelayMinutes));
     m_hotspot.setHotspotActive(false);
@@ -505,9 +523,12 @@ void AppController::onDelayedStopTimeout()
 
 void AppController::onBatteryChanged(int percentage, bool charging)
 {
-    Q_UNUSED(percentage);
+    if (!m_isDaemon && m_isDaemonActive) {
+        return;
+    }
+
     // If Hotspot is running, not charging, and battery dropped below limit -> auto-stop to protect phone
-    if (m_hotspot.isHotspotActive() && !charging && percentage <= m_minBatteryLevel) {
+    if (m_hotspot.isHotspotActive() && !charging && percentage > 0 && percentage <= m_minBatteryLevel) {
         QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss");
         appendLog(QString("[%1] Battery critical (%2%)! Auto-stopping Hotspot.").arg(timestamp).arg(percentage));
         m_hotspot.setHotspotActive(false);
@@ -517,6 +538,10 @@ void AppController::onBatteryChanged(int percentage, bool charging)
 
 void AppController::onRoamingChanged(bool roaming)
 {
+    if (!m_isDaemon && m_isDaemonActive) {
+        return;
+    }
+
     // If roaming detected while Hotspot is running and block option is on -> immediate shutdown
     if (roaming && m_blockInRoaming && m_hotspot.isHotspotActive()) {
         QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss");

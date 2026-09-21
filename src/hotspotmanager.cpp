@@ -122,10 +122,6 @@ void HotspotManager::updateHotspotState(bool active)
         emit hotspotActiveChanged(m_isHotspotActive);
         m_statusMessage = m_isHotspotActive ? "Hotspot is ON" : "Hotspot is OFF";
         emit statusMessageChanged(m_statusMessage);
-
-        if (!active) {
-            restoreWifiStateIfNeeded();
-        }
     }
 }
 
@@ -134,20 +130,21 @@ void HotspotManager::setHotspotActive(bool active)
     m_statusMessage = active ? "Enabling Hotspot..." : "Disabling Hotspot...";
     emit statusMessageChanged(m_statusMessage);
 
+    QSettings settings("harbour-carhotspot", "harbour-carhotspot");
+
     if (active) {
-        m_wifiStateRestored = false;
         // Only capture Wi-Fi powered state if tethering wasn't already running
         if (!m_isHotspotActive) {
             m_wifiWasPowered = queryWifiPoweredState();
-            QSettings settings("harbour-carhotspot", "harbour-carhotspot");
             settings.setValue("wifiWasPoweredBeforeTethering", m_wifiWasPowered);
+            settings.setValue("wifiStateNeedsRestoration", !m_wifiWasPowered);
             settings.sync();
             emit wifiWasPoweredBeforeChanged(m_wifiWasPowered);
             qDebug() << "HotspotManager: Wi-Fi was powered before tethering:" << m_wifiWasPowered;
         }
     }
 
-    // 1. Always send D-Bus call to com.jolla.Connectiond (works in background, locked screen, daemon)
+    // Always send D-Bus call to com.jolla.Connectiond (works in background, locked screen, daemon)
     QDBusInterface connDaemon(
         "com.jolla.Connectiond",
         "/Connectiond",
@@ -174,70 +171,75 @@ void HotspotManager::setHotspotActive(bool active)
         }
     }
 
-    // 2. Also trigger QML declarative ConnectionAgent if GUI is alive
-    emit hotspotToggleRequested(active);
-
-    if (!active) {
-        // Schedule Wi-Fi restore check in case stopTethering takes a moment
-        QTimer::singleShot(1500, this, [this]() {
-            restoreWifiStateIfNeeded();
-        });
-    }
-
-    // 3. Verify status after brief delay
-    checkStatus();
+    // Check status after brief delay
+    QTimer::singleShot(1000, this, &HotspotManager::checkStatus);
 }
 
 void HotspotManager::restoreWifiStateIfNeeded()
 {
-    if (m_wifiStateRestored)
+    // Guard 1: NEVER restore (turn off) Wi-Fi if Hotspot is currently active!
+    if (m_isHotspotActive) {
+        qDebug() << "HotspotManager: restoreWifiStateIfNeeded skipped: Hotspot is currently active.";
         return;
-
-    QSettings settings("harbour-carhotspot", "harbour-carhotspot");
-    bool wifiWasPowered = settings.value("wifiWasPoweredBeforeTethering", m_wifiWasPowered).toBool();
-
-    qDebug() << "HotspotManager: restoreWifiStateIfNeeded. wifiWasPoweredBeforeTethering was:" << wifiWasPowered;
-
-    if (!wifiWasPowered) {
-        m_wifiStateRestored = true;
-        qDebug() << "HotspotManager: Wi-Fi was OFF before tethering. Powering off Wi-Fi technology now...";
-
-        // 1. Connectiond session D-Bus interface (stopTethering with keepPowered=false)
-        QSettings caSettings("nemomobile", "connectionagent");
-        caSettings.beginGroup("Connectionagent");
-        caSettings.setValue("tetheringTechPowered", false);
-        caSettings.sync();
-
-        QDBusInterface connDaemon(
-            "com.jolla.Connectiond",
-            "/Connectiond",
-            "com.jolla.Connectiond",
-            QDBusConnection::sessionBus()
-        );
-        if (connDaemon.isValid()) {
-            connDaemon.asyncCall("stopTethering", QString("wifi"), false);
-        }
-
-        // 2. Direct QDBusInterface in case permission is granted
-        QDBusInterface wifiTech(
-            "net.connman",
-            "/net/connman/technology/wifi",
-            "net.connman.Technology",
-            QDBusConnection::systemBus()
-        );
-        if (wifiTech.isValid()) {
-            wifiTech.call("SetProperty", "Powered", QVariant::fromValue(QDBusVariant(false)));
-        }
-
-        // 3. Privileged helper / fallback if available
-        QProcess::execute("sudo", QStringList() << "/usr/bin/harbour-carhotspot-helper" << "wifi-off");
-
-        // 4. Emit signal for QML NetworkTechnology
-        emit restoreWifiRequested(false);
-    } else {
-        m_wifiStateRestored = true;
-        qDebug() << "HotspotManager: Wi-Fi was originally ON, leaving it ON.";
     }
+
+    // Guard 2: Double check with ConnMan directly to ensure Tethering is genuinely stopped
+    QDBusInterface wifiTech(
+        "net.connman",
+        "/net/connman/technology/wifi",
+        "net.connman.Technology",
+        QDBusConnection::systemBus()
+    );
+    if (wifiTech.isValid()) {
+        QDBusReply<QVariantMap> reply = wifiTech.call("GetProperties");
+        if (reply.isValid()) {
+            bool tethering = reply.value().value("Tethering", false).toBool();
+            if (tethering) {
+                qDebug() << "HotspotManager: restoreWifiStateIfNeeded aborted: ConnMan reports Tethering is still active!";
+                m_isHotspotActive = true;
+                emit hotspotActiveChanged(m_isHotspotActive);
+                return;
+            }
+        }
+    }
+
+    // Guard 3: Only restore if a restoration was explicitly scheduled by Car Hotspot
+    QSettings settings("harbour-carhotspot", "harbour-carhotspot");
+    bool needsRestoration = settings.value("wifiStateNeedsRestoration", false).toBool();
+    if (!needsRestoration) {
+        return;
+    }
+
+    // Clear restoration flag immediately so no other thread/process duplicates this
+    settings.setValue("wifiStateNeedsRestoration", false);
+    settings.sync();
+
+    // Guard 4: Check if Wi-Fi was powered before tethering
+    bool wifiWasPowered = settings.value("wifiWasPoweredBeforeTethering", true).toBool();
+    if (wifiWasPowered) {
+        qDebug() << "HotspotManager: Wi-Fi was originally ON before tethering, leaving it ON.";
+        return;
+    }
+
+    qDebug() << "HotspotManager: Wi-Fi was OFF before tethering. Powering off Wi-Fi technology now...";
+
+    // 1. Privileged helper via sudo
+    QProcess::execute("sudo", QStringList() << "/usr/bin/harbour-carhotspot-helper" << "wifi-off");
+
+    // 2. Direct privileged dbus-send via sudo fallback
+    QProcess::execute("sudo", QStringList() 
+        << "dbus-send" << "--system" << "--dest=net.connman"
+        << "/net/connman/technology/wifi"
+        << "net.connman.Technology.SetProperty"
+        << "string:Powered" << "variant:boolean:false"
+    );
+
+    // 3. Direct QDBusInterface in case permission is granted
+    if (wifiTech.isValid()) {
+        wifiTech.call("SetProperty", "Powered", QVariant::fromValue(QDBusVariant(false)));
+    }
+
+    emit restoreWifiRequested(false);
 }
 
 void HotspotManager::onPropertyChanged(const QString &name, const QDBusVariant &value)
@@ -251,7 +253,7 @@ void HotspotManager::onPropertyChanged(const QString &name, const QDBusVariant &
             emit statusMessageChanged(m_statusMessage);
 
             if (!tethering) {
-                // When ConnMan reports tethering stopped, restore Wi-Fi
+                // When ConnMan reports tethering actually stopped, restore Wi-Fi
                 QTimer::singleShot(800, this, [this]() {
                     restoreWifiStateIfNeeded();
                 });
