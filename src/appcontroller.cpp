@@ -268,6 +268,9 @@ void AppController::sendNotification(const QString &summary, const QString &body
     );
 
     QVariantMap hints;
+    hints.insert("category", "x-nemo.general");
+    hints.insert("x-nemo-preview-summary", summary);
+    hints.insert("x-nemo-preview-body", body);
     hints.insert("sound-file", "message-new-email");
 
     QList<QVariant> args;
