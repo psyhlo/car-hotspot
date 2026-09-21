@@ -499,6 +499,12 @@ void AppController::onDisconnectDebounceTimeout()
     QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss");
     QString carLabel = !m_targetName.isEmpty() ? m_targetName : "Car";
 
+    // Safety guard: if car reconnected during debounce, abort stop sequence
+    if (m_bluetooth.isTargetConnected()) {
+        appendLog(QString("[%1] %2 is currently connected. Disconnect sequence cancelled.").arg(timestamp, carLabel));
+        return;
+    }
+
     appendLog(QString("[%1] %2 disconnect confirmed.").arg(timestamp, carLabel));
 
     if (m_autoToggle && m_hotspot.isHotspotActive()) {
@@ -521,6 +527,14 @@ void AppController::onDelayedStopTimeout()
     }
 
     QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss");
+    QString carLabel = !m_targetName.isEmpty() ? m_targetName : "Car";
+
+    // Safety guard: if car reconnected during grace period, abort stop sequence
+    if (m_bluetooth.isTargetConnected()) {
+        appendLog(QString("[%1] %2 is currently connected. Grace stop cancelled.").arg(timestamp, carLabel));
+        return;
+    }
+
     appendLog(QString("[%1] Grace period (%2 min) expired. Auto-disabling Hotspot.").arg(timestamp).arg(m_stopDelayMinutes));
     m_hotspot.setHotspotActive(false);
     sendNotification("Car Hotspot", "Grace timer expired: Wi-Fi Hotspot turned OFF");
