@@ -42,10 +42,12 @@ usage() {
 
 Основни опции за компилация:
   build             Компилира проекта за текущия активен target
+  build-all         Компилира RPM пакети за двете архитектури (aarch64 и armv7hl)
   package           Компилира и създава RPM пакет (в директория RPMS/)
   clean             Изчиства генерираните build файлове
   targets           Показва списък с инсталираните build targets
-  set-aarch64       Задава target по подразбиране за Jolla Phone (aarch64)
+  set-aarch64       Задава target за 64-битов ARM (aarch64)
+  set-armv7hl       Задава target за 32-битов ARM (armv7hl)
   set-emulator      Задава target за емулатор (i486 / x86_64)
   ide               Стартира Sailfish Qt Creator IDE
   help              Показва това съобщение
@@ -85,8 +87,29 @@ case "$COMMAND" in
             echo "   sfdk tools install SailfishOS-latest-aarch64"
         else
             echo "🎯 Задаване на активен таргет: $TARGET"
-            sfdk config --global --push target "$TARGET"
+            sfdk config target="$TARGET"
         fi
+        ;;
+    set-armv7hl)
+        TARGET="$(sfdk tools list | grep -oE "[a-zA-Z0-9._-]*armv7hl[a-zA-Z0-9._-]*" | head -n 1)"
+        if [ -z "$TARGET" ]; then
+            echo "⚠️  Не е намерен armv7hl таргет."
+        else
+            echo "🎯 Задаване на активен таргет: $TARGET"
+            sfdk config target="$TARGET"
+        fi
+        ;;
+    build-all)
+        echo "🔨 Компилиране за aarch64..."
+        rm -f *.o moc_* harbour-carhotspot
+        sfdk config target=SailfishOS-5.1.0.11-aarch64
+        sfdk build
+        echo "🔨 Компилиране за armv7hl..."
+        rm -f *.o moc_* harbour-carhotspot
+        sfdk config target=SailfishOS-5.1.0.11-armv7hl
+        sfdk build
+        echo "✅ Готово! Всички RPM пакети:"
+        ls -lh RPMS/*.rpm
         ;;
     set-emulator)
         TARGET="$(sfdk tools list | grep -oE "[a-zA-Z0-9._-]*(i486|x86_64)[a-zA-Z0-9._-]*" | head -n 1)"
