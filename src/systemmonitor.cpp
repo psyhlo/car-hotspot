@@ -84,7 +84,9 @@ void SystemMonitor::queryBattery()
 
 void SystemMonitor::queryRoaming()
 {
-    // Query oFono Manager for modems
+    bool roamingDetected = false;
+
+    // 1. Query oFono Manager for all modems (supports Dual-SIM / Multi-SIM)
     QDBusInterface ofono(
         "org.ofono",
         "/",
@@ -115,12 +117,10 @@ void SystemMonitor::queryRoaming()
                         QDBusReply<QVariantMap> netProps = netReg.call("GetProperties");
                         if (netProps.isValid()) {
                             QString status = netProps.value().value("Status").toString();
-                            bool roaming = (status == "roaming");
-                            if (m_isRoaming != roaming) {
-                                m_isRoaming = roaming;
-                                emit roamingChanged(m_isRoaming);
+                            if (status == "roaming") {
+                                roamingDetected = true;
+                                break;
                             }
-                            return;
                         }
                     }
                 }
@@ -128,49 +128,49 @@ void SystemMonitor::queryRoaming()
         }
     }
 
-    // ConnMan Technology cellular / Cellular services fallback
-    QDBusInterface connman(
-        "net.connman",
-        "/",
-        "net.connman.Manager",
-        QDBusConnection::systemBus()
-    );
+    // 2. If not already flagged by oFono, also check ConnMan active cellular services
+    if (!roamingDetected) {
+        QDBusInterface connman(
+            "net.connman",
+            "/",
+            "net.connman.Manager",
+            QDBusConnection::systemBus()
+        );
 
-    if (connman.isValid()) {
-        QDBusReply<QVariantList> reply = connman.call("GetServices");
-        if (reply.isValid()) {
-            for (const QVariant &item : reply.value()) {
-                const QDBusArgument &arg = item.value<QDBusArgument>();
-                if (arg.currentType() == QDBusArgument::StructureType) {
-                    arg.beginStructure();
-                    QDBusObjectPath path;
-                    QVariantMap props;
-                    arg >> path >> props;
-                    arg.endStructure();
+        if (connman.isValid()) {
+            QDBusReply<QVariantList> reply = connman.call("GetServices");
+            if (reply.isValid()) {
+                for (const QVariant &item : reply.value()) {
+                    const QDBusArgument &arg = item.value<QDBusArgument>();
+                    if (arg.currentType() == QDBusArgument::StructureType) {
+                        arg.beginStructure();
+                        QDBusObjectPath path;
+                        QVariantMap props;
+                        arg >> path >> props;
+                        arg.endStructure();
 
-                    if (props.value("Type").toString() == "cellular") {
-                        bool roaming = props.value("Roaming", false).toBool();
-                        if (m_isRoaming != roaming) {
-                            m_isRoaming = roaming;
-                            emit roamingChanged(m_isRoaming);
+                        if (props.value("Type").toString() == "cellular") {
+                            if (props.value("Roaming", false).toBool()) {
+                                roamingDetected = true;
+                                break;
+                            }
                         }
-                        return;
                     }
                 }
             }
         }
+    }
+
+    if (m_isRoaming != roamingDetected) {
+        m_isRoaming = roamingDetected;
+        emit roamingChanged(m_isRoaming);
     }
 }
 
 void SystemMonitor::onOfonoPropertyChanged(const QString &name, const QVariant &value)
 {
     if (name == "Status") {
-        QString status = value.toString();
-        bool roaming = (status == "roaming");
-        if (m_isRoaming != roaming) {
-            m_isRoaming = roaming;
-            emit roamingChanged(m_isRoaming);
-        }
+        queryRoaming();
     }
 }
 
