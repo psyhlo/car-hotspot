@@ -159,8 +159,18 @@ void HotspotManager::setHotspotActive(bool active)
         if (active) {
             connDaemon.asyncCall("startTethering", QString("wifi"));
         } else {
-            // stopTethering expects (QString type, bool force)
-            connDaemon.asyncCall("stopTethering", QString("wifi"), true);
+            // When wifi was not powered initially, ensure connectionagent's internal state
+            // has tetheringTechPowered = false so that it will automatically power Wi-Fi off.
+            if (!m_wifiWasPowered) {
+                QSettings caSettings("nemomobile", "connectionagent");
+                caSettings.beginGroup("Connectionagent");
+                caSettings.setValue("tetheringTechPowered", false);
+                caSettings.sync();
+            }
+
+            // stopTethering expects (QString type, bool keepPowered).
+            // Passing false instructs connectionagent to restore Wi-Fi power to off if it was off!
+            connDaemon.asyncCall("stopTethering", QString("wifi"), false);
         }
     }
 
@@ -192,18 +202,23 @@ void HotspotManager::restoreWifiStateIfNeeded()
         m_wifiStateRestored = true;
         qDebug() << "HotspotManager: Wi-Fi was OFF before tethering. Powering off Wi-Fi technology now...";
 
-        // 1. Privileged helper via sudo
-        QProcess::execute("sudo", QStringList() << "/usr/bin/harbour-carhotspot-helper" << "wifi-off");
+        // 1. Connectiond session D-Bus interface (stopTethering with keepPowered=false)
+        QSettings caSettings("nemomobile", "connectionagent");
+        caSettings.beginGroup("Connectionagent");
+        caSettings.setValue("tetheringTechPowered", false);
+        caSettings.sync();
 
-        // 2. Direct privileged dbus-send via sudo fallback
-        QProcess::execute("sudo", QStringList() 
-            << "dbus-send" << "--system" << "--dest=net.connman"
-            << "/net/connman/technology/wifi"
-            << "net.connman.Technology.SetProperty"
-            << "string:Powered" << "variant:boolean:false"
+        QDBusInterface connDaemon(
+            "com.jolla.Connectiond",
+            "/Connectiond",
+            "com.jolla.Connectiond",
+            QDBusConnection::sessionBus()
         );
+        if (connDaemon.isValid()) {
+            connDaemon.asyncCall("stopTethering", QString("wifi"), false);
+        }
 
-        // 3. Direct QDBusInterface in case permission is granted
+        // 2. Direct QDBusInterface in case permission is granted
         QDBusInterface wifiTech(
             "net.connman",
             "/net/connman/technology/wifi",
@@ -213,6 +228,9 @@ void HotspotManager::restoreWifiStateIfNeeded()
         if (wifiTech.isValid()) {
             wifiTech.call("SetProperty", "Powered", QVariant::fromValue(QDBusVariant(false)));
         }
+
+        // 3. Privileged helper / fallback if available
+        QProcess::execute("sudo", QStringList() << "/usr/bin/harbour-carhotspot-helper" << "wifi-off");
 
         // 4. Emit signal for QML NetworkTechnology
         emit restoreWifiRequested(false);

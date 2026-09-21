@@ -7,13 +7,14 @@
 set -euo pipefail
 
 # Ensure Sailfish SDK bin is in PATH
-SFDK_DIR="$HOME/SailfishOS/bin"
-if [ -d "$SFDK_DIR" ]; then
-    export PATH="$SFDK_DIR:$PATH"
-fi
+for p in "$HOME/SailfishOS/bin" "/e/SailfishOS/bin" "/c/SailfishOS/bin" "E:/SailfishOS/bin" "C:/SailfishOS/bin"; do
+    if [ -d "$p" ]; then
+        export PATH="$p:$PATH"
+    fi
+done
 
 if ! command -v sfdk >/dev/null 2>&1; then
-    echo "❌ Грешка: 'sfdk' не беше намерен в PATH или в $HOME/SailfishOS/bin."
+    echo "❌ Грешка: 'sfdk' не беше намерен в PATH или в SailfishOS/bin."
     echo "   Уверете се, че Sailfish SDK е инсталиран успешно."
     exit 1
 fi

@@ -3,8 +3,8 @@ TARGET = harbour-carhotspot
 # Single Source of Truth for Version: read directly from rpm spec file
 SPEC_FILE = $$_PRO_FILE_PWD_/rpm/harbour-carhotspot.spec
 APP_VERSION = $$system(sed -n -e 's/^Version:[[:space:]]*//p' $$SPEC_FILE)
-isEmpty(APP_VERSION): APP_VERSION = "0.1.0"
-DEFINES += APP_VERSION=\\\"$$APP_VERSION\\\"
+isEmpty(APP_VERSION): APP_VERSION = 0.1.31
+DEFINES += APP_VERSION=$$APP_VERSION
 
 CONFIG += sailfishapp c++17
 QT += core gui qml quick dbus

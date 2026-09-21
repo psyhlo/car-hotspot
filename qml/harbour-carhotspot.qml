@@ -32,7 +32,7 @@ ApplicationWindow {
             if (active) {
                 connAgent.startTethering("wifi")
             } else {
-                connAgent.stopTethering("wifi", true)
+                connAgent.stopTethering("wifi", false)
             }
         }
         onRestoreWifiRequested: {
