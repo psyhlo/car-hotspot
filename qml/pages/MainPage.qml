@@ -321,7 +321,7 @@ Page {
                                 color: isSelected ? Theme.highlightColor : Theme.primaryColor
                                 font.bold: isSelected
                                 truncationMode: TruncationMode.Fade
-                                width: parent.width - (modelData.connected ? 140 : (isSelected ? 100 : 0))
+                                width: parent.width - (modelData.connected ? 140 : 0) - (isSelected ? 90 : 0) - Theme.paddingSmall * 2
                             }
 
                             Label {
@@ -374,12 +374,33 @@ Page {
                 font.pixelSize: Theme.fontSizeExtraSmall
             }
 
-            TextArea {
-                width: parent.width
-                readOnly: true
-                text: appController.logStatus
-                font.pixelSize: Theme.fontSizeTiny
-                color: Theme.secondaryHighlightColor
+            // Scrollable Activity Log Container with bounded max height
+            Rectangle {
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                anchors.horizontalCenter: parent.horizontalCenter
+                height: Math.min(Math.max(logText.height + Theme.paddingSmall * 2, Theme.itemSizeMedium), Theme.itemSizeLarge * 3.5)
+                color: Theme.rgba(Theme.highlightBackgroundColor, 0.1)
+                radius: Theme.paddingSmall
+                clip: true
+
+                SilicaFlickable {
+                    id: logFlickable
+                    anchors.fill: parent
+                    anchors.margins: Theme.paddingSmall
+                    contentHeight: logText.height
+                    clip: true
+
+                    TextArea {
+                        id: logText
+                        width: parent.width
+                        readOnly: true
+                        text: appController.logStatus
+                        font.pixelSize: Theme.fontSizeTiny
+                        color: Theme.secondaryHighlightColor
+                    }
+
+                    VerticalScrollDecorator { }
+                }
             }
         }
     }
