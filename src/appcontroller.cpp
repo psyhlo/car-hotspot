@@ -25,8 +25,6 @@ AppController::AppController(bool isDaemon, QObject *parent)
         m_settings.sync();
     }
 
-    loadSettings();
-
     connect(&m_bluetooth, &BluetoothManager::targetConnectionChanged,
             this, &AppController::onTargetConnectionChanged);
     connect(&m_bluetooth, &BluetoothManager::devicesChanged,
@@ -35,6 +33,13 @@ AppController::AppController(bool isDaemon, QObject *parent)
             this, &AppController::onBatteryChanged);
     connect(&m_systemMonitor, &SystemMonitor::roamingChanged,
             this, &AppController::onRoamingChanged);
+
+    loadSettings();
+
+    // Check if target car is already connected at startup
+    if (m_bluetooth.isTargetConnected() && !m_hotspot.isHotspotActive()) {
+        onTargetConnectionChanged(true);
+    }
 
     m_delayedStopTimer = new QTimer(this);
     m_delayedStopTimer->setSingleShot(true);
