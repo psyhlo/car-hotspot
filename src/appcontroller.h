@@ -75,8 +75,11 @@ public slots:
     void triggerFeedback();
     void ensureCellularConnected();
     void checkDaemonStatus();
+    void openApp();
+    void activate();
 
 signals:
+    void requestActivateWindow();
     void targetAddressChanged(const QString &address);
     void targetNameChanged(const QString &name);
     void autoToggleChanged(bool enabled);

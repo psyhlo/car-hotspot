@@ -5,5 +5,7 @@ Icon=harbour-carhotspot
 Exec=/usr/bin/harbour-carhotspot
 Name=Car Hotspot
 Name[bg]=Хотспот за кола
+X-DBusActivatable=true
+DBusActivatable=true
 [X-Sailjail]
 Sandboxing=Disabled

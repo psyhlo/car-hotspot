@@ -72,6 +72,14 @@ AppController::AppController(bool isDaemon, QObject *parent)
     }
 
     checkDaemonStatus();
+
+    // Register D-Bus object so notification clicks and remote actions activate/open the app
+    QDBusConnection::sessionBus().registerService("harbour.carhotspot");
+    QDBusConnection::sessionBus().registerObject("/", this, QDBusConnection::ExportAllSlots);
+
+    if (!m_isDaemon) {
+        QDBusConnection::sessionBus().registerService("harbour.carhotspot.ui");
+    }
 }
 
 void AppController::loadSettings()
@@ -272,6 +280,10 @@ void AppController::sendNotification(const QString &summary, const QString &body
     hints.insert("x-nemo-preview-summary", summary);
     hints.insert("x-nemo-preview-body", body);
     hints.insert("sound-file", "message-new-email");
+    hints.insert("x-nemo-remote-action-default", "harbour.carhotspot / harbour.carhotspot openApp");
+
+    QStringList actions;
+    actions << "default" << "";
 
     QList<QVariant> args;
     args << QString("Car Hotspot");
@@ -279,12 +291,38 @@ void AppController::sendNotification(const QString &summary, const QString &body
     args << QString("harbour-carhotspot");
     args << summary;
     args << body;
-    args << QStringList();
+    args << actions;
     args << hints;
     args << (int)4000;
 
     msg.setArguments(args);
     QDBusConnection::sessionBus().send(msg);
+}
+
+void AppController::openApp()
+{
+    qDebug() << "AppController::openApp() called from notification. Daemon:" << m_isDaemon;
+    if (m_isDaemon) {
+        QDBusInterface guiApp(
+            "harbour.carhotspot.ui",
+            "/",
+            "harbour.carhotspot.ui",
+            QDBusConnection::sessionBus()
+        );
+        if (guiApp.isValid()) {
+            guiApp.call("activate");
+        } else {
+            // Launch GUI application
+            QProcess::startDetached("/usr/bin/harbour-carhotspot");
+        }
+    } else {
+        emit requestActivateWindow();
+    }
+}
+
+void AppController::activate()
+{
+    openApp();
 }
 
 void AppController::selectDevice(const QString &address, const QString &name)

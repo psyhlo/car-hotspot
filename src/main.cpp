@@ -59,6 +59,13 @@ int main(int argc, char *argv[])
 #endif
 
     AppController controller;
+    QObject::connect(&controller, &AppController::requestActivateWindow, [&view]() {
+        if (view) {
+            view->raise();
+            view->requestActivate();
+        }
+    });
+
     view->rootContext()->setContextProperty("appVersion", QStringLiteral(STRINGIFY(APP_VERSION)));
     view->rootContext()->setContextProperty("appController", &controller);
     view->rootContext()->setContextProperty("bluetoothManager", controller.bluetooth());

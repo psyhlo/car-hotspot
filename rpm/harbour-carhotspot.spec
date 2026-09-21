@@ -38,6 +38,7 @@ mkdir -p %{buildroot}%{_datadir}/icons/hicolor/128x128/apps
 mkdir -p %{buildroot}%{_datadir}/icons/hicolor/172x172/apps
 mkdir -p %{buildroot}%{_sysconfdir}/sudoers.d
 mkdir -p %{buildroot}%{_userunitdir}
+mkdir -p %{buildroot}%{_datadir}/dbus-1/services
 
 install -m 755 harbour-carhotspot %{buildroot}%{_bindir}/%{name}
 install -m 755 harbour-carhotspot-helper %{buildroot}%{_bindir}/harbour-carhotspot-helper
@@ -45,6 +46,7 @@ cp -r qml/* %{buildroot}%{_datadir}/%{name}/qml/
 install -m 644 translations/*.qm %{buildroot}%{_datadir}/%{name}/translations/
 install -m 644 translations/*.qm %{buildroot}%{_datadir}/translations/
 install -m 644 harbour-carhotspot.desktop %{buildroot}%{_datadir}/applications/
+install -m 644 harbour.carhotspot.dbus.service %{buildroot}%{_datadir}/dbus-1/services/harbour.carhotspot.service
 install -m 644 harbour-carhotspot.service %{buildroot}%{_userunitdir}/%{name}.service
 install -m 440 harbour-carhotspot.sudoers %{buildroot}%{_sysconfdir}/sudoers.d/harbour-carhotspot
 install -m 644 icons/86x86/harbour-carhotspot.png %{buildroot}%{_datadir}/icons/hicolor/86x86/apps/
@@ -73,6 +75,7 @@ fi
 %{_datadir}/translations/%{name}*.qm
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
+%{_datadir}/dbus-1/services/harbour.carhotspot.service
 %{_userunitdir}/%{name}.service
 %config %{_sysconfdir}/sudoers.d/harbour-carhotspot
 
