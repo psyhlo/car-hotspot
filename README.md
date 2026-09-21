@@ -8,15 +8,18 @@
 
 ### ✨ Features
 
-- 🔄 **Smart Automation**: Automatically activates Wi-Fi hotspot upon pairing with your designated car Bluetooth device.
+- 🔄 **Smart Automation**: Automatically activates Wi-Fi hotspot upon pairing with your designated car Bluetooth device, and safely turns it off when you disconnect.
+- 📶 **Smart Wi-Fi State Restoration**: Remembers your previous Wi-Fi power state before the hotspot started and seamlessly restores it when turning off the hotspot.
 - ⏳ **Grace Period (Delayed Shutdown)**: Configurable disconnect grace timer (0 to 10 minutes). Avoids turning off the hotspot during brief disconnections (e.g., fuel stops or momentary signal drops).
-- 📶 **Cellular Keep-Alive**: Automatically ensures mobile data is powered on and connected via ConnMan technology before starting tethering.
+- 📡 **Cellular Keep-Alive & Dual-SIM Support**: Automatically ensures mobile data is powered on and connected across Single and Dual-SIM devices (with privileged helper fallback) before starting tethering.
 - 🔋 **Battery Drain Protection**: User-defined minimum battery threshold (5%–50%). Will not start or will automatically power down if the battery is low and the device is not on a charger.
-- 🌍 **Roaming Guard**: Protects against unexpected carrier charges by preventing auto-activation when roaming abroad.
+- 🌍 **Roaming Guard**: Multi-SIM aware roaming protection against unexpected carrier charges by preventing auto-activation when roaming abroad.
+- 🔔 **Interactive System Notifications**: Lockscreen and banner notifications for status changes, with one-tap action to bring the app directly to the foreground.
 - 📳 **Haptic Feedback & Sound**: Haptic vibration confirmation (via NGF session bus) and sound cues when connected to the car and hotspot starts successfully.
 - 🚀 **Background Daemon & Autostart**: Optional `systemd --user` background service (`harbour-carhotspot.service`) that monitors Bluetooth in the background and starts on phone boot.
-- 🌐 **System-Aware Localization**: Follows system language settings (English and Bulgarian supported out of the box).
-- 📱 **Active Silica UI & Cover**: Real-time status banner, paired devices discovery, manual override, and cover actions.
+- 📋 **Live Activity Log**: Scrollable in-app event log tracking real-time connections, battery, cellular, and diagnostic events.
+- 🌐 **Comprehensive Localization**: Translated into all 34 Sailfish OS official languages out of the box.
+- 📱 **Active Silica UI & Cover**: Real-time status banner, paired devices discovery, manual MAC entry override, and cover actions.
 
 ---
 
