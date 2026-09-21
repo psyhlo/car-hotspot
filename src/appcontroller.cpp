@@ -410,7 +410,7 @@ void AppController::ensureCellularConnected()
     if (!m_enableCellularAuto)
         return;
 
-    // Enable cellular technology via ConnMan
+    // 1. Enable cellular technology via ConnMan
     QDBusInterface cellTech(
         "net.connman",
         "/net/connman/technology/cellular",
@@ -421,6 +421,9 @@ void AppController::ensureCellularConnected()
     if (cellTech.isValid()) {
         cellTech.call("SetProperty", "Powered", QVariant::fromValue(QDBusVariant(true)));
     }
+
+    // 2. Privileged helper fallback in case unprivileged call was blocked by D-Bus policy
+    QProcess::execute("sudo", QStringList() << "/usr/bin/harbour-carhotspot-helper" << "cellular-on");
 }
 
 void AppController::onTargetConnectionChanged(bool connected)

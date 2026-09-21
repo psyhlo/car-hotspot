@@ -16,8 +16,14 @@ case "$1" in
     tethering-on)
         /usr/bin/dbus-send --system --dest=net.connman /net/connman/technology/wifi net.connman.Technology.SetProperty string:Tethering variant:boolean:true
         ;;
+    cellular-on)
+        /usr/bin/dbus-send --system --dest=net.connman /net/connman/technology/cellular net.connman.Technology.SetProperty string:Powered variant:boolean:true
+        ;;
+    cellular-off)
+        /usr/bin/dbus-send --system --dest=net.connman /net/connman/technology/cellular net.connman.Technology.SetProperty string:Powered variant:boolean:false
+        ;;
     *)
-        echo "Usage: $0 {wifi-off|wifi-on|tethering-off|tethering-on}"
+        echo "Usage: $0 {wifi-off|wifi-on|tethering-off|tethering-on|cellular-on|cellular-off}"
         exit 1
         ;;
 esac

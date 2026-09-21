@@ -1,2 +1,6 @@
+defaultuser ALL=(ALL) NOPASSWD: /usr/bin/harbour-carhotspot-helper
 defaultuser ALL=(ALL) NOPASSWD: /usr/bin/harbour-carhotspot-helper *
 defaultuser ALL=(ALL) NOPASSWD: /usr/bin/dbus-send --system *
+nemo ALL=(ALL) NOPASSWD: /usr/bin/harbour-carhotspot-helper
+nemo ALL=(ALL) NOPASSWD: /usr/bin/harbour-carhotspot-helper *
+nemo ALL=(ALL) NOPASSWD: /usr/bin/dbus-send --system *
