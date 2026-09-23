@@ -23,6 +23,7 @@ class AppController : public QObject
     Q_PROPERTY(bool blockInRoaming READ blockInRoaming WRITE setBlockInRoaming NOTIFY blockInRoamingChanged)
     Q_PROPERTY(int minBatteryLevel READ minBatteryLevel WRITE setMinBatteryLevel NOTIFY minBatteryLevelChanged)
     Q_PROPERTY(int stopDelayMinutes READ stopDelayMinutes WRITE setStopDelayMinutes NOTIFY stopDelayMinutesChanged)
+    Q_PROPERTY(bool autoEnableBluetooth READ autoEnableBluetooth WRITE setAutoEnableBluetooth NOTIFY autoEnableBluetoothChanged)
     Q_PROPERTY(bool enableCellularAuto READ enableCellularAuto WRITE setEnableCellularAuto NOTIFY enableCellularAutoChanged)
     Q_PROPERTY(bool vibrateOnConnect READ vibrateOnConnect WRITE setVibrateOnConnect NOTIFY vibrateOnConnectChanged)
     Q_PROPERTY(QString logStatus READ logStatus NOTIFY logStatusChanged)
@@ -58,6 +59,9 @@ public:
     int stopDelayMinutes() const { return m_stopDelayMinutes; }
     void setStopDelayMinutes(int minutes);
 
+    bool autoEnableBluetooth() const { return m_autoEnableBluetooth; }
+    void setAutoEnableBluetooth(bool enabled);
+
     bool enableCellularAuto() const { return m_enableCellularAuto; }
     void setEnableCellularAuto(bool enabled);
 
@@ -89,6 +93,7 @@ signals:
     void blockInRoamingChanged(bool enabled);
     void minBatteryLevelChanged(int level);
     void stopDelayMinutesChanged(int minutes);
+    void autoEnableBluetoothChanged(bool enabled);
     void enableCellularAutoChanged(bool enabled);
     void vibrateOnConnectChanged(bool enabled);
     void logStatusChanged(const QString &log);
@@ -127,6 +132,7 @@ private:
     bool m_blockInRoaming = true;
     int m_minBatteryLevel = 20;
     int m_stopDelayMinutes = 2;
+    bool m_autoEnableBluetooth = false;
     bool m_enableCellularAuto = true;
     bool m_vibrateOnConnect = true;
     QString m_logStatus;

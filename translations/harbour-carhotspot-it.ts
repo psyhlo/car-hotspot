@@ -146,6 +146,16 @@
         <translation>Continua a monitorare in background e avvia al riavvio del telefono</translation>
     </message>
     <message>
+        <location filename="../qml/pages/MainPage.qml" line="152" />
+        <source>Auto-enable Bluetooth</source>
+        <translation>Attiva automaticamente il Bluetooth</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/MainPage.qml" line="153" />
+        <source>Turn on Bluetooth automatically if it is powered off</source>
+        <translation>Accendi il Bluetooth automaticamente se è disattivato</translation>
+    </message>
+<message>
         <location filename="../qml/pages/MainPage.qml" line="151" />
         <source>Auto-enable Mobile Data</source>
         <translation>Attiva automaticamente i dati mobili</translation>

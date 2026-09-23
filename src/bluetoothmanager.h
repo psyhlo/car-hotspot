@@ -19,10 +19,12 @@ public:
 
     QVariantList devices() const { return m_devices; }
     bool isTargetConnected() const { return m_isTargetConnected; }
+    bool isBluetoothPowered();
 
 public slots:
     void refreshDevices();
     void setTargetDevice(const QString &address);
+    void ensureBluetoothPowered();
 
 signals:
     void devicesChanged();

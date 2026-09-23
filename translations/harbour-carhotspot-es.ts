@@ -146,6 +146,16 @@
         <translation>Supervisar coche en segundo plano e iniciar al reiniciar el teléfono</translation>
     </message>
     <message>
+        <location filename="../qml/pages/MainPage.qml" line="152" />
+        <source>Auto-enable Bluetooth</source>
+        <translation>Activar Bluetooth automáticamente</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/MainPage.qml" line="153" />
+        <source>Turn on Bluetooth automatically if it is powered off</source>
+        <translation>Activar Bluetooth automáticamente si está apagado</translation>
+    </message>
+<message>
         <location filename="../qml/pages/MainPage.qml" line="151" />
         <source>Auto-enable Mobile Data</source>
         <translation>Activar datos móviles automáticamente</translation>

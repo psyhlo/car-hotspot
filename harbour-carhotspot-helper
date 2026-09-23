@@ -22,6 +22,9 @@ case "$1" in
     cellular-off)
         /usr/bin/dbus-send --system --dest=net.connman /net/connman/technology/cellular net.connman.Technology.SetProperty string:Powered variant:boolean:false
         ;;
+    bluetooth-on)
+        /usr/bin/dbus-send --system --dest=net.connman /net/connman/technology/bluetooth net.connman.Technology.SetProperty string:Powered variant:boolean:true
+        ;;
     *)
         echo "Usage: $0 {wifi-off|wifi-on|tethering-off|tethering-on|cellular-on|cellular-off}"
         exit 1

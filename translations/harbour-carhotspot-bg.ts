@@ -147,7 +147,17 @@
         <translation>Следи колата във фонов режим и стартира автоматично при рестарт на телефона</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="151"/>
+        <location filename="../qml/pages/MainPage.qml" line="152"/>
+        <source>Auto-enable Bluetooth</source>
+        <translation>Автоматично пускане на Bluetooth</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/MainPage.qml" line="153"/>
+        <source>Turn on Bluetooth automatically if it is powered off</source>
+        <translation>Включва Bluetooth автоматично, ако е изключен</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/MainPage.qml" line="158"/>
         <source>Auto-enable Mobile Data</source>
         <translation>Автоматични мобилни данни</translation>
     </message>

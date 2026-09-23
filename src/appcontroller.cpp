@@ -25,6 +25,14 @@ AppController::AppController(bool isDaemon, QObject *parent)
         m_settings.sync();
     }
 
+    checkDaemonStatus();
+    loadSettings();
+
+    // If autoEnableBluetooth is turned on, ensure Bluetooth is powered
+    if (m_autoEnableBluetooth) {
+        m_bluetooth.ensureBluetoothPowered();
+    }
+
     connect(&m_bluetooth, &BluetoothManager::targetConnectionChanged,
             this, &AppController::onTargetConnectionChanged);
     connect(&m_bluetooth, &BluetoothManager::devicesChanged,
@@ -34,10 +42,11 @@ AppController::AppController(bool isDaemon, QObject *parent)
     connect(&m_systemMonitor, &SystemMonitor::roamingChanged,
             this, &AppController::onRoamingChanged);
 
-    loadSettings();
+    // Automation timers are only active in the daemon process (or standalone GUI if daemon is disabled)
+    bool isHandlingAutomation = m_isDaemon || (!m_isDaemonActive && !m_autostartService);
 
-    // Check if target car is already connected at startup
-    if (m_bluetooth.isTargetConnected() && !m_hotspot.isHotspotActive()) {
+    // Check if target car is already connected at startup (only if handling automation)
+    if (isHandlingAutomation && m_bluetooth.isTargetConnected() && !m_hotspot.isHotspotActive()) {
         onTargetConnectionChanged(true);
     }
 
@@ -71,8 +80,6 @@ AppController::AppController(bool isDaemon, QObject *parent)
         appendLog(QString("[%1] UI connected to service").arg(QDateTime::currentDateTime().toString("hh:mm:ss")));
     }
 
-    checkDaemonStatus();
-
     // Register D-Bus object so notification clicks and remote actions activate/open the app
     QDBusConnection::sessionBus().registerService("harbour.carhotspot");
     QDBusConnection::sessionBus().registerObject("/", this, QDBusConnection::ExportAllSlots);
@@ -92,6 +99,7 @@ void AppController::loadSettings()
     m_blockInRoaming = m_settings.value("blockInRoaming", true).toBool();
     m_minBatteryLevel = m_settings.value("minBatteryLevel", 20).toInt();
     m_stopDelayMinutes = m_settings.value("stopDelayMinutes", 2).toInt();
+    m_autoEnableBluetooth = m_settings.value("autoEnableBluetooth", false).toBool();
     m_enableCellularAuto = m_settings.value("enableCellularAuto", true).toBool();
     m_vibrateOnConnect = m_settings.value("vibrateOnConnect", true).toBool();
 
@@ -110,9 +118,23 @@ void AppController::saveSettings()
     m_settings.setValue("blockInRoaming", m_blockInRoaming);
     m_settings.setValue("minBatteryLevel", m_minBatteryLevel);
     m_settings.setValue("stopDelayMinutes", m_stopDelayMinutes);
+    m_settings.setValue("autoEnableBluetooth", m_autoEnableBluetooth);
     m_settings.setValue("enableCellularAuto", m_enableCellularAuto);
     m_settings.setValue("vibrateOnConnect", m_vibrateOnConnect);
     m_settings.sync();
+}
+
+void AppController::setAutoEnableBluetooth(bool enabled)
+{
+    if (m_autoEnableBluetooth != enabled) {
+        m_autoEnableBluetooth = enabled;
+        saveSettings();
+        emit autoEnableBluetoothChanged(m_autoEnableBluetooth);
+        appendLog(QString("[%1] Auto-enable Bluetooth: %2").arg(QDateTime::currentDateTime().toString("hh:mm:ss"), enabled ? "YES" : "NO"));
+        if (enabled) {
+            m_bluetooth.ensureBluetoothPowered();
+        }
+    }
 }
 
 void AppController::setTargetAddress(const QString &address)
@@ -469,9 +491,9 @@ void AppController::ensureCellularConnected()
 
 void AppController::onTargetConnectionChanged(bool connected)
 {
-    // If background systemd daemon is active, it handles the connection automation.
-    // The GUI should not duplicate actions, timers, vibrations or notifications.
-    if (!m_isDaemon && m_isDaemonActive) {
+    // If background systemd daemon is active or configured to autostart, it handles connection automation.
+    // The GUI should NOT duplicate actions, timers, vibrations or notifications.
+    if (!m_isDaemon && (m_isDaemonActive || m_autostartService)) {
         return;
     }
 
@@ -536,7 +558,7 @@ void AppController::onTargetConnectionChanged(bool connected)
 
 void AppController::onDisconnectDebounceTimeout()
 {
-    if (!m_isDaemon && m_isDaemonActive) {
+    if (!m_isDaemon && (m_isDaemonActive || m_autostartService)) {
         return;
     }
 
@@ -566,7 +588,7 @@ void AppController::onDisconnectDebounceTimeout()
 
 void AppController::onDelayedStopTimeout()
 {
-    if (!m_isDaemon && m_isDaemonActive) {
+    if (!m_isDaemon && (m_isDaemonActive || m_autostartService)) {
         return;
     }
 
@@ -586,7 +608,7 @@ void AppController::onDelayedStopTimeout()
 
 void AppController::onBatteryChanged(int percentage, bool charging)
 {
-    if (!m_isDaemon && m_isDaemonActive) {
+    if (!m_isDaemon && (m_isDaemonActive || m_autostartService)) {
         return;
     }
 
@@ -601,7 +623,7 @@ void AppController::onBatteryChanged(int percentage, bool charging)
 
 void AppController::onRoamingChanged(bool roaming)
 {
-    if (!m_isDaemon && m_isDaemonActive) {
+    if (!m_isDaemon && (m_isDaemonActive || m_autostartService)) {
         return;
     }
 

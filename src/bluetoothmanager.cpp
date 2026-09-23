@@ -3,6 +3,7 @@
 #include <QtDBus/QDBusReply>
 #include <QtDBus/QDBusArgument>
 #include <QtDBus/QDBusMetaType>
+#include <QProcess>
 #include <QDebug>
 
 // Type definition for BlueZ GetManagedObjects
@@ -47,6 +48,75 @@ BluetoothManager::BluetoothManager(QObject *parent)
     );
 
     refreshDevices();
+}
+
+bool BluetoothManager::isBluetoothPowered()
+{
+    // Check via ConnMan technology first
+    QDBusInterface btTech(
+        "net.connman",
+        "/net/connman/technology/bluetooth",
+        "net.connman.Technology",
+        QDBusConnection::systemBus()
+    );
+
+    if (btTech.isValid()) {
+        QDBusReply<QVariantMap> reply = btTech.call("GetProperties");
+        if (reply.isValid()) {
+            return reply.value().value("Powered", false).toBool();
+        }
+    }
+
+    // Fallback: check BlueZ default adapter
+    QDBusInterface adapter(
+        "org.bluez",
+        "/org/bluez/hci0",
+        "org.bluez.Adapter1",
+        QDBusConnection::systemBus()
+    );
+    if (adapter.isValid()) {
+        QVariant powered = adapter.property("Powered");
+        if (powered.isValid()) {
+            return powered.toBool();
+        }
+    }
+
+    return false;
+}
+
+void BluetoothManager::ensureBluetoothPowered()
+{
+    if (isBluetoothPowered()) {
+        qDebug() << "BluetoothManager: Bluetooth is already powered ON";
+        return;
+    }
+
+    qDebug() << "BluetoothManager: Bluetooth is OFF. Powering ON...";
+
+    // 1. Try ConnMan Technology interface
+    QDBusInterface btTech(
+        "net.connman",
+        "/net/connman/technology/bluetooth",
+        "net.connman.Technology",
+        QDBusConnection::systemBus()
+    );
+    if (btTech.isValid()) {
+        btTech.call("SetProperty", "Powered", QVariant::fromValue(QDBusVariant(true)));
+    }
+
+    // 2. Try BlueZ Adapter1 interface
+    QDBusInterface adapter(
+        "org.bluez",
+        "/org/bluez/hci0",
+        "org.bluez.Adapter1",
+        QDBusConnection::systemBus()
+    );
+    if (adapter.isValid()) {
+        adapter.setProperty("Powered", true);
+    }
+
+    // 3. Privileged helper fallback (in case dbus policy requires root)
+    QProcess::execute("sudo", QStringList() << "/usr/bin/harbour-carhotspot-helper" << "bluetooth-on");
 }
 
 void BluetoothManager::refreshDevices()

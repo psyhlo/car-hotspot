@@ -146,7 +146,17 @@
         <translation>Keep monitoring car in background and start automatically on phone reboot</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="151" />
+        <location filename="../qml/pages/MainPage.qml" line="152" />
+        <source>Auto-enable Bluetooth</source>
+        <translation>Auto-enable Bluetooth</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/MainPage.qml" line="153" />
+        <source>Turn on Bluetooth automatically if it is powered off</source>
+        <translation>Turn on Bluetooth automatically if it is powered off</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/MainPage.qml" line="158" />
         <source>Auto-enable Mobile Data</source>
         <translation>Auto-enable Mobile Data</translation>
     </message>

@@ -146,6 +146,16 @@
         <translation>Следить за авто в фоне и запускать при перезагрузке телефона</translation>
     </message>
     <message>
+        <location filename="../qml/pages/MainPage.qml" line="152" />
+        <source>Auto-enable Bluetooth</source>
+        <translation>Автоматически включать Bluetooth</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/MainPage.qml" line="153" />
+        <source>Turn on Bluetooth automatically if it is powered off</source>
+        <translation>Включать Bluetooth автоматически, если он выключен</translation>
+    </message>
+<message>
         <location filename="../qml/pages/MainPage.qml" line="151" />
         <source>Auto-enable Mobile Data</source>
         <translation>Автоматически включать моб. данные</translation>

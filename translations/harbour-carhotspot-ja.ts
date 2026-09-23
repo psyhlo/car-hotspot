@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+﻿<?xml version='1.0' encoding='utf-8'?>
 <TS version="2.1" language="ja">
 <context>
     <name>CoverPage</name>
@@ -145,7 +145,17 @@
         <source>Keep monitoring car in background and start automatically on phone reboot</source>
         <translation>バックグラウンドで監視を継続し、再起動時に自動起動</translation>
     </message>
+        <message>
+        <location filename="../qml/pages/MainPage.qml" line="152" />
+        <source>Auto-enable Bluetooth</source>
+        <translation type="unfinished">Auto-enable Bluetooth</translation>
+    </message>
     <message>
+        <location filename="../qml/pages/MainPage.qml" line="153" />
+        <source>Turn on Bluetooth automatically if it is powered off</source>
+        <translation type="unfinished">Turn on Bluetooth automatically if it is powered off</translation>
+    </message>
+<message>
         <location filename="../qml/pages/MainPage.qml" line="151" />
         <source>Auto-enable Mobile Data</source>
         <translation>モバイルデータを自動有効化</translation>

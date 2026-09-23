@@ -149,6 +149,13 @@ Page {
             }
 
             TextSwitch {
+                text: qsTr("Auto-enable Bluetooth")
+                description: qsTr("Turn on Bluetooth automatically if it is powered off")
+                checked: appController.autoEnableBluetooth
+                onCheckedChanged: appController.autoEnableBluetooth = checked
+            }
+
+            TextSwitch {
                 text: qsTr("Auto-enable Mobile Data")
                 description: qsTr("Ensure cellular data connection is active when starting Hotspot")
                 checked: appController.enableCellularAuto

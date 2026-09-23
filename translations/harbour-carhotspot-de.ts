@@ -146,6 +146,16 @@
         <translation>Auto im Hintergrund überwachen und bei Geräteneustart automatisch starten</translation>
     </message>
     <message>
+        <location filename="../qml/pages/MainPage.qml" line="152" />
+        <source>Auto-enable Bluetooth</source>
+        <translation>Bluetooth automatisch aktivieren</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/MainPage.qml" line="153" />
+        <source>Turn on Bluetooth automatically if it is powered off</source>
+        <translation>Bluetooth automatisch einschalten, wenn es deaktiviert ist</translation>
+    </message>
+<message>
         <location filename="../qml/pages/MainPage.qml" line="151" />
         <source>Auto-enable Mobile Data</source>
         <translation>Mobile Daten automatisch aktivieren</translation>
