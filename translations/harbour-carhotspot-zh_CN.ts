@@ -154,12 +154,12 @@
     <message>
         <location filename="../qml/pages/MainPage.qml" line="159"/>
         <source>Auto-enable Bluetooth</source>
-        <translation type="unfinished">Auto-enable Bluetooth</translation>
+        <translation>自动开启蓝牙</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="160"/>
         <source>Turn on Bluetooth automatically if it is powered off</source>
-        <translation type="unfinished">Turn on Bluetooth automatically if it is powered off</translation>
+        <translation>若蓝牙已关闭，则自动开启</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="166"/>

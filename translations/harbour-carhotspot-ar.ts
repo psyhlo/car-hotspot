@@ -134,12 +134,12 @@
     <message>
         <location filename="../qml/pages/MainPage.qml" line="145"/>
         <source>Multiple car devices</source>
-        <translation>Multiple car devices</translation>
+        <translation>أجهزة سيارة متعددة</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="146"/>
         <source>Allow selecting multiple Bluetooth devices instead of just one</source>
-        <translation>Allow selecting multiple Bluetooth devices instead of just one</translation>
+        <translation>السماح بتحديد عدة أجهزة بلوتوث بدلاً من جهاز واحد فقط</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="152"/>
@@ -154,12 +154,12 @@
     <message>
         <location filename="../qml/pages/MainPage.qml" line="159"/>
         <source>Auto-enable Bluetooth</source>
-        <translation type="unfinished">Auto-enable Bluetooth</translation>
+        <translation>تفعيل البلوتوث تلقائياً</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="160"/>
         <source>Turn on Bluetooth automatically if it is powered off</source>
-        <translation type="unfinished">Turn on Bluetooth automatically if it is powered off</translation>
+        <translation>تشغيل البلوتوث تلقائياً إذا كان متوقفاً</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="166"/>
@@ -240,13 +240,13 @@
         <location filename="../qml/pages/MainPage.qml" line="264"/>
         <source>Selected Cars (%1):
 %2</source>
-        <translation>Selected Cars (%1):
+        <translation>السيارات المحددة (%1):
 %2</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="266"/>
         <source>No car Bluetooth devices selected yet. Choose from list below:</source>
-        <translation>No car Bluetooth devices selected yet. Choose from list below:</translation>
+        <translation>لم يتم تحديد أي أجهزة بلوتوث للسيارة بعد. اختر من القائمة أدناه:</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="270"/>
@@ -291,7 +291,7 @@
     <message>
         <location filename="../qml/pages/MainPage.qml" line="305"/>
         <source>Add</source>
-        <translation>Add</translation>
+        <translation>إضافة</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="321"/>

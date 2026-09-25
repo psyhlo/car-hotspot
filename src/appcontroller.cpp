@@ -265,13 +265,13 @@ bool AppController::checkSafetyConditions(QString &reason)
 {
     // Roaming check
     if (m_blockInRoaming && m_systemMonitor.isRoaming()) {
-        reason = "Device is currently in roaming! Hotspot blocked to prevent high costs.";
+        reason = tr("Device is currently in roaming! Hotspot blocked to prevent high costs.");
         return false;
     }
 
     // Battery check (if not charging and below threshold)
     if (!m_systemMonitor.isBatteryCharging() && m_systemMonitor.batteryChargePercentage() <= m_minBatteryLevel) {
-        reason = QString("Battery too low (%1% <= %2%) and not charging! Hotspot blocked.")
+        reason = tr("Battery too low (%1% <= %2%) and not charging! Hotspot blocked.")
                  .arg(m_systemMonitor.batteryChargePercentage())
                  .arg(m_minBatteryLevel);
         return false;
@@ -307,13 +307,13 @@ void AppController::syncSystemdService(bool enable)
         QProcess::execute("systemctl", QStringList() << "--user" << "enable" << "harbour-carhotspot.service");
         QProcess::execute("systemctl", QStringList() << "--user" << "restart" << "harbour-carhotspot.service");
         checkDaemonStatus();
-        sendNotification("Car Hotspot", "Background service is ACTIVE and monitoring Bluetooth");
+        sendNotification(tr("Car Hotspot"), tr("Background service is ACTIVE and monitoring Bluetooth"));
     } else {
         QProcess::execute("systemctl", QStringList() << "--user" << "stop" << "harbour-carhotspot.service");
         QProcess::execute("systemctl", QStringList() << "--user" << "disable" << "harbour-carhotspot.service");
         QProcess::execute("systemctl", QStringList() << "--user" << "daemon-reload");
         checkDaemonStatus();
-        sendNotification("Car Hotspot", "Background service STOPPED");
+        sendNotification(tr("Car Hotspot"), tr("Background service STOPPED"));
     }
 }
 
@@ -561,7 +561,7 @@ void AppController::toggleHotspotManual(bool active)
         QString failReason;
         if (!checkSafetyConditions(failReason)) {
             appendLog(QString("[%1] Warning: %2").arg(QDateTime::currentDateTime().toString("hh:mm:ss"), failReason));
-            sendNotification("Hotspot blocked", failReason);
+            sendNotification(tr("Hotspot blocked"), failReason);
             return;
         }
         ensureCellularConnected();
@@ -571,8 +571,8 @@ void AppController::toggleHotspotManual(bool active)
     appendLog(QString("[%1] Manual toggle Hotspot: %2").arg(QDateTime::currentDateTime().toString("hh:mm:ss"), active ? "ON" : "OFF"));
     m_hotspot.setHotspotActive(active);
     sendNotification(
-        "Car Hotspot", 
-        active ? "Hotspot manually enabled" : "Hotspot manually disabled"
+        tr("Car Hotspot"), 
+        active ? tr("Hotspot manually enabled") : tr("Hotspot manually disabled")
     );
 }
 
@@ -722,7 +722,7 @@ void AppController::onTargetConnectionChanged(bool connected)
             QString failReason;
             if (!checkSafetyConditions(failReason)) {
                 appendLog(QString("[%1] Safety Check Failed: %2").arg(timestamp, failReason));
-                sendNotification("Hotspot blocked", failReason);
+                sendNotification(tr("Hotspot blocked"), failReason);
                 return;
             }
 
@@ -732,9 +732,9 @@ void AppController::onTargetConnectionChanged(bool connected)
             appendLog(QString("[%1] Auto-enabling Hotspot...").arg(timestamp));
             m_hotspot.setHotspotActive(true);
             triggerFeedback();
-            sendNotification("Car Hotspot", QString("%1 connected: Wi-Fi Hotspot turned ON").arg(carLabel));
+            sendNotification(tr("Car Hotspot"), tr("%1 connected: Wi-Fi Hotspot turned ON").arg(carLabel));
         } else {
-            sendNotification("Car Hotspot", QString("%1 connected").arg(carLabel));
+            sendNotification(tr("Car Hotspot"), tr("%1 connected").arg(carLabel));
         }
     } else {
         // Bluetooth reported disconnected:
@@ -744,7 +744,7 @@ void AppController::onTargetConnectionChanged(bool connected)
             m_disconnectDebounceTimer->start(5000);
         } else {
             appendLog(QString("[%1] %2 disconnected.").arg(timestamp, carLabel));
-            sendNotification("Car Hotspot", QString("%1 disconnected").arg(carLabel));
+            sendNotification(tr("Car Hotspot"), tr("%1 disconnected").arg(carLabel));
         }
     }
 }
@@ -769,12 +769,12 @@ void AppController::onDisconnectDebounceTimeout()
     if (m_autoToggle && m_hotspot.isHotspotActive()) {
         if (m_stopDelayMinutes > 0) {
             appendLog(QString("[%1] Starting turn-off grace timer (%2 min)...").arg(timestamp).arg(m_stopDelayMinutes));
-            sendNotification("Car Hotspot", QString("%1 disconnected. Hotspot will turn OFF in %2 min").arg(carLabel).arg(m_stopDelayMinutes));
+            sendNotification(tr("Car Hotspot"), tr("%1 disconnected. Hotspot will turn OFF in %2 min").arg(carLabel).arg(m_stopDelayMinutes));
             m_delayedStopTimer->start(m_stopDelayMinutes * 60 * 1000);
         } else {
             appendLog(QString("[%1] Auto-disabling Hotspot immediately...").arg(timestamp));
             m_hotspot.setHotspotActive(false);
-            sendNotification("Car Hotspot", QString("%1 disconnected: Wi-Fi Hotspot turned OFF").arg(carLabel));
+            sendNotification(tr("Car Hotspot"), tr("%1 disconnected: Wi-Fi Hotspot turned OFF").arg(carLabel));
         }
     }
 }
@@ -796,7 +796,7 @@ void AppController::onDelayedStopTimeout()
 
     appendLog(QString("[%1] Grace period (%2 min) expired. Auto-disabling Hotspot.").arg(timestamp).arg(m_stopDelayMinutes));
     m_hotspot.setHotspotActive(false);
-    sendNotification("Car Hotspot", "Grace timer expired: Wi-Fi Hotspot turned OFF");
+    sendNotification(tr("Car Hotspot"), tr("Grace timer expired: Wi-Fi Hotspot turned OFF"));
 }
 
 void AppController::onBatteryChanged(int percentage, bool charging)
@@ -810,7 +810,7 @@ void AppController::onBatteryChanged(int percentage, bool charging)
         QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss");
         appendLog(QString("[%1] Battery critical (%2%)! Auto-stopping Hotspot.").arg(timestamp).arg(percentage));
         m_hotspot.setHotspotActive(false);
-        sendNotification("Hotspot turned OFF", QString("Battery dropped to %1%. Hotspot stopped to prevent battery drain.").arg(percentage));
+        sendNotification(tr("Hotspot turned OFF"), tr("Battery dropped to %1%. Hotspot stopped to prevent battery drain.").arg(percentage));
     }
 }
 
@@ -825,7 +825,7 @@ void AppController::onRoamingChanged(bool roaming)
         QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss");
         appendLog(QString("[%1] Roaming detected! Auto-stopping Hotspot to prevent high costs.").arg(timestamp));
         m_hotspot.setHotspotActive(false);
-        sendNotification("Hotspot turned OFF", "Roaming detected! Wi-Fi Hotspot turned off to avoid extra carrier charges.");
+        sendNotification(tr("Hotspot turned OFF"), tr("Roaming detected! Wi-Fi Hotspot turned off to avoid extra carrier charges."));
     }
 }
 

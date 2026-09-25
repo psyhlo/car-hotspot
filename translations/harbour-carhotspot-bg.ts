@@ -134,7 +134,7 @@
     <message>
         <location filename="../qml/pages/MainPage.qml" line="145"/>
         <source>Multiple car devices</source>
-        <translation>Няколко устройства за кола</translation>
+        <translation>Избор на няколко автомобила</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="146"/>
@@ -164,7 +164,7 @@
     <message>
         <location filename="../qml/pages/MainPage.qml" line="166"/>
         <source>Auto-enable Mobile Data</source>
-        <translation>Автоматични мобилни данни</translation>
+        <translation>Автоматично пускане на мобилни данни</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="167"/>
@@ -332,6 +332,77 @@
         <location filename="../qml/pages/MainPage.qml" line="417"/>
         <source>Activity Log:</source>
         <translation>Дневник на събитията:</translation>
+    </message>
+</context>
+<context>
+    <name>AppController</name>
+    <message>
+        <source>Car Hotspot</source>
+        <translation>Хотспот за кола</translation>
+    </message>
+    <message>
+        <source>Background service is ACTIVE and monitoring Bluetooth</source>
+        <translation>Фоновата услуга е АКТИВНА и следи за Bluetooth връзка</translation>
+    </message>
+    <message>
+        <source>Background service STOPPED</source>
+        <translation>Фоновата услуга е СПРЯНА</translation>
+    </message>
+    <message>
+        <source>Hotspot blocked</source>
+        <translation>Хотспотът е блокиран</translation>
+    </message>
+    <message>
+        <source>Device is currently in roaming! Hotspot blocked to prevent high costs.</source>
+        <translation>Устройството е в роуминг! Хотспотът е блокиран за избягване на високи такси.</translation>
+    </message>
+    <message>
+        <source>Battery too low (%1% &lt;= %2%) and not charging! Hotspot blocked.</source>
+        <translation>Батерията е твърде ниска (%1% &lt;= %2%) и не се зарежда! Хотспотът е блокиран.</translation>
+    </message>
+    <message>
+        <source>Hotspot manually enabled</source>
+        <translation>Хотспотът е включен ръчно</translation>
+    </message>
+    <message>
+        <source>Hotspot manually disabled</source>
+        <translation>Хотспотът е изключен ръчно</translation>
+    </message>
+    <message>
+        <source>%1 connected: Wi-Fi Hotspot turned ON</source>
+        <translation>%1 е свързан: Wi-Fi хотспотът е ВКЛЮЧЕН</translation>
+    </message>
+    <message>
+        <source>%1 connected</source>
+        <translation>%1 е свързан</translation>
+    </message>
+    <message>
+        <source>%1 disconnected</source>
+        <translation>%1 е разкачен</translation>
+    </message>
+    <message>
+        <source>%1 disconnected. Hotspot will turn OFF in %2 min</source>
+        <translation>%1 се разкачи. Хотспотът ще се изключи след %2 мин</translation>
+    </message>
+    <message>
+        <source>%1 disconnected: Wi-Fi Hotspot turned OFF</source>
+        <translation>%1 се разкачи: Wi-Fi хотспотът е ИЗКЛЮЧЕН</translation>
+    </message>
+    <message>
+        <source>Grace timer expired: Wi-Fi Hotspot turned OFF</source>
+        <translation>Времето за изчакване изтече: Wi-Fi хотспотът е ИЗКЛЮЧЕН</translation>
+    </message>
+    <message>
+        <source>Hotspot turned OFF</source>
+        <translation>Хотспотът е ИЗКЛЮЧЕН</translation>
+    </message>
+    <message>
+        <source>Battery dropped to %1%. Hotspot stopped to prevent battery drain.</source>
+        <translation>Батерията падна до %1%. Хотспотът е спрян за пестене на заряд.</translation>
+    </message>
+    <message>
+        <source>Roaming detected! Wi-Fi Hotspot turned off to avoid extra carrier charges.</source>
+        <translation>Засечен е роуминг! Wi-Fi хотспотът е изключен за избягване на допълнителни такси.</translation>
     </message>
 </context>
 </TS>

@@ -4,6 +4,29 @@
 #include <QCoreApplication>
 #include "appcontroller.h"
 
+static void installAppTranslator(QCoreApplication *app, bool isDaemon)
+{
+    QTranslator *translator = new QTranslator(app);
+    QString localeName = QLocale::system().name(); // e.g. "bg_BG" or "bg"
+    QString langCode = localeName.split('_').first(); // e.g. "bg"
+
+    // Look in standard app translation directories
+    QStringList translationDirs;
+    translationDirs << "/usr/share/harbour-carhotspot/translations"
+                    << "/usr/share/translations";
+    if (!isDaemon) {
+        translationDirs << SailfishApp::pathTo("translations").toLocalFile();
+    }
+
+    for (const QString &dir : translationDirs) {
+        if (translator->load(QString("harbour-carhotspot-%1").arg(localeName), dir) ||
+            translator->load(QString("harbour-carhotspot-%1").arg(langCode), dir)) {
+            app->installTranslator(translator);
+            return;
+        }
+    }
+}
+
 int main(int argc, char *argv[])
 {
     bool isDaemon = false;
@@ -19,6 +42,7 @@ int main(int argc, char *argv[])
         QCoreApplication app(argc, argv);
         QCoreApplication::setOrganizationName("harbour-carhotspot");
         QCoreApplication::setApplicationName("harbour-carhotspot");
+        installAppTranslator(&app, true);
         AppController controller(true);
         return app.exec();
     }
@@ -29,25 +53,7 @@ int main(int argc, char *argv[])
     QGuiApplication::setApplicationName("harbour-carhotspot");
 
     // Install translator according to system locale
-    QScopedPointer<QTranslator> translator(new QTranslator);
-    QString localeName = QLocale::system().name(); // e.g. "bg_BG" or "bg"
-    QString langCode = localeName.split('_').first(); // e.g. "bg"
-
-    // Look in standard app translation directories
-    QStringList translationDirs;
-    translationDirs << "/usr/share/harbour-carhotspot/translations"
-                    << "/usr/share/translations"
-                    << SailfishApp::pathTo("translations").toLocalFile();
-
-    bool loaded = false;
-    for (const QString &dir : translationDirs) {
-        if (translator->load(QString("harbour-carhotspot-%1").arg(localeName), dir) ||
-            translator->load(QString("harbour-carhotspot-%1").arg(langCode), dir)) {
-            app->installTranslator(translator.data());
-            loaded = true;
-            break;
-        }
-    }
+    installAppTranslator(app.data(), false);
 
     QScopedPointer<QQuickView> view(SailfishApp::createView());
 

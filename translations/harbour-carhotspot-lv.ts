@@ -134,12 +134,12 @@
     <message>
         <location filename="../qml/pages/MainPage.qml" line="145"/>
         <source>Multiple car devices</source>
-        <translation>Multiple car devices</translation>
+        <translation>Vairākas automašīnas ierīces</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="146"/>
         <source>Allow selecting multiple Bluetooth devices instead of just one</source>
-        <translation>Allow selecting multiple Bluetooth devices instead of just one</translation>
+        <translation>Atļaut atlasīt vairākas Bluetooth ierīces, nevis tikai vienu</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="152"/>
@@ -154,12 +154,12 @@
     <message>
         <location filename="../qml/pages/MainPage.qml" line="159"/>
         <source>Auto-enable Bluetooth</source>
-        <translation type="unfinished">Auto-enable Bluetooth</translation>
+        <translation>Automātiski iespējot Bluetooth</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="160"/>
         <source>Turn on Bluetooth automatically if it is powered off</source>
-        <translation type="unfinished">Turn on Bluetooth automatically if it is powered off</translation>
+        <translation>Automātiski ieslēgt Bluetooth, ja tas ir izslēgts</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="166"/>
@@ -240,13 +240,13 @@
         <location filename="../qml/pages/MainPage.qml" line="264"/>
         <source>Selected Cars (%1):
 %2</source>
-        <translation>Selected Cars (%1):
+        <translation>Atlasītās automašīnas (%1):
 %2</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="266"/>
         <source>No car Bluetooth devices selected yet. Choose from list below:</source>
-        <translation>No car Bluetooth devices selected yet. Choose from list below:</translation>
+        <translation>Vēl nav atlasīta neviena automašīnas Bluetooth ierīce. Izvēlieties no saraksta zemāk:</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="270"/>
@@ -291,7 +291,7 @@
     <message>
         <location filename="../qml/pages/MainPage.qml" line="305"/>
         <source>Add</source>
-        <translation>Add</translation>
+        <translation>Pievienot</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="321"/>
