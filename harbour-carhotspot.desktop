@@ -5,6 +5,13 @@ Icon=harbour-carhotspot
 Exec=/usr/bin/harbour-carhotspot
 Name=Car Hotspot
 Name[bg]=Хотспот за кола
+Name[de]=Fahrzeug-Hotspot
+Name[es]=Punto de acceso para coche
+Name[fr]=Point d'accès voiture
+Name[it]=Hotspot auto
+Name[ru]=Точка доступа авто
+Name[sv]=Mobil hotspot för bil
+Name[fi]=Auton yhteyspiste
 X-DBusActivatable=true
 DBusActivatable=true
 [X-Sailjail]
