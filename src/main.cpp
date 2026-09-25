@@ -25,6 +25,8 @@ static void installAppTranslator(QCoreApplication *app, bool isDaemon)
             return;
         }
     }
+
+    delete translator;
 }
 
 int main(int argc, char *argv[])

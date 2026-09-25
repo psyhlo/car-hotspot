@@ -36,8 +36,6 @@ public slots:
 signals:
     void devicesChanged();
     void targetConnectionChanged(bool connected);
-    void deviceConnected(const QString &name, const QString &address);
-    void deviceDisconnected(const QString &name, const QString &address);
 
 private slots:
     void onPropertiesChanged(const QString &interface, const QVariantMap &changedProperties, const QStringList &invalidatedProperties);

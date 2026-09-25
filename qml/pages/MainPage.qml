@@ -296,6 +296,7 @@ Page {
                                 text = ""
                             } else {
                                 appController.selectDevice(text.trim(), qsTr("Car Bluetooth"))
+                                focus = false
                             }
                         }
                     }
@@ -312,6 +313,7 @@ Page {
                                 customMacField.text = ""
                             } else {
                                 appController.selectDevice(customMacField.text.trim(), qsTr("Car Bluetooth"))
+                                customMacField.focus = false
                             }
                         }
                     }

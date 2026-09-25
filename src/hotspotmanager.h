@@ -29,7 +29,6 @@ public slots:
 signals:
     void hotspotActiveChanged(bool active);
     void statusMessageChanged(const QString &msg);
-    void hotspotToggleRequested(bool active);
     void restoreWifiRequested(bool powered);
     void wifiWasPoweredBeforeChanged(bool powered);
 
