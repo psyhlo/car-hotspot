@@ -142,6 +142,13 @@ Page {
             }
 
             TextSwitch {
+                text: qsTr("Multiple car devices")
+                description: qsTr("Allow selecting multiple Bluetooth devices instead of just one")
+                checked: appController.allowMultipleDevices
+                onCheckedChanged: appController.allowMultipleDevices = checked
+            }
+
+            TextSwitch {
                 text: qsTr("Run in background & Autostart")
                 description: qsTr("Keep monitoring car in background and start automatically on phone reboot")
                 checked: appController.autostartService
@@ -244,10 +251,27 @@ Page {
                 anchors.right: parent.right
                 anchors.leftMargin: Theme.horizontalPageMargin
                 anchors.rightMargin: Theme.horizontalPageMargin
-                text: appController.targetAddress !== "" 
-                      ? qsTr("Selected Car: %1\n(%2)").arg(appController.targetName !== "" ? appController.targetName : qsTr("Car BT")).arg(appController.targetAddress)
-                      : qsTr("No car Bluetooth device selected yet. Choose from list below:")
-                color: appController.targetAddress !== "" ? Theme.highlightColor : Theme.secondaryColor
+                text: {
+                    if (appController.allowMultipleDevices) {
+                        if (appController.selectedDevicesCount > 0) {
+                            var listStr = ""
+                            for (var i = 0; i < appController.targetAddresses.length; ++i) {
+                                var addr = appController.targetAddresses[i]
+                                var dname = appController.getDeviceName(addr)
+                                if (listStr.length > 0) listStr += ", "
+                                listStr += (dname !== "" ? dname : addr)
+                            }
+                            return qsTr("Selected Cars (%1):\n%2").arg(appController.selectedDevicesCount).arg(listStr)
+                        } else {
+                            return qsTr("No car Bluetooth devices selected yet. Choose from list below:")
+                        }
+                    } else {
+                        return appController.targetAddress !== ""
+                            ? qsTr("Selected Car: %1\n(%2)").arg(appController.targetName !== "" ? appController.targetName : qsTr("Car BT")).arg(appController.targetAddress)
+                            : qsTr("No car Bluetooth device selected yet. Choose from list below:")
+                    }
+                }
+                color: (appController.allowMultipleDevices ? appController.selectedDevicesCount > 0 : appController.targetAddress !== "") ? Theme.highlightColor : Theme.secondaryColor
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.fontSizeSmall
             }
@@ -263,21 +287,31 @@ Page {
                     width: parent.width - setBtn.width - Theme.paddingMedium
                     placeholderText: qsTr("Or enter MAC (e.g. AA:BB:CC:DD:EE:FF)")
                     label: qsTr("Custom Bluetooth MAC")
-                    text: appController.targetAddress
+                    text: appController.allowMultipleDevices ? "" : appController.targetAddress
                     EnterKey.onClicked: {
                         if (text.trim().length > 0) {
-                            appController.selectDevice(text.trim(), qsTr("Car Bluetooth"))
+                            if (appController.allowMultipleDevices) {
+                                appController.addDevice(text.trim(), qsTr("Car Bluetooth"))
+                                text = ""
+                            } else {
+                                appController.selectDevice(text.trim(), qsTr("Car Bluetooth"))
+                            }
                         }
                     }
                 }
 
                 Button {
                     id: setBtn
-                    text: qsTr("Save")
+                    text: appController.allowMultipleDevices ? qsTr("Add") : qsTr("Save")
                     anchors.verticalCenter: customMacField.verticalCenter
                     onClicked: {
                         if (customMacField.text.trim().length > 0) {
-                            appController.selectDevice(customMacField.text.trim(), qsTr("Car Bluetooth"))
+                            if (appController.allowMultipleDevices) {
+                                appController.addDevice(customMacField.text.trim(), qsTr("Car Bluetooth"))
+                                customMacField.text = ""
+                            } else {
+                                appController.selectDevice(customMacField.text.trim(), qsTr("Car Bluetooth"))
+                            }
                         }
                     }
                 }
@@ -305,7 +339,7 @@ Page {
                     id: deviceItem
                     contentHeight: Theme.itemSizeMedium
 
-                    property bool isSelected: appController.targetAddress.toUpperCase() === modelData.address.toUpperCase()
+                    property bool isSelected: appController.isDeviceSelected(modelData.address)
 
                     Rectangle {
                         anchors.fill: parent
@@ -355,8 +389,12 @@ Page {
                     }
 
                     onClicked: {
-                        customMacField.text = modelData.address
-                        appController.selectDevice(modelData.address, modelData.name)
+                        if (appController.allowMultipleDevices) {
+                            appController.toggleDeviceSelection(modelData.address, modelData.name)
+                        } else {
+                            customMacField.text = modelData.address
+                            appController.selectDevice(modelData.address, modelData.name)
+                        }
                     }
                 }
             }
