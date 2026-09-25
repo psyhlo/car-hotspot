@@ -688,7 +688,10 @@ void AppController::onTargetConnectionChanged(bool connected)
 
     QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss");
     QString activeName = connectedTargetName();
-    QString carLabel = !activeName.isEmpty() ? activeName : "Car";
+    if (!activeName.isEmpty()) {
+        m_lastConnectedCarLabel = activeName;
+    }
+    QString carLabel = !m_lastConnectedCarLabel.isEmpty() ? m_lastConnectedCarLabel : (!m_targetName.isEmpty() ? m_targetName : "Car");
 
     if (connected) {
         // 1. If disconnect debounce timer was active (micro-disconnect flutter < 5s), cancel it!
@@ -753,7 +756,7 @@ void AppController::onDisconnectDebounceTimeout()
     }
 
     QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss");
-    QString carLabel = !m_targetName.isEmpty() ? m_targetName : "Car";
+    QString carLabel = !m_lastConnectedCarLabel.isEmpty() ? m_lastConnectedCarLabel : (!m_targetName.isEmpty() ? m_targetName : "Car");
 
     // Safety guard: if car reconnected during debounce, abort stop sequence
     if (m_bluetooth.isTargetConnected()) {
@@ -783,7 +786,7 @@ void AppController::onDelayedStopTimeout()
     }
 
     QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss");
-    QString carLabel = !m_targetName.isEmpty() ? m_targetName : "Car";
+    QString carLabel = !m_lastConnectedCarLabel.isEmpty() ? m_lastConnectedCarLabel : (!m_targetName.isEmpty() ? m_targetName : "Car");
 
     // Safety guard: if car reconnected during grace period, abort stop sequence
     if (m_bluetooth.isTargetConnected()) {

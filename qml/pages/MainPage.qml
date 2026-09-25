@@ -58,9 +58,10 @@ Page {
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         Label {
-                            text: qsTr("Car Bluetooth: ") + (bluetoothManager.isTargetConnected ? qsTr("Connected") : qsTr("Disconnected"))
+                            text: qsTr("Car Bluetooth: ") + (bluetoothManager.isTargetConnected ? (bluetoothManager.connectedTargetName !== "" ? bluetoothManager.connectedTargetName : qsTr("Connected")) : qsTr("Disconnected"))
                             color: Theme.primaryColor
                             font.pixelSize: Theme.fontSizeSmall
+                            truncationMode: TruncationMode.Fade
                         }
                     }
 

@@ -147,6 +147,7 @@ private:
     bool m_allowMultipleDevices = false;
     QStringList m_targetAddresses;
     QMap<QString, QString> m_targetNames;
+    QString m_lastConnectedCarLabel;
 
     QString m_targetAddress;
     QString m_targetName;
