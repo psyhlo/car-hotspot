@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QSettings>
 #include <QTimer>
+#include <QSet>
 #include "bluetoothmanager.h"
 #include "hotspotmanager.h"
 #include "systemmonitor.h"
@@ -16,7 +17,7 @@ class AppController : public QObject
     Q_PROPERTY(SystemMonitor* systemMonitor READ systemMonitor CONSTANT)
     Q_PROPERTY(bool allowMultipleDevices READ allowMultipleDevices WRITE setAllowMultipleDevices NOTIFY allowMultipleDevicesChanged)
     Q_PROPERTY(QStringList targetAddresses READ targetAddresses NOTIFY targetAddressesChanged)
-    Q_PROPERTY(int selectedDevicesCount READ selectedDevicesCount NOTIFY targetAddressesChanged)
+    Q_PROPERTY(int selectedDevicesCount READ selectedDevicesCount NOTIFY selectedDevicesCountChanged)
     Q_PROPERTY(QString connectedTargetName READ connectedTargetName NOTIFY connectedTargetNameChanged)
     Q_PROPERTY(QString targetAddress READ targetAddress WRITE setTargetAddress NOTIFY targetAddressChanged)
     Q_PROPERTY(QString targetName READ targetName NOTIFY targetNameChanged)
@@ -104,6 +105,7 @@ signals:
     void requestActivateWindow();
     void allowMultipleDevicesChanged(bool enabled);
     void targetAddressesChanged();
+    void selectedDevicesCountChanged();
     void connectedTargetNameChanged();
     void targetAddressChanged(const QString &address);
     void targetNameChanged(const QString &name);
@@ -146,6 +148,7 @@ private:
 
     bool m_allowMultipleDevices = false;
     QStringList m_targetAddresses;
+    QSet<QString> m_targetAddressesSet;
     QMap<QString, QString> m_targetNames;
     QString m_lastConnectedCarLabel;
 

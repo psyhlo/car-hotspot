@@ -63,6 +63,9 @@ AppController::AppController(bool isDaemon, QObject *parent)
     // Periodic watchdog timer: keeps monitoring Bluetooth and Hotspot even if system D-Bus signals are missed in background/lockscreen
     m_pollTimer = new QTimer(this);
     connect(m_pollTimer, &QTimer::timeout, this, [this]() {
+        if (m_autoEnableBluetooth && !m_bluetooth.isBluetoothPowered()) {
+            m_bluetooth.ensureBluetoothPowered();
+        }
         m_bluetooth.refreshDevices();
         m_hotspot.checkStatus();
         if (m_isDaemon) {
@@ -122,6 +125,11 @@ void AppController::loadSettings()
     } else {
         m_targetAddress.clear();
         m_targetName.clear();
+    }
+
+    m_targetAddressesSet.clear();
+    for (const QString &addr : m_targetAddresses) {
+        m_targetAddressesSet.insert(addr.trimmed().toUpper());
     }
 
     m_autoToggle = m_settings.value("autoToggle", true).toBool();
@@ -392,6 +400,8 @@ void AppController::setAllowMultipleDevices(bool enabled)
                 QString primaryName = m_targetNames.value(primaryAddress.toUpper(), primaryAddress);
 
                 m_targetAddresses = QStringList() << primaryAddress;
+                m_targetAddressesSet.clear();
+                m_targetAddressesSet.insert(primaryAddress.toUpper());
                 m_targetAddress = primaryAddress;
                 m_targetName = primaryName;
 
@@ -412,8 +422,10 @@ void AppController::setAllowMultipleDevices(bool enabled)
         } else {
             // Switched to multiple devices mode:
             if (!m_targetAddress.isEmpty() && !isDeviceSelected(m_targetAddress)) {
-                m_targetAddresses.append(m_targetAddress.toUpper());
-                m_targetNames[m_targetAddress.toUpper()] = m_targetName;
+                QString clean = m_targetAddress.toUpper();
+                m_targetAddresses.append(clean);
+                m_targetAddressesSet.insert(clean);
+                m_targetNames[clean] = m_targetName;
             }
             appendLog(QString("[%1] Switched to multiple devices mode.").arg(QDateTime::currentDateTime().toString("hh:mm:ss")));
         }
@@ -424,17 +436,13 @@ void AppController::setAllowMultipleDevices(bool enabled)
         emit targetAddressesChanged();
         emit targetAddressChanged(m_targetAddress);
         emit targetNameChanged(m_targetName);
+        emit selectedDevicesCountChanged();
     }
 }
 
 bool AppController::isDeviceSelected(const QString &address) const
 {
-    QString clean = address.trimmed().toUpper();
-    for (const QString &addr : m_targetAddresses) {
-        if (addr.toUpper() == clean)
-            return true;
-    }
-    return false;
+    return m_targetAddressesSet.contains(address.trimmed().toUpper());
 }
 
 void AppController::addDevice(const QString &address, const QString &name)
@@ -448,9 +456,11 @@ void AppController::addDevice(const QString &address, const QString &name)
     if (!isDeviceSelected(cleanAddr)) {
         if (!m_allowMultipleDevices) {
             m_targetAddresses.clear();
+            m_targetAddressesSet.clear();
             m_targetNames.clear();
         }
         m_targetAddresses.append(cleanAddr);
+        m_targetAddressesSet.insert(cleanAddr);
         m_targetNames[cleanAddr] = cleanName;
         m_targetAddress = m_targetAddresses.first();
         m_targetName = m_targetNames.value(m_targetAddress);
@@ -460,6 +470,7 @@ void AppController::addDevice(const QString &address, const QString &name)
         emit targetAddressesChanged();
         emit targetAddressChanged(m_targetAddress);
         emit targetNameChanged(m_targetName);
+        emit selectedDevicesCountChanged();
         appendLog(QString("[%1] Added car device: %2 (%3)").arg(QDateTime::currentDateTime().toString("hh:mm:ss"), cleanName, cleanAddr));
     }
 }
@@ -478,6 +489,7 @@ void AppController::removeDevice(const QString &address)
     if (idx >= 0) {
         QString devName = m_targetNames.value(cleanAddr, cleanAddr);
         m_targetAddresses.removeAt(idx);
+        m_targetAddressesSet.remove(cleanAddr);
         m_targetNames.remove(cleanAddr);
 
         if (!m_targetAddresses.isEmpty()) {
@@ -493,6 +505,7 @@ void AppController::removeDevice(const QString &address)
         emit targetAddressesChanged();
         emit targetAddressChanged(m_targetAddress);
         emit targetNameChanged(m_targetName);
+        emit selectedDevicesCountChanged();
         appendLog(QString("[%1] Removed car device: %2 (%3)").arg(QDateTime::currentDateTime().toString("hh:mm:ss"), devName, cleanAddr));
     }
 }
@@ -509,6 +522,7 @@ void AppController::toggleDeviceSelection(const QString &address, const QString 
 void AppController::clearDevices()
 {
     m_targetAddresses.clear();
+    m_targetAddressesSet.clear();
     m_targetNames.clear();
     m_targetAddress.clear();
     m_targetName.clear();
@@ -518,6 +532,7 @@ void AppController::clearDevices()
     emit targetAddressesChanged();
     emit targetAddressChanged(m_targetAddress);
     emit targetNameChanged(m_targetName);
+    emit selectedDevicesCountChanged();
     appendLog(QString("[%1] Cleared all car devices.").arg(QDateTime::currentDateTime().toString("hh:mm:ss")));
 }
 
@@ -531,6 +546,10 @@ QString AppController::connectedTargetName() const
     QString name = m_bluetooth.connectedTargetName();
     if (!name.isEmpty())
         return name;
+    QString activeAddr = m_bluetooth.connectedTargetAddress();
+    if (!activeAddr.isEmpty()) {
+        return m_targetNames.value(activeAddr.toUpper(), activeAddr);
+    }
     if (!m_targetName.isEmpty())
         return m_targetName;
     return QString();

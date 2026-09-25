@@ -186,10 +186,12 @@ void BluetoothManager::setTargetDevice(const QString &address)
 void BluetoothManager::setTargetDevices(const QStringList &addresses)
 {
     QStringList cleanList;
+    QSet<QString> cleanSet;
     for (const QString &addr : addresses) {
-        QString trimmed = addr.trimmed();
-        if (!trimmed.isEmpty() && !cleanList.contains(trimmed, Qt::CaseInsensitive)) {
+        QString trimmed = addr.trimmed().toUpper();
+        if (!trimmed.isEmpty() && !cleanSet.contains(trimmed)) {
             cleanList << trimmed;
+            cleanSet.insert(trimmed);
         }
     }
 
@@ -197,6 +199,7 @@ void BluetoothManager::setTargetDevices(const QStringList &addresses)
         return;
 
     m_targetAddresses = cleanList;
+    m_targetAddressesSet = cleanSet;
     updateTargetStatus();
 }
 
@@ -206,22 +209,20 @@ void BluetoothManager::updateTargetStatus()
     QString activeAddress;
     QString activeName;
 
-    for (const QVariant &item : m_devices) {
-        QVariantMap map = item.toMap();
-        QString devAddr = map.value("address").toString();
+    if (!m_targetAddressesSet.isEmpty()) {
+        for (const QVariant &item : m_devices) {
+            QVariantMap map = item.toMap();
+            if (!map.value("connected").toBool())
+                continue;
 
-        for (const QString &target : m_targetAddresses) {
-            if (devAddr.compare(target, Qt::CaseInsensitive) == 0) {
-                if (map.value("connected").toBool()) {
-                    foundConnected = true;
-                    activeAddress = devAddr;
-                    activeName = map.value("name").toString();
-                    break;
-                }
+            QString devAddr = map.value("address").toString().trimmed().toUpper();
+            if (m_targetAddressesSet.contains(devAddr)) {
+                foundConnected = true;
+                activeAddress = devAddr;
+                activeName = map.value("name").toString();
+                break;
             }
         }
-        if (foundConnected)
-            break;
     }
 
     bool statusChanged = (m_isTargetConnected != foundConnected) ||

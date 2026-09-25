@@ -5,6 +5,7 @@
 #include <QVariantList>
 #include <QVariantMap>
 #include <QStringList>
+#include <QSet>
 #include <QtDBus/QDBusConnection>
 #include <QtDBus/QDBusMessage>
 #include <QtDBus/QDBusObjectPath>
@@ -47,6 +48,7 @@ private:
     void updateTargetStatus();
     QVariantList m_devices;
     QStringList m_targetAddresses;
+    QSet<QString> m_targetAddressesSet;
     bool m_isTargetConnected = false;
     QString m_connectedTargetAddress;
     QString m_connectedTargetName;
