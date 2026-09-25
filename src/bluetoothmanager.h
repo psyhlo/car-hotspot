@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QVariantList>
 #include <QVariantMap>
+#include <QStringList>
 #include <QtDBus/QDBusConnection>
 #include <QtDBus/QDBusMessage>
 #include <QtDBus/QDBusObjectPath>
@@ -13,17 +14,22 @@ class BluetoothManager : public QObject
     Q_OBJECT
     Q_PROPERTY(QVariantList devices READ devices NOTIFY devicesChanged)
     Q_PROPERTY(bool isTargetConnected READ isTargetConnected NOTIFY targetConnectionChanged)
+    Q_PROPERTY(QString connectedTargetAddress READ connectedTargetAddress NOTIFY targetConnectionChanged)
+    Q_PROPERTY(QString connectedTargetName READ connectedTargetName NOTIFY targetConnectionChanged)
 
 public:
     explicit BluetoothManager(QObject *parent = nullptr);
 
     QVariantList devices() const { return m_devices; }
     bool isTargetConnected() const { return m_isTargetConnected; }
+    QString connectedTargetAddress() const { return m_connectedTargetAddress; }
+    QString connectedTargetName() const { return m_connectedTargetName; }
     bool isBluetoothPowered();
 
 public slots:
     void refreshDevices();
     void setTargetDevice(const QString &address);
+    void setTargetDevices(const QStringList &addresses);
     void ensureBluetoothPowered();
 
 signals:
@@ -40,8 +46,10 @@ private slots:
 private:
     void updateTargetStatus();
     QVariantList m_devices;
-    QString m_targetAddress;
+    QStringList m_targetAddresses;
     bool m_isTargetConnected = false;
+    QString m_connectedTargetAddress;
+    QString m_connectedTargetName;
 };
 
 #endif // BLUETOOTHMANAGER_H

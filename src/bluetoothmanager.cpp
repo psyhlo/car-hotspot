@@ -176,26 +176,63 @@ void BluetoothManager::refreshDevices()
 
 void BluetoothManager::setTargetDevice(const QString &address)
 {
-    if (m_targetAddress == address)
+    QStringList list;
+    if (!address.trimmed().isEmpty()) {
+        list << address.trimmed();
+    }
+    setTargetDevices(list);
+}
+
+void BluetoothManager::setTargetDevices(const QStringList &addresses)
+{
+    QStringList cleanList;
+    for (const QString &addr : addresses) {
+        QString trimmed = addr.trimmed();
+        if (!trimmed.isEmpty() && !cleanList.contains(trimmed, Qt::CaseInsensitive)) {
+            cleanList << trimmed;
+        }
+    }
+
+    if (m_targetAddresses == cleanList)
         return;
 
-    m_targetAddress = address;
+    m_targetAddresses = cleanList;
     updateTargetStatus();
 }
 
 void BluetoothManager::updateTargetStatus()
 {
     bool foundConnected = false;
+    QString activeAddress;
+    QString activeName;
+
     for (const QVariant &item : m_devices) {
         QVariantMap map = item.toMap();
-        if (map.value("address").toString().compare(m_targetAddress, Qt::CaseInsensitive) == 0) {
-            foundConnected = map.value("connected").toBool();
-            break;
+        QString devAddr = map.value("address").toString();
+
+        for (const QString &target : m_targetAddresses) {
+            if (devAddr.compare(target, Qt::CaseInsensitive) == 0) {
+                if (map.value("connected").toBool()) {
+                    foundConnected = true;
+                    activeAddress = devAddr;
+                    activeName = map.value("name").toString();
+                    break;
+                }
+            }
         }
+        if (foundConnected)
+            break;
     }
 
-    if (m_isTargetConnected != foundConnected) {
-        m_isTargetConnected = foundConnected;
+    bool statusChanged = (m_isTargetConnected != foundConnected) ||
+                         (m_connectedTargetAddress != activeAddress) ||
+                         (m_connectedTargetName != activeName);
+
+    m_isTargetConnected = foundConnected;
+    m_connectedTargetAddress = activeAddress;
+    m_connectedTargetName = activeName;
+
+    if (statusChanged) {
         emit targetConnectionChanged(m_isTargetConnected);
     }
 }

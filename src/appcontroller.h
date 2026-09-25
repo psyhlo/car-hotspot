@@ -14,6 +14,10 @@ class AppController : public QObject
     Q_PROPERTY(BluetoothManager* bluetooth READ bluetooth CONSTANT)
     Q_PROPERTY(HotspotManager* hotspot READ hotspot CONSTANT)
     Q_PROPERTY(SystemMonitor* systemMonitor READ systemMonitor CONSTANT)
+    Q_PROPERTY(bool allowMultipleDevices READ allowMultipleDevices WRITE setAllowMultipleDevices NOTIFY allowMultipleDevicesChanged)
+    Q_PROPERTY(QStringList targetAddresses READ targetAddresses NOTIFY targetAddressesChanged)
+    Q_PROPERTY(int selectedDevicesCount READ selectedDevicesCount NOTIFY targetAddressesChanged)
+    Q_PROPERTY(QString connectedTargetName READ connectedTargetName NOTIFY connectedTargetNameChanged)
     Q_PROPERTY(QString targetAddress READ targetAddress WRITE setTargetAddress NOTIFY targetAddressChanged)
     Q_PROPERTY(QString targetName READ targetName NOTIFY targetNameChanged)
     Q_PROPERTY(bool autoToggle READ autoToggle WRITE setAutoToggle NOTIFY autoToggleChanged)
@@ -34,6 +38,20 @@ public:
     BluetoothManager* bluetooth() { return &m_bluetooth; }
     HotspotManager* hotspot() { return &m_hotspot; }
     SystemMonitor* systemMonitor() { return &m_systemMonitor; }
+
+    bool allowMultipleDevices() const { return m_allowMultipleDevices; }
+    void setAllowMultipleDevices(bool enabled);
+
+    QStringList targetAddresses() const { return m_targetAddresses; }
+    int selectedDevicesCount() const { return m_targetAddresses.size(); }
+    QString connectedTargetName() const;
+
+    Q_INVOKABLE bool isDeviceSelected(const QString &address) const;
+    Q_INVOKABLE void toggleDeviceSelection(const QString &address, const QString &name);
+    Q_INVOKABLE void addDevice(const QString &address, const QString &name);
+    Q_INVOKABLE void removeDevice(const QString &address);
+    Q_INVOKABLE void clearDevices();
+    Q_INVOKABLE QString getDeviceName(const QString &address) const;
 
     QString targetAddress() const { return m_targetAddress; }
     void setTargetAddress(const QString &address);
@@ -84,6 +102,9 @@ public slots:
 
 signals:
     void requestActivateWindow();
+    void allowMultipleDevicesChanged(bool enabled);
+    void targetAddressesChanged();
+    void connectedTargetNameChanged();
     void targetAddressChanged(const QString &address);
     void targetNameChanged(const QString &name);
     void autoToggleChanged(bool enabled);
@@ -122,6 +143,10 @@ private:
     QTimer *m_disconnectDebounceTimer = nullptr;
     QTimer *m_pollTimer = nullptr;
     qint64 m_lastFeedbackTime = 0;
+
+    bool m_allowMultipleDevices = false;
+    QStringList m_targetAddresses;
+    QMap<QString, QString> m_targetNames;
 
     QString m_targetAddress;
     QString m_targetName;
