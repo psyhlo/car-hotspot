@@ -9,6 +9,7 @@
 ### ✨ Features
 
 - 🔄 **Smart Automation**: Automatically activates Wi-Fi hotspot upon pairing with your designated car Bluetooth device, and safely turns it off when you disconnect.
+- 🚘 **Multi-Car Device Support**: Optional multi-device mode allowing you to select multiple car Bluetooth devices (single selection by default; switching back retains your primary vehicle).
 - 📶 **Smart Wi-Fi State Restoration**: Remembers your previous Wi-Fi power state before the hotspot started and seamlessly restores it when turning off the hotspot.
 - ⏳ **Grace Period (Delayed Shutdown)**: Configurable disconnect grace timer (0 to 10 minutes). Avoids turning off the hotspot during brief disconnections (e.g., fuel stops or momentary signal drops).
 - 📡 **Cellular Keep-Alive & Dual-SIM Support**: Automatically ensures mobile data is powered on and connected across Single and Dual-SIM devices (with privileged helper fallback) before starting tethering.
