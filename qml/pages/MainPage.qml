@@ -143,13 +143,6 @@ Page {
             }
 
             TextSwitch {
-                text: qsTr("Multiple car devices")
-                description: qsTr("Allow selecting multiple Bluetooth devices instead of just one")
-                checked: appController.allowMultipleDevices
-                onCheckedChanged: appController.allowMultipleDevices = checked
-            }
-
-            TextSwitch {
                 text: qsTr("Run in background & Autostart")
                 description: qsTr("Keep monitoring car in background and start automatically on phone reboot")
                 checked: appController.autostartService
@@ -245,6 +238,13 @@ Page {
 
             SectionHeader {
                 text: qsTr("Select Car Bluetooth Device")
+            }
+
+            TextSwitch {
+                text: qsTr("Multiple car devices")
+                description: qsTr("Allow selecting multiple Bluetooth devices instead of just one")
+                checked: appController.allowMultipleDevices
+                onCheckedChanged: appController.allowMultipleDevices = checked
             }
 
             Label {
