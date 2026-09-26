@@ -14,6 +14,9 @@ Page {
                 text: qsTr("Refresh Status & Devices")
                 onClicked: {
                     bluetoothManager.refreshDevices()
+                    if (!bluetoothManager.isTargetConnected && bluetoothManager.isBluetoothPowered) {
+                        bluetoothManager.connectTargetDevices()
+                    }
                     hotspotManager.checkStatus()
                     systemMonitor.refreshStatus()
                     appController.checkDaemonStatus()

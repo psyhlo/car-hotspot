@@ -23,10 +23,25 @@ case "$1" in
         /usr/bin/dbus-send --system --dest=net.connman /net/connman/technology/cellular net.connman.Technology.SetProperty string:Powered variant:boolean:false
         ;;
     bluetooth-on)
-        /usr/bin/dbus-send --system --dest=net.connman /net/connman/technology/bluetooth net.connman.Technology.SetProperty string:Powered variant:boolean:true
+        for rf in /usr/sbin/rfkill /usr/bin/rfkill /sbin/rfkill /bin/rfkill; do
+            if [ -x "$rf" ]; then
+                "$rf" unblock bluetooth 2>/dev/null || true
+                break
+            fi
+        done
+        if [ -x /usr/bin/connmanctl ]; then
+            /usr/bin/connmanctl enable bluetooth 2>/dev/null || true
+        fi
+        /usr/bin/dbus-send --system --dest=net.connman /net/connman/technology/bluetooth net.connman.Technology.SetProperty string:Powered variant:boolean:true 2>/dev/null || true
+        ;;
+    bluetooth-off)
+        if [ -x /usr/bin/connmanctl ]; then
+            /usr/bin/connmanctl disable bluetooth 2>/dev/null || true
+        fi
+        /usr/bin/dbus-send --system --dest=net.connman /net/connman/technology/bluetooth net.connman.Technology.SetProperty string:Powered variant:boolean:false 2>/dev/null || true
         ;;
     *)
-        echo "Usage: $0 {wifi-off|wifi-on|tethering-off|tethering-on|cellular-on|cellular-off}"
+        echo "Usage: $0 {wifi-off|wifi-on|tethering-off|tethering-on|cellular-on|cellular-off|bluetooth-on|bluetooth-off}"
         exit 1
         ;;
 esac

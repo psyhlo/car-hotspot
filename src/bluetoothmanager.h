@@ -17,6 +17,7 @@ class BluetoothManager : public QObject
     Q_PROPERTY(bool isTargetConnected READ isTargetConnected NOTIFY targetConnectionChanged)
     Q_PROPERTY(QString connectedTargetAddress READ connectedTargetAddress NOTIFY targetConnectionChanged)
     Q_PROPERTY(QString connectedTargetName READ connectedTargetName NOTIFY targetConnectionChanged)
+    Q_PROPERTY(bool isBluetoothPowered READ isBluetoothPowered NOTIFY bluetoothPoweredChanged)
 
 public:
     explicit BluetoothManager(QObject *parent = nullptr);
@@ -32,10 +33,12 @@ public slots:
     void setTargetDevice(const QString &address);
     void setTargetDevices(const QStringList &addresses);
     void ensureBluetoothPowered();
+    void connectTargetDevices();
 
 signals:
     void devicesChanged();
     void targetConnectionChanged(bool connected);
+    void bluetoothPoweredChanged(bool powered);
 
 private slots:
     void onPropertiesChanged(const QString &interface, const QVariantMap &changedProperties, const QStringList &invalidatedProperties);
@@ -50,6 +53,8 @@ private:
     bool m_isTargetConnected = false;
     QString m_connectedTargetAddress;
     QString m_connectedTargetName;
+    qint64 m_lastPowerOnAttempt = 0;
+    int m_reconnectAttemptsLeft = 0;
 };
 
 #endif // BLUETOOTHMANAGER_H

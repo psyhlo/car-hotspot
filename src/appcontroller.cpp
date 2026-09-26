@@ -28,9 +28,16 @@ AppController::AppController(bool isDaemon, QObject *parent)
     checkDaemonStatus();
     loadSettings();
 
-    // If autoEnableBluetooth is turned on, ensure Bluetooth is powered
+    // If autoEnableBluetooth is turned on, give system boot 2 seconds to settle, then ensure Bluetooth is powered
     if (m_autoEnableBluetooth) {
-        m_bluetooth.ensureBluetoothPowered();
+        QTimer::singleShot(2000, this, [this]() {
+            if (m_autoEnableBluetooth && !m_bluetooth.isBluetoothPowered()) {
+                m_bluetooth.ensureBluetoothPowered();
+            }
+        });
+    } else if (m_bluetooth.isBluetoothPowered() && !m_bluetooth.isTargetConnected()) {
+        // Bluetooth already on at boot, proactively attempt to connect to target car
+        QTimer::singleShot(3000, &m_bluetooth, &BluetoothManager::connectTargetDevices);
     }
 
     connect(&m_bluetooth, &BluetoothManager::targetConnectionChanged,

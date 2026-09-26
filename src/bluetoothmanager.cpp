@@ -4,6 +4,8 @@
 #include <QtDBus/QDBusArgument>
 #include <QtDBus/QDBusMetaType>
 #include <QProcess>
+#include <QDateTime>
+#include <QTimer>
 #include <QDebug>
 
 // Type definition for BlueZ GetManagedObjects
@@ -52,22 +54,7 @@ BluetoothManager::BluetoothManager(QObject *parent)
 
 bool BluetoothManager::isBluetoothPowered()
 {
-    // Check via ConnMan technology first
-    QDBusInterface btTech(
-        "net.connman",
-        "/net/connman/technology/bluetooth",
-        "net.connman.Technology",
-        QDBusConnection::systemBus()
-    );
-
-    if (btTech.isValid()) {
-        QDBusReply<QVariantMap> reply = btTech.call("GetProperties");
-        if (reply.isValid()) {
-            return reply.value().value("Powered", false).toBool();
-        }
-    }
-
-    // Fallback: check BlueZ default adapter
+    // 1. Check BlueZ default adapter first (reflects actual hardware/driver state)
     QDBusInterface adapter(
         "org.bluez",
         "/org/bluez/hci0",
@@ -76,8 +63,22 @@ bool BluetoothManager::isBluetoothPowered()
     );
     if (adapter.isValid()) {
         QVariant powered = adapter.property("Powered");
-        if (powered.isValid()) {
-            return powered.toBool();
+        if (powered.isValid() && powered.toBool()) {
+            return true;
+        }
+    }
+
+    // 2. Check ConnMan technology
+    QDBusInterface btTech(
+        "net.connman",
+        "/net/connman/technology/bluetooth",
+        "net.connman.Technology",
+        QDBusConnection::systemBus()
+    );
+    if (btTech.isValid()) {
+        QDBusReply<QVariantMap> reply = btTech.call("GetProperties");
+        if (reply.isValid() && reply.value().value("Powered", false).toBool()) {
+            return true;
         }
     }
 
@@ -91,32 +92,19 @@ void BluetoothManager::ensureBluetoothPowered()
         return;
     }
 
-    qDebug() << "BluetoothManager: Bluetooth is OFF. Powering ON...";
-
-    // 1. Try ConnMan Technology interface
-    QDBusInterface btTech(
-        "net.connman",
-        "/net/connman/technology/bluetooth",
-        "net.connman.Technology",
-        QDBusConnection::systemBus()
-    );
-    if (btTech.isValid()) {
-        btTech.call("SetProperty", "Powered", QVariant::fromValue(QDBusVariant(true)));
+    qint64 now = QDateTime::currentMSecsSinceEpoch();
+    if (now - m_lastPowerOnAttempt < 15000) {
+        qDebug() << "BluetoothManager: Bluetooth power-on cooldown active ("
+                 << (now - m_lastPowerOnAttempt) << "ms elapsed), skipping duplicate attempt";
+        return;
     }
+    m_lastPowerOnAttempt = now;
 
-    // 2. Try BlueZ Adapter1 interface
-    QDBusInterface adapter(
-        "org.bluez",
-        "/org/bluez/hci0",
-        "org.bluez.Adapter1",
-        QDBusConnection::systemBus()
-    );
-    if (adapter.isValid()) {
-        adapter.setProperty("Powered", true);
-    }
+    qDebug() << "BluetoothManager: Bluetooth is OFF. Powering ON via privileged helper...";
 
-    // 3. Privileged helper fallback (in case dbus policy requires root)
-    QProcess::execute("sudo", QStringList() << "/usr/bin/harbour-carhotspot-helper" << "bluetooth-on");
+    // Power on asynchronously via helper (unblocks rfkill and enables ConnMan technology)
+    // Avoid direct adapter.setProperty("Powered", true) to prevent desynchronization with ConnMan and rfkill.
+    QProcess::startDetached("sudo", QStringList() << "/usr/bin/harbour-carhotspot-helper" << "bluetooth-on");
 }
 
 void BluetoothManager::refreshDevices()
@@ -238,13 +226,76 @@ void BluetoothManager::updateTargetStatus()
     }
 }
 
+void BluetoothManager::connectTargetDevices()
+{
+    if (!isBluetoothPowered()) {
+        qDebug() << "BluetoothManager: Cannot connect to target devices, Bluetooth is OFF";
+        return;
+    }
+
+    if (m_targetAddressesSet.isEmpty()) {
+        return;
+    }
+
+    if (m_isTargetConnected) {
+        qDebug() << "BluetoothManager: Target device already connected";
+        m_reconnectAttemptsLeft = 0;
+        return;
+    }
+
+    refreshDevices();
+
+    bool attempted = false;
+    for (const QVariant &item : m_devices) {
+        QVariantMap map = item.toMap();
+        QString addr = map.value("address").toString().trimmed().toUpper();
+        if (m_targetAddressesSet.contains(addr)) {
+            QString path = map.value("path").toString();
+            if (!path.isEmpty()) {
+                qDebug() << "BluetoothManager: Initiating proactive connection to target car:" << addr << "path:" << path;
+                QDBusInterface dev(
+                    "org.bluez",
+                    path,
+                    "org.bluez.Device1",
+                    QDBusConnection::systemBus()
+                );
+                if (dev.isValid()) {
+                    dev.asyncCall("Connect");
+                    attempted = true;
+                }
+            }
+        }
+    }
+
+    if (attempted && m_reconnectAttemptsLeft > 0) {
+        m_reconnectAttemptsLeft--;
+        if (m_reconnectAttemptsLeft > 0) {
+            // Retry once more after 10s if still not connected
+            QTimer::singleShot(10000, this, [this]() {
+                if (!m_isTargetConnected && isBluetoothPowered()) {
+                    connectTargetDevices();
+                }
+            });
+        }
+    }
+}
+
 void BluetoothManager::onPropertiesChanged(const QString &interface, const QVariantMap &changedProperties, const QStringList &invalidatedProperties)
 {
     Q_UNUSED(invalidatedProperties);
 
     if (interface == "org.bluez.Adapter1") {
         if (changedProperties.contains("Powered")) {
+            bool powered = changedProperties.value("Powered").toBool();
+            qDebug() << "BluetoothManager: Adapter1 Powered changed to:" << powered;
+            emit bluetoothPoweredChanged(powered);
             refreshDevices();
+            if (powered) {
+                // Adapter transitioned to Powered ON. BlueZ needs ~2.5s to register profiles.
+                // Then attempt to proactively connect to paired car device(s).
+                m_reconnectAttemptsLeft = 2;
+                QTimer::singleShot(2500, this, &BluetoothManager::connectTargetDevices);
+            }
         }
         return;
     }
