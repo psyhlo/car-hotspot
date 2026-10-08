@@ -1,100 +1,99 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS>
+<?xml version='1.0' encoding='utf-8'?>
 <TS version="2.1" language="ru">
 <context>
     <name>AppController</name>
     <message>
-        <location filename="../src/appcontroller.cpp" line="283"/>
+        <location filename="../src/appcontroller.cpp" line="283" />
         <source>Device is currently in roaming! Hotspot blocked to prevent high costs.</source>
         <translation>Устройство в роуминге! Точка доступа заблокирована во избежание расходов.</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="289"/>
+        <location filename="../src/appcontroller.cpp" line="289" />
         <source>Battery too low (%1% &lt;= %2%) and not charging! Hotspot blocked.</source>
         <translation>Низкий заряд батареи (%1% &lt;= %2%) без зарядки! Точка доступа заблокирована.</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="325"/>
-        <location filename="../src/appcontroller.cpp" line="331"/>
-        <location filename="../src/appcontroller.cpp" line="600"/>
-        <location filename="../src/appcontroller.cpp" line="761"/>
-        <location filename="../src/appcontroller.cpp" line="763"/>
-        <location filename="../src/appcontroller.cpp" line="799"/>
-        <location filename="../src/appcontroller.cpp" line="804"/>
-        <location filename="../src/appcontroller.cpp" line="808"/>
-        <location filename="../src/appcontroller.cpp" line="829"/>
+        <location filename="../src/appcontroller.cpp" line="325" />
+        <location filename="../src/appcontroller.cpp" line="331" />
+        <location filename="../src/appcontroller.cpp" line="600" />
+        <location filename="../src/appcontroller.cpp" line="761" />
+        <location filename="../src/appcontroller.cpp" line="763" />
+        <location filename="../src/appcontroller.cpp" line="799" />
+        <location filename="../src/appcontroller.cpp" line="804" />
+        <location filename="../src/appcontroller.cpp" line="808" />
+        <location filename="../src/appcontroller.cpp" line="829" />
         <source>Car Hotspot</source>
         <translation>Точка доступа авто</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="325"/>
+        <location filename="../src/appcontroller.cpp" line="325" />
         <source>Background service is ACTIVE and monitoring Bluetooth</source>
         <translation>Фоновая служба АКТИВНА и отслеживает Bluetooth</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="331"/>
+        <location filename="../src/appcontroller.cpp" line="331" />
         <source>Background service STOPPED</source>
         <translation>Фоновая служба ОСТАНОВЛЕНА</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="590"/>
-        <location filename="../src/appcontroller.cpp" line="751"/>
+        <location filename="../src/appcontroller.cpp" line="590" />
+        <location filename="../src/appcontroller.cpp" line="751" />
         <source>Hotspot blocked</source>
         <translation>Точка доступа заблокирована</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="601"/>
+        <location filename="../src/appcontroller.cpp" line="601" />
         <source>Hotspot manually enabled</source>
         <translation>Точка доступа включена вручную</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="601"/>
+        <location filename="../src/appcontroller.cpp" line="601" />
         <source>Hotspot manually disabled</source>
         <translation>Точка доступа выключена вручную</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="761"/>
+        <location filename="../src/appcontroller.cpp" line="761" />
         <source>%1 connected: Wi-Fi Hotspot turned ON</source>
         <translation>%1 подключен: Wi-Fi точка доступа ВКЛЮЧЕНА</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="763"/>
+        <location filename="../src/appcontroller.cpp" line="763" />
         <source>%1 connected</source>
         <translation>%1 подключен</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="808"/>
+        <location filename="../src/appcontroller.cpp" line="808" />
         <source>%1 disconnected</source>
         <translation>%1 отключен</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="799"/>
+        <location filename="../src/appcontroller.cpp" line="799" />
         <source>%1 disconnected. Hotspot will turn OFF in %2 min</source>
         <translation>%1 отключен. Точка доступа выключится через %2 мин</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="804"/>
+        <location filename="../src/appcontroller.cpp" line="804" />
         <source>%1 disconnected: Wi-Fi Hotspot turned OFF</source>
         <translation>%1 отключен: Wi-Fi точка доступа ВЫКЛЮЧЕНА</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="829"/>
+        <location filename="../src/appcontroller.cpp" line="829" />
         <source>Grace timer expired: Wi-Fi Hotspot turned OFF</source>
         <translation>Время ожидания истекло: Wi-Fi точка доступа ВЫКЛЮЧЕНА</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="843"/>
-        <location filename="../src/appcontroller.cpp" line="858"/>
+        <location filename="../src/appcontroller.cpp" line="843" />
+        <location filename="../src/appcontroller.cpp" line="858" />
         <source>Hotspot turned OFF</source>
         <translation>Точка доступа ВЫКЛЮЧЕНА</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="843"/>
+        <location filename="../src/appcontroller.cpp" line="843" />
         <source>Battery dropped to %1%. Hotspot stopped to prevent battery drain.</source>
         <translation>Заряд снизился до %1%. Точка доступа отключена для экономии энергии.</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="858"/>
+        <location filename="../src/appcontroller.cpp" line="858" />
         <source>Roaming detected! Wi-Fi Hotspot turned off to avoid extra carrier charges.</source>
         <translation>Обнаружен роуминг! Wi-Fi точка доступа отключена во избежание расходов.</translation>
     </message>
@@ -102,27 +101,27 @@
 <context>
     <name>CoverPage</name>
     <message>
-        <location filename="../qml/cover/CoverPage.qml" line="12"/>
+        <location filename="../qml/cover/CoverPage.qml" line="12" />
         <source>Car Hotspot</source>
         <translation>Авто-хотспот</translation>
     </message>
     <message>
-        <location filename="../qml/cover/CoverPage.qml" line="25"/>
+        <location filename="../qml/cover/CoverPage.qml" line="25" />
         <source>Car: Connected</source>
         <translation>Авто: Подключено</translation>
     </message>
     <message>
-        <location filename="../qml/cover/CoverPage.qml" line="25"/>
+        <location filename="../qml/cover/CoverPage.qml" line="25" />
         <source>Car: Disconnected</source>
         <translation>Авто: Отключено</translation>
     </message>
     <message>
-        <location filename="../qml/cover/CoverPage.qml" line="32"/>
+        <location filename="../qml/cover/CoverPage.qml" line="32" />
         <source>Hotspot: ON</source>
         <translation>Хотспот: ВКЛ</translation>
     </message>
     <message>
-        <location filename="../qml/cover/CoverPage.qml" line="32"/>
+        <location filename="../qml/cover/CoverPage.qml" line="32" />
         <source>Hotspot: OFF</source>
         <translation>Хотспот: ВЫКЛ</translation>
     </message>
@@ -130,374 +129,369 @@
 <context>
     <name>MainPage</name>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="18"/>
+        <location filename="../qml/pages/MainPage.qml" line="18" />
         <source>Refresh Status &amp; Devices</source>
         <translation>Обновить статус и устройства</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="38"/>
+        <location filename="../qml/pages/MainPage.qml" line="38" />
         <source>Car Hotspot</source>
         <translation>Авто-хотспот</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="68"/>
+        <location filename="../qml/pages/MainPage.qml" line="68" />
         <source>Car Bluetooth: </source>
         <translation>Bluetooth автомобиля: </translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="68"/>
+        <location filename="../qml/pages/MainPage.qml" line="68" />
         <source>Connected</source>
         <translation>Подключено</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="68"/>
+        <location filename="../qml/pages/MainPage.qml" line="68" />
         <source>Disconnected</source>
         <translation>Отключено</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="85"/>
+        <location filename="../qml/pages/MainPage.qml" line="85" />
         <source>Wi-Fi Hotspot: </source>
         <translation>Точка доступа Wi-Fi: </translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="85"/>
+        <location filename="../qml/pages/MainPage.qml" line="85" />
         <source>ACTIVE</source>
         <translation>АКТИВНА</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="85"/>
+        <location filename="../qml/pages/MainPage.qml" line="85" />
         <source>INACTIVE</source>
         <translation>НЕАКТИВНА</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="101"/>
+        <location filename="../qml/pages/MainPage.qml" line="101" />
         <source>Battery: %1%%2</source>
         <translation>Батарея: %1%%2</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="101"/>
+        <location filename="../qml/pages/MainPage.qml" line="101" />
         <source> (Charging)</source>
         <translation> (Зарядка)</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="117"/>
+        <location filename="../qml/pages/MainPage.qml" line="117" />
         <source>Roaming: </source>
         <translation>Роуминг: </translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="117"/>
+        <location filename="../qml/pages/MainPage.qml" line="117" />
         <source>YES (Active)</source>
         <translation>ДА (Активен)</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="117"/>
+        <location filename="../qml/pages/MainPage.qml" line="117" />
         <source>No</source>
         <translation>Нет</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="133"/>
+        <location filename="../qml/pages/MainPage.qml" line="133" />
         <source>Background Service: </source>
         <translation>Фоновая служба: </translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="133"/>
+        <location filename="../qml/pages/MainPage.qml" line="133" />
         <source>RUNNING (Active)</source>
         <translation>РАБОТАЕТ (Активна)</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="133"/>
+        <location filename="../qml/pages/MainPage.qml" line="133" />
         <source>Enabled</source>
         <translation>Включена</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="133"/>
+        <location filename="../qml/pages/MainPage.qml" line="133" />
         <source>Stopped</source>
         <translation>Остановлена</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="142"/>
+        <location filename="../qml/pages/MainPage.qml" line="142" />
         <source>Automation &amp; Safety</source>
         <translation>Автоматизация и безопасность</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="146"/>
+        <location filename="../qml/pages/MainPage.qml" line="146" />
         <source>Auto-toggle Hotspot</source>
         <translation>Автопереключение точки доступа</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="147"/>
+        <location filename="../qml/pages/MainPage.qml" line="147" />
         <source>Start Hotspot when car connects, stop when disconnected</source>
         <translation>Включать при подключении к авто, выключать при отключении</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="251"/>
+        <location filename="../qml/pages/MainPage.qml" line="251" />
         <source>Multiple car devices</source>
         <translation>Несколько устройств автомобиля</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="252"/>
+        <location filename="../qml/pages/MainPage.qml" line="252" />
         <source>Allow selecting multiple Bluetooth devices instead of just one</source>
         <translation>Разрешить выбор нескольких Bluetooth-устройств вместо одного</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="153"/>
+        <location filename="../qml/pages/MainPage.qml" line="153" />
         <source>Run in background &amp; Autostart</source>
         <translation>Работа в фоне и автозапуск</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="14"/>
+        <location filename="../qml/pages/MainPage.qml" line="14" />
         <source>Tools &amp; Diagnostics</source>
-        <translation type="unfinished"></translation>
+        <translation>Инструменты и диагностика</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="154"/>
+        <location filename="../qml/pages/MainPage.qml" line="154" />
         <source>Keep monitoring car in background and start automatically on phone reboot</source>
         <translation>Следить за авто в фоне и запускать при перезагрузке телефона</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="160"/>
+        <location filename="../qml/pages/MainPage.qml" line="160" />
         <source>Auto-enable Bluetooth</source>
         <translation>Автоматически включать Bluetooth</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="161"/>
+        <location filename="../qml/pages/MainPage.qml" line="161" />
         <source>Turn on Bluetooth automatically if it is powered off</source>
         <translation>Включать Bluetooth автоматически, если он выключен</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="167"/>
+        <location filename="../qml/pages/MainPage.qml" line="167" />
         <source>Auto-enable Mobile Data</source>
         <translation>Автоматически включать моб. данные</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="168"/>
+        <location filename="../qml/pages/MainPage.qml" line="168" />
         <source>Ensure cellular data connection is active when starting Hotspot</source>
         <translation>Включать мобильный интернет при запуске точки доступа</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="174"/>
+        <location filename="../qml/pages/MainPage.qml" line="174" />
         <source>Vibration feedback</source>
         <translation>Виброотклик</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="175"/>
+        <location filename="../qml/pages/MainPage.qml" line="175" />
         <source>Vibrate to confirm when car connects and Hotspot starts</source>
         <translation>Вибрировать при подключении к авто и запуске хотспота</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="181"/>
+        <location filename="../qml/pages/MainPage.qml" line="181" />
         <source>System notifications</source>
         <translation>Системные уведомления</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="182"/>
+        <location filename="../qml/pages/MainPage.qml" line="182" />
         <source>Show banner notification and lockscreen events when car connects/disconnects</source>
         <translation>Показывать уведомления и события на экране блокировки</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="188"/>
+        <location filename="../qml/pages/MainPage.qml" line="188" />
         <source>Block Hotspot in Roaming</source>
         <translation>Блокировать хотспот в роуминге</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="189"/>
+        <location filename="../qml/pages/MainPage.qml" line="189" />
         <source>Prevent starting Hotspot when abroad/roaming to avoid high cellular data charges</source>
         <translation>Не запускать в роуминге для избежания непредвиденных расходов</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="196"/>
+        <location filename="../qml/pages/MainPage.qml" line="196" />
         <source>Delayed turn off: %1 min</source>
         <translation>Задержка выключения: %1 мин</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="201"/>
+        <location filename="../qml/pages/MainPage.qml" line="201" />
         <source>Instantly</source>
         <translation>Сразу</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="201"/>
+        <location filename="../qml/pages/MainPage.qml" line="201" />
         <source>%1 min</source>
         <translation>%1 мин</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="214"/>
+        <location filename="../qml/pages/MainPage.qml" line="214" />
         <source>Wait a grace period before stopping Hotspot in case of temporary Bluetooth disconnect.</source>
         <translation>Ожидать перед выключением хотспота на случай кратковременного обрыва связи.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="222"/>
+        <location filename="../qml/pages/MainPage.qml" line="222" />
         <source>Minimum battery level: %1%</source>
         <translation>Мин. уровень заряда батареи: %1%</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="240"/>
+        <location filename="../qml/pages/MainPage.qml" line="240" />
         <source>If battery is below this level and phone is not charging, Hotspot will not start (or will automatically turn off) to protect the battery.</source>
         <translation>Если заряд ниже этого уровня и телефон не заряжается, хотспот не запустится для экономии батареи.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="247"/>
+        <location filename="../qml/pages/MainPage.qml" line="247" />
         <source>Select Car Bluetooth Device</source>
         <translation>Выберите Bluetooth-устройство автомобиля</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="272"/>
+        <location filename="../qml/pages/MainPage.qml" line="272" />
         <source>Selected Cars (%1):
 %2</source>
         <translation>Выбранные автомобили (%1):
 %2</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="274"/>
+        <location filename="../qml/pages/MainPage.qml" line="274" />
         <source>No car Bluetooth devices selected yet. Choose from list below:</source>
         <translation>Bluetooth-устройства еще не выбраны. Выберите из списка ниже:</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="278"/>
+        <location filename="../qml/pages/MainPage.qml" line="278" />
         <source>Selected Car: %1
 (%2)</source>
         <translation>Выбранный автомобиль: %1
 (%2)</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="278"/>
+        <location filename="../qml/pages/MainPage.qml" line="278" />
         <source>Car BT</source>
         <translation>Авто BT</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="279"/>
+        <location filename="../qml/pages/MainPage.qml" line="279" />
         <source>No car Bluetooth device selected yet. Choose from list below:</source>
         <translation>Устройство автомобиля еще не выбрано. Выберите из списка ниже:</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="296"/>
+        <location filename="../qml/pages/MainPage.qml" line="296" />
         <source>Or enter MAC (e.g. AA:BB:CC:DD:EE:FF)</source>
         <translation>Или введите MAC-адрес (напр. AA:BB:CC:DD:EE:FF)</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="297"/>
+        <location filename="../qml/pages/MainPage.qml" line="297" />
         <source>Custom Bluetooth MAC</source>
         <translation>Пользовательский MAC-адрес</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="302"/>
-        <location filename="../qml/pages/MainPage.qml" line="305"/>
-        <location filename="../qml/pages/MainPage.qml" line="319"/>
-        <location filename="../qml/pages/MainPage.qml" line="322"/>
+        <location filename="../qml/pages/MainPage.qml" line="302" />
+        <location filename="../qml/pages/MainPage.qml" line="305" />
+        <location filename="../qml/pages/MainPage.qml" line="319" />
+        <location filename="../qml/pages/MainPage.qml" line="322" />
         <source>Car Bluetooth</source>
         <translation>Bluetooth автомобиля</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="314"/>
+        <location filename="../qml/pages/MainPage.qml" line="314" />
         <source>Save</source>
         <translation>Сохранить</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="314"/>
+        <location filename="../qml/pages/MainPage.qml" line="314" />
         <source>Add</source>
         <translation>Добавить</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="331"/>
+        <location filename="../qml/pages/MainPage.qml" line="331" />
         <source>Paired / Detected Devices (%1)</source>
         <translation>Сопряженные / найденные устройства (%1)</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="340"/>
+        <location filename="../qml/pages/MainPage.qml" line="340" />
         <source>No paired devices found yet. Pull down to refresh or pair your car in Settings -&gt; Bluetooth.</source>
         <translation>Сопряженные устройства не найдены. Потяните вниз для обновления или сопрягите в Настройки -&gt; Bluetooth.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="380"/>
+        <location filename="../qml/pages/MainPage.qml" line="380" />
         <source>[CAR]</source>
         <translation>[АВТО]</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="388"/>
+        <location filename="../qml/pages/MainPage.qml" line="388" />
         <source>[connected]</source>
         <translation>[подключено]</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="413"/>
+        <location filename="../qml/pages/MainPage.qml" line="413" />
         <source>Manual Control &amp; Diagnostics</source>
         <translation>Ручное управление и диагностика</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="418"/>
+        <location filename="../qml/pages/MainPage.qml" line="418" />
         <source>Turn Hotspot OFF</source>
         <translation>Выключить хотспот</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="418"/>
+        <location filename="../qml/pages/MainPage.qml" line="418" />
         <source>Turn Hotspot ON</source>
         <translation>Включить хотспот</translation>
     </message>
-    <message>
-        <location filename="../qml/pages/MainPage.qml" line="427"/>
-        <source>Activity Log:</source>
-        <translation>Журнал действий:</translation>
-    </message>
-</context>
+    </context>
 <context>
     <name>ToolsPage</name>
     <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="14"/>
+        <location filename="../qml/pages/ToolsPage.qml" line="14" />
         <source>Refresh Status</source>
-        <translation type="unfinished"></translation>
+        <translation>Обновить статус</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="31"/>
+        <location filename="../qml/pages/ToolsPage.qml" line="31" />
         <source>Tools &amp; Diagnostics</source>
-        <translation type="unfinished"></translation>
+        <translation>Инструменты и диагностика</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="35"/>
+        <location filename="../qml/pages/ToolsPage.qml" line="35" />
         <source>Bluetooth Subsystem Recovery</source>
-        <translation type="unfinished"></translation>
+        <translation>Восстановление Bluetooth</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="46"/>
+        <location filename="../qml/pages/ToolsPage.qml" line="46" />
         <source>Performs a low-level reset of the Bluetooth daemon, unblocks kernel rfkill state, and re-initializes ConnMan. Use this if the Bluetooth connection hangs or the system toggle gets stuck.</source>
-        <translation type="unfinished"></translation>
+        <translation>Выполняет низкоуровневый сброс демона Bluetooth, снимает блокировку rfkill и реинициализирует ConnMan.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="51"/>
+        <location filename="../qml/pages/ToolsPage.qml" line="51" />
         <source>Restart Bluetooth Subsystem</source>
-        <translation type="unfinished"></translation>
+        <translation>Перезапустить службу Bluetooth</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="58"/>
+        <location filename="../qml/pages/ToolsPage.qml" line="58" />
         <source>Hotspot Manual Control</source>
-        <translation type="unfinished"></translation>
+        <translation>Ручное управление точкой доступа</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="69"/>
+        <location filename="../qml/pages/ToolsPage.qml" line="69" />
         <source>Current State: </source>
-        <translation type="unfinished"></translation>
+        <translation>Текущее состояние: </translation>
     </message>
     <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="69"/>
+        <location filename="../qml/pages/ToolsPage.qml" line="69" />
         <source>Hotspot ACTIVE</source>
-        <translation type="unfinished"></translation>
+        <translation>Точка доступа АКТИВНА</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="69"/>
+        <location filename="../qml/pages/ToolsPage.qml" line="69" />
         <source>Hotspot INACTIVE</source>
-        <translation type="unfinished"></translation>
+        <translation>Точка доступа НЕАКТИВНА</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="74"/>
+        <location filename="../qml/pages/ToolsPage.qml" line="74" />
         <source>Turn Hotspot OFF</source>
-        <translation type="unfinished">Выключить хотспот</translation>
+        <translation>Выключить точку доступа</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="74"/>
+        <location filename="../qml/pages/ToolsPage.qml" line="74" />
         <source>Turn Hotspot ON</source>
-        <translation type="unfinished">Включить хотспот</translation>
+        <translation>Включить точку доступа</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="79"/>
+        <location filename="../qml/pages/ToolsPage.qml" line="79" />
         <source>System Diagnostics Log</source>
-        <translation type="unfinished"></translation>
+        <translation>Журнал диагностики системы</translation>
     </message>
 </context>
 </TS>

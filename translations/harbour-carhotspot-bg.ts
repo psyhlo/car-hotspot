@@ -418,8 +418,8 @@
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="413"/>
-        <source>Manual Control &amp; Diagnostics</source>
-        <translation>Ръчен контрол и диагностика</translation>
+        <source>Hotspot Manual Control</source>
+        <translation>Ръчно управление на хотспот</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="418"/>
@@ -430,11 +430,6 @@
         <location filename="../qml/pages/MainPage.qml" line="418"/>
         <source>Turn Hotspot ON</source>
         <translation>Пусни хотспота</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/MainPage.qml" line="427"/>
-        <source>Activity Log:</source>
-        <translation>Дневник на събитията:</translation>
     </message>
 </context>
 <context>

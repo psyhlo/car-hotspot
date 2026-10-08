@@ -410,52 +410,13 @@ Page {
             }
 
             SectionHeader {
-                text: qsTr("Manual Control & Diagnostics")
+                text: qsTr("Hotspot Manual Control")
             }
 
             Button {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: hotspotManager.isHotspotActive ? qsTr("Turn Hotspot OFF") : qsTr("Turn Hotspot ON")
                 onClicked: appController.toggleHotspotManual(!hotspotManager.isHotspotActive)
-            }
-
-            Label {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.leftMargin: Theme.horizontalPageMargin
-                anchors.rightMargin: Theme.horizontalPageMargin
-                text: qsTr("Activity Log:")
-                color: Theme.secondaryColor
-                font.pixelSize: Theme.fontSizeExtraSmall
-            }
-
-            // Scrollable Activity Log Container with bounded max height
-            Rectangle {
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                anchors.horizontalCenter: parent.horizontalCenter
-                height: Math.min(Math.max(logText.height + Theme.paddingSmall * 2, Theme.itemSizeMedium), Theme.itemSizeLarge * 3.5)
-                color: Theme.rgba(Theme.highlightBackgroundColor, 0.1)
-                radius: Theme.paddingSmall
-                clip: true
-
-                SilicaFlickable {
-                    id: logFlickable
-                    anchors.fill: parent
-                    anchors.margins: Theme.paddingSmall
-                    contentHeight: logText.height
-                    clip: true
-
-                    TextArea {
-                        id: logText
-                        width: parent.width
-                        readOnly: true
-                        text: appController.logStatus
-                        font.pixelSize: Theme.fontSizeTiny
-                        color: Theme.secondaryHighlightColor
-                    }
-
-                    VerticalScrollDecorator { }
-                }
             }
         }
     }

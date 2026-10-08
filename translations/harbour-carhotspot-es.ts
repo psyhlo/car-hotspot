@@ -1,100 +1,99 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS>
+<?xml version='1.0' encoding='utf-8'?>
 <TS version="2.1" language="es">
 <context>
     <name>AppController</name>
     <message>
-        <location filename="../src/appcontroller.cpp" line="283"/>
+        <location filename="../src/appcontroller.cpp" line="283" />
         <source>Device is currently in roaming! Hotspot blocked to prevent high costs.</source>
         <translation>¡El dispositivo está en itinerancia! Punto de acceso bloqueado para evitar costes.</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="289"/>
+        <location filename="../src/appcontroller.cpp" line="289" />
         <source>Battery too low (%1% &lt;= %2%) and not charging! Hotspot blocked.</source>
         <translation>¡Batería demasiado baja (%1% &lt;= %2%) y no se está cargando! Punto de acceso bloqueado.</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="325"/>
-        <location filename="../src/appcontroller.cpp" line="331"/>
-        <location filename="../src/appcontroller.cpp" line="600"/>
-        <location filename="../src/appcontroller.cpp" line="761"/>
-        <location filename="../src/appcontroller.cpp" line="763"/>
-        <location filename="../src/appcontroller.cpp" line="799"/>
-        <location filename="../src/appcontroller.cpp" line="804"/>
-        <location filename="../src/appcontroller.cpp" line="808"/>
-        <location filename="../src/appcontroller.cpp" line="829"/>
+        <location filename="../src/appcontroller.cpp" line="325" />
+        <location filename="../src/appcontroller.cpp" line="331" />
+        <location filename="../src/appcontroller.cpp" line="600" />
+        <location filename="../src/appcontroller.cpp" line="761" />
+        <location filename="../src/appcontroller.cpp" line="763" />
+        <location filename="../src/appcontroller.cpp" line="799" />
+        <location filename="../src/appcontroller.cpp" line="804" />
+        <location filename="../src/appcontroller.cpp" line="808" />
+        <location filename="../src/appcontroller.cpp" line="829" />
         <source>Car Hotspot</source>
         <translation>Punto de acceso para coche</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="325"/>
+        <location filename="../src/appcontroller.cpp" line="325" />
         <source>Background service is ACTIVE and monitoring Bluetooth</source>
         <translation>El servicio en segundo plano está ACTIVO y monitorizando Bluetooth</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="331"/>
+        <location filename="../src/appcontroller.cpp" line="331" />
         <source>Background service STOPPED</source>
         <translation>Servicio en segundo plano DETENIDO</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="590"/>
-        <location filename="../src/appcontroller.cpp" line="751"/>
+        <location filename="../src/appcontroller.cpp" line="590" />
+        <location filename="../src/appcontroller.cpp" line="751" />
         <source>Hotspot blocked</source>
         <translation>Punto de acceso bloqueado</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="601"/>
+        <location filename="../src/appcontroller.cpp" line="601" />
         <source>Hotspot manually enabled</source>
         <translation>Punto de acceso activado manualmente</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="601"/>
+        <location filename="../src/appcontroller.cpp" line="601" />
         <source>Hotspot manually disabled</source>
         <translation>Punto de acceso desactivado manualmente</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="761"/>
+        <location filename="../src/appcontroller.cpp" line="761" />
         <source>%1 connected: Wi-Fi Hotspot turned ON</source>
         <translation>%1 conectado: punto de acceso Wi-Fi ENCENDIDO</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="763"/>
+        <location filename="../src/appcontroller.cpp" line="763" />
         <source>%1 connected</source>
         <translation>%1 conectado</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="808"/>
+        <location filename="../src/appcontroller.cpp" line="808" />
         <source>%1 disconnected</source>
         <translation>%1 desconectado</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="799"/>
+        <location filename="../src/appcontroller.cpp" line="799" />
         <source>%1 disconnected. Hotspot will turn OFF in %2 min</source>
         <translation>%1 desconectado. El punto de acceso se apagará en %2 min</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="804"/>
+        <location filename="../src/appcontroller.cpp" line="804" />
         <source>%1 disconnected: Wi-Fi Hotspot turned OFF</source>
         <translation>%1 desconectado: punto de acceso Wi-Fi APAGADO</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="829"/>
+        <location filename="../src/appcontroller.cpp" line="829" />
         <source>Grace timer expired: Wi-Fi Hotspot turned OFF</source>
         <translation>Tiempo de gracia expirado: punto de acceso Wi-Fi APAGADO</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="843"/>
-        <location filename="../src/appcontroller.cpp" line="858"/>
+        <location filename="../src/appcontroller.cpp" line="843" />
+        <location filename="../src/appcontroller.cpp" line="858" />
         <source>Hotspot turned OFF</source>
         <translation>Punto de acceso APAGADO</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="843"/>
+        <location filename="../src/appcontroller.cpp" line="843" />
         <source>Battery dropped to %1%. Hotspot stopped to prevent battery drain.</source>
         <translation>Batería bajó al %1%. Punto de acceso detenido para no agotar la batería.</translation>
     </message>
     <message>
-        <location filename="../src/appcontroller.cpp" line="858"/>
+        <location filename="../src/appcontroller.cpp" line="858" />
         <source>Roaming detected! Wi-Fi Hotspot turned off to avoid extra carrier charges.</source>
         <translation>¡Itinerancia detectada! Punto de acceso Wi-Fi apagado para evitar cargos.</translation>
     </message>
@@ -102,27 +101,27 @@
 <context>
     <name>CoverPage</name>
     <message>
-        <location filename="../qml/cover/CoverPage.qml" line="12"/>
+        <location filename="../qml/cover/CoverPage.qml" line="12" />
         <source>Car Hotspot</source>
         <translation>Punto de acceso para coche</translation>
     </message>
     <message>
-        <location filename="../qml/cover/CoverPage.qml" line="25"/>
+        <location filename="../qml/cover/CoverPage.qml" line="25" />
         <source>Car: Connected</source>
         <translation>Coche: Conectado</translation>
     </message>
     <message>
-        <location filename="../qml/cover/CoverPage.qml" line="25"/>
+        <location filename="../qml/cover/CoverPage.qml" line="25" />
         <source>Car: Disconnected</source>
         <translation>Coche: Desconectado</translation>
     </message>
     <message>
-        <location filename="../qml/cover/CoverPage.qml" line="32"/>
+        <location filename="../qml/cover/CoverPage.qml" line="32" />
         <source>Hotspot: ON</source>
         <translation>Punto de acceso: ENCENDIDO</translation>
     </message>
     <message>
-        <location filename="../qml/cover/CoverPage.qml" line="32"/>
+        <location filename="../qml/cover/CoverPage.qml" line="32" />
         <source>Hotspot: OFF</source>
         <translation>Punto de acceso: APAGADO</translation>
     </message>
@@ -130,374 +129,369 @@
 <context>
     <name>MainPage</name>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="18"/>
+        <location filename="../qml/pages/MainPage.qml" line="18" />
         <source>Refresh Status &amp; Devices</source>
         <translation>Actualizar estado y dispositivos</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="38"/>
+        <location filename="../qml/pages/MainPage.qml" line="38" />
         <source>Car Hotspot</source>
         <translation>Punto de acceso para coche</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="68"/>
+        <location filename="../qml/pages/MainPage.qml" line="68" />
         <source>Car Bluetooth: </source>
         <translation>Bluetooth del coche: </translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="68"/>
+        <location filename="../qml/pages/MainPage.qml" line="68" />
         <source>Connected</source>
         <translation>Conectado</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="68"/>
+        <location filename="../qml/pages/MainPage.qml" line="68" />
         <source>Disconnected</source>
         <translation>Desconectado</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="85"/>
+        <location filename="../qml/pages/MainPage.qml" line="85" />
         <source>Wi-Fi Hotspot: </source>
         <translation>Punto de acceso Wi-Fi: </translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="85"/>
+        <location filename="../qml/pages/MainPage.qml" line="85" />
         <source>ACTIVE</source>
         <translation>ACTIVO</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="85"/>
+        <location filename="../qml/pages/MainPage.qml" line="85" />
         <source>INACTIVE</source>
         <translation>INACTIVO</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="101"/>
+        <location filename="../qml/pages/MainPage.qml" line="101" />
         <source>Battery: %1%%2</source>
         <translation>Batería: %1%%2</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="101"/>
+        <location filename="../qml/pages/MainPage.qml" line="101" />
         <source> (Charging)</source>
         <translation> (Cargando)</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="117"/>
+        <location filename="../qml/pages/MainPage.qml" line="117" />
         <source>Roaming: </source>
         <translation>Itinerancia: </translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="117"/>
+        <location filename="../qml/pages/MainPage.qml" line="117" />
         <source>YES (Active)</source>
         <translation>SÍ (Activo)</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="117"/>
+        <location filename="../qml/pages/MainPage.qml" line="117" />
         <source>No</source>
         <translation>No</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="133"/>
+        <location filename="../qml/pages/MainPage.qml" line="133" />
         <source>Background Service: </source>
         <translation>Servicio en segundo plano: </translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="133"/>
+        <location filename="../qml/pages/MainPage.qml" line="133" />
         <source>RUNNING (Active)</source>
         <translation>EJECUTÁNDOSE (Activo)</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="133"/>
+        <location filename="../qml/pages/MainPage.qml" line="133" />
         <source>Enabled</source>
         <translation>Habilitado</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="133"/>
+        <location filename="../qml/pages/MainPage.qml" line="133" />
         <source>Stopped</source>
         <translation>Detenido</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="142"/>
+        <location filename="../qml/pages/MainPage.qml" line="142" />
         <source>Automation &amp; Safety</source>
         <translation>Automatización y seguridad</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="146"/>
+        <location filename="../qml/pages/MainPage.qml" line="146" />
         <source>Auto-toggle Hotspot</source>
         <translation>Conmutación automática de punto de acceso</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="147"/>
+        <location filename="../qml/pages/MainPage.qml" line="147" />
         <source>Start Hotspot when car connects, stop when disconnected</source>
         <translation>Iniciar punto de acceso al conectar con el coche, detener al desconectar</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="251"/>
+        <location filename="../qml/pages/MainPage.qml" line="251" />
         <source>Multiple car devices</source>
         <translation>Múltiples dispositivos de coche</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="252"/>
+        <location filename="../qml/pages/MainPage.qml" line="252" />
         <source>Allow selecting multiple Bluetooth devices instead of just one</source>
         <translation>Permitir seleccionar varios dispositivos Bluetooth en lugar de solo uno</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="153"/>
+        <location filename="../qml/pages/MainPage.qml" line="153" />
         <source>Run in background &amp; Autostart</source>
         <translation>Ejecutar en segundo plano e inicio automático</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="14"/>
+        <location filename="../qml/pages/MainPage.qml" line="14" />
         <source>Tools &amp; Diagnostics</source>
-        <translation type="unfinished"></translation>
+        <translation>Herramientas y diagnóstico</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="154"/>
+        <location filename="../qml/pages/MainPage.qml" line="154" />
         <source>Keep monitoring car in background and start automatically on phone reboot</source>
         <translation>Supervisar coche en segundo plano e iniciar al reiniciar el teléfono</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="160"/>
+        <location filename="../qml/pages/MainPage.qml" line="160" />
         <source>Auto-enable Bluetooth</source>
         <translation>Activar Bluetooth automáticamente</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="161"/>
+        <location filename="../qml/pages/MainPage.qml" line="161" />
         <source>Turn on Bluetooth automatically if it is powered off</source>
         <translation>Activar Bluetooth automáticamente si está apagado</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="167"/>
+        <location filename="../qml/pages/MainPage.qml" line="167" />
         <source>Auto-enable Mobile Data</source>
         <translation>Activar datos móviles automáticamente</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="168"/>
+        <location filename="../qml/pages/MainPage.qml" line="168" />
         <source>Ensure cellular data connection is active when starting Hotspot</source>
         <translation>Asegurar que la conexión de datos móviles esté activa al iniciar el punto de acceso</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="174"/>
+        <location filename="../qml/pages/MainPage.qml" line="174" />
         <source>Vibration feedback</source>
         <translation>Respuesta por vibración</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="175"/>
+        <location filename="../qml/pages/MainPage.qml" line="175" />
         <source>Vibrate to confirm when car connects and Hotspot starts</source>
         <translation>Vibrar para confirmar cuando el coche se conecta y el punto de acceso se inicia</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="181"/>
+        <location filename="../qml/pages/MainPage.qml" line="181" />
         <source>System notifications</source>
         <translation>Notificaciones del sistema</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="182"/>
+        <location filename="../qml/pages/MainPage.qml" line="182" />
         <source>Show banner notification and lockscreen events when car connects/disconnects</source>
         <translation>Mostrar notificación y eventos de pantalla de bloqueo al conectar/desconectar</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="188"/>
+        <location filename="../qml/pages/MainPage.qml" line="188" />
         <source>Block Hotspot in Roaming</source>
         <translation>Bloquear punto de acceso en itinerancia</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="189"/>
+        <location filename="../qml/pages/MainPage.qml" line="189" />
         <source>Prevent starting Hotspot when abroad/roaming to avoid high cellular data charges</source>
         <translation>Evitar iniciar en itinerancia en el extranjero para eludir altos cargos de datos</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="196"/>
+        <location filename="../qml/pages/MainPage.qml" line="196" />
         <source>Delayed turn off: %1 min</source>
         <translation>Apagado diferido: %1 min</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="201"/>
+        <location filename="../qml/pages/MainPage.qml" line="201" />
         <source>Instantly</source>
         <translation>Al instante</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="201"/>
+        <location filename="../qml/pages/MainPage.qml" line="201" />
         <source>%1 min</source>
         <translation>%1 min</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="214"/>
+        <location filename="../qml/pages/MainPage.qml" line="214" />
         <source>Wait a grace period before stopping Hotspot in case of temporary Bluetooth disconnect.</source>
         <translation>Esperar un periodo de cortesía antes de detener ante desconexiones Bluetooth temporales.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="222"/>
+        <location filename="../qml/pages/MainPage.qml" line="222" />
         <source>Minimum battery level: %1%</source>
         <translation>Nivel mínimo de batería: %1%</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="240"/>
+        <location filename="../qml/pages/MainPage.qml" line="240" />
         <source>If battery is below this level and phone is not charging, Hotspot will not start (or will automatically turn off) to protect the battery.</source>
         <translation>Si la batería está por debajo de este nivel y no carga, el punto de acceso no se iniciará para protegerla.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="247"/>
+        <location filename="../qml/pages/MainPage.qml" line="247" />
         <source>Select Car Bluetooth Device</source>
         <translation>Seleccionar dispositivo Bluetooth del coche</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="272"/>
+        <location filename="../qml/pages/MainPage.qml" line="272" />
         <source>Selected Cars (%1):
 %2</source>
         <translation>Coches seleccionados (%1):
 %2</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="274"/>
+        <location filename="../qml/pages/MainPage.qml" line="274" />
         <source>No car Bluetooth devices selected yet. Choose from list below:</source>
         <translation>Aún no se ha seleccionado ningún dispositivo Bluetooth. Elija de la lista inferior:</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="278"/>
+        <location filename="../qml/pages/MainPage.qml" line="278" />
         <source>Selected Car: %1
 (%2)</source>
         <translation>Coche seleccionado: %1
 (%2)</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="278"/>
+        <location filename="../qml/pages/MainPage.qml" line="278" />
         <source>Car BT</source>
         <translation>BT Coche</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="279"/>
+        <location filename="../qml/pages/MainPage.qml" line="279" />
         <source>No car Bluetooth device selected yet. Choose from list below:</source>
         <translation>No se ha seleccionado ningún dispositivo aún. Elija de la lista inferior:</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="296"/>
+        <location filename="../qml/pages/MainPage.qml" line="296" />
         <source>Or enter MAC (e.g. AA:BB:CC:DD:EE:FF)</source>
         <translation>O introduzca la MAC (ej. AA:BB:CC:DD:EE:FF)</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="297"/>
+        <location filename="../qml/pages/MainPage.qml" line="297" />
         <source>Custom Bluetooth MAC</source>
         <translation>MAC Bluetooth personalizada</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="302"/>
-        <location filename="../qml/pages/MainPage.qml" line="305"/>
-        <location filename="../qml/pages/MainPage.qml" line="319"/>
-        <location filename="../qml/pages/MainPage.qml" line="322"/>
+        <location filename="../qml/pages/MainPage.qml" line="302" />
+        <location filename="../qml/pages/MainPage.qml" line="305" />
+        <location filename="../qml/pages/MainPage.qml" line="319" />
+        <location filename="../qml/pages/MainPage.qml" line="322" />
         <source>Car Bluetooth</source>
         <translation>Bluetooth del coche</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="314"/>
+        <location filename="../qml/pages/MainPage.qml" line="314" />
         <source>Save</source>
         <translation>Guardar</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="314"/>
+        <location filename="../qml/pages/MainPage.qml" line="314" />
         <source>Add</source>
         <translation>Añadir</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="331"/>
+        <location filename="../qml/pages/MainPage.qml" line="331" />
         <source>Paired / Detected Devices (%1)</source>
         <translation>Dispositivos emparejados / detectados (%1)</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="340"/>
+        <location filename="../qml/pages/MainPage.qml" line="340" />
         <source>No paired devices found yet. Pull down to refresh or pair your car in Settings -&gt; Bluetooth.</source>
         <translation>No se encontraron dispositivos emparejados. Deslice abajo para actualizar o empareje en Ajustes -&gt; Bluetooth.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="380"/>
+        <location filename="../qml/pages/MainPage.qml" line="380" />
         <source>[CAR]</source>
         <translation>[COCHE]</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="388"/>
+        <location filename="../qml/pages/MainPage.qml" line="388" />
         <source>[connected]</source>
         <translation>[conectado]</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="413"/>
+        <location filename="../qml/pages/MainPage.qml" line="413" />
         <source>Manual Control &amp; Diagnostics</source>
         <translation>Control manual y diagnósticos</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="418"/>
+        <location filename="../qml/pages/MainPage.qml" line="418" />
         <source>Turn Hotspot OFF</source>
         <translation>Apagar punto de acceso</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="418"/>
+        <location filename="../qml/pages/MainPage.qml" line="418" />
+        <source>Turn Hotspot ON</source>
+        <translation>Encender punto de acceso</translation>
+    </message>
+    </context>
+<context>
+    <name>ToolsPage</name>
+    <message>
+        <location filename="../qml/pages/ToolsPage.qml" line="14" />
+        <source>Refresh Status</source>
+        <translation>Actualizar estado</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ToolsPage.qml" line="31" />
+        <source>Tools &amp; Diagnostics</source>
+        <translation>Herramientas y diagnóstico</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ToolsPage.qml" line="35" />
+        <source>Bluetooth Subsystem Recovery</source>
+        <translation>Recuperación de Bluetooth</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ToolsPage.qml" line="46" />
+        <source>Performs a low-level reset of the Bluetooth daemon, unblocks kernel rfkill state, and re-initializes ConnMan. Use this if the Bluetooth connection hangs or the system toggle gets stuck.</source>
+        <translation>Realiza un reinicio de bajo nivel del demonio Bluetooth, desbloquea el estado rfkill y reinicia ConnMan.</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ToolsPage.qml" line="51" />
+        <source>Restart Bluetooth Subsystem</source>
+        <translation>Reiniciar subsistema Bluetooth</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ToolsPage.qml" line="58" />
+        <source>Hotspot Manual Control</source>
+        <translation>Control manual del punto de acceso</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ToolsPage.qml" line="69" />
+        <source>Current State: </source>
+        <translation>Estado actual: </translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ToolsPage.qml" line="69" />
+        <source>Hotspot ACTIVE</source>
+        <translation>Punto de acceso ACTIVO</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ToolsPage.qml" line="69" />
+        <source>Hotspot INACTIVE</source>
+        <translation>Punto de acceso INACTIVO</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ToolsPage.qml" line="74" />
+        <source>Turn Hotspot OFF</source>
+        <translation>Apagar punto de acceso</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ToolsPage.qml" line="74" />
         <source>Turn Hotspot ON</source>
         <translation>Encender punto de acceso</translation>
     </message>
     <message>
-        <location filename="../qml/pages/MainPage.qml" line="427"/>
-        <source>Activity Log:</source>
-        <translation>Registro de actividad:</translation>
-    </message>
-</context>
-<context>
-    <name>ToolsPage</name>
-    <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="14"/>
-        <source>Refresh Status</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="31"/>
-        <source>Tools &amp; Diagnostics</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="35"/>
-        <source>Bluetooth Subsystem Recovery</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="46"/>
-        <source>Performs a low-level reset of the Bluetooth daemon, unblocks kernel rfkill state, and re-initializes ConnMan. Use this if the Bluetooth connection hangs or the system toggle gets stuck.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="51"/>
-        <source>Restart Bluetooth Subsystem</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="58"/>
-        <source>Hotspot Manual Control</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="69"/>
-        <source>Current State: </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="69"/>
-        <source>Hotspot ACTIVE</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="69"/>
-        <source>Hotspot INACTIVE</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="74"/>
-        <source>Turn Hotspot OFF</source>
-        <translation type="unfinished">Apagar punto de acceso</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="74"/>
-        <source>Turn Hotspot ON</source>
-        <translation type="unfinished">Encender punto de acceso</translation>
-    </message>
-    <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="79"/>
+        <location filename="../qml/pages/ToolsPage.qml" line="79" />
         <source>System Diagnostics Log</source>
-        <translation type="unfinished"></translation>
+        <translation>Registro de diagnóstico del sistema</translation>
     </message>
 </context>
 </TS>
