@@ -245,8 +245,8 @@
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="14" />
-        <source>Tools &amp; Diagnostics</source>
-        <translation>ツールと診断</translation>
+        <source>Manual Control &amp; Diagnostics</source>
+        <translation>手動操作と診断</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="154" />
@@ -440,8 +440,8 @@
     </message>
     <message>
         <location filename="../qml/pages/ToolsPage.qml" line="31" />
-        <source>Tools &amp; Diagnostics</source>
-        <translation>ツールと診断</translation>
+        <source>Manual Control &amp; Diagnostics</source>
+        <translation>手動操作と診断</translation>
     </message>
     <message>
         <location filename="../qml/pages/ToolsPage.qml" line="35" />

@@ -245,8 +245,8 @@
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="14" />
-        <source>Tools &amp; Diagnostics</source>
-        <translation>Eszközök és diagnosztika</translation>
+        <source>Manual Control &amp; Diagnostics</source>
+        <translation>Kézi vezérlés és diagnosztika</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="154" />
@@ -440,8 +440,8 @@
     </message>
     <message>
         <location filename="../qml/pages/ToolsPage.qml" line="31" />
-        <source>Tools &amp; Diagnostics</source>
-        <translation>Eszközök és diagnosztika</translation>
+        <source>Manual Control &amp; Diagnostics</source>
+        <translation>Kézi vezérlés és diagnosztika</translation>
     </message>
     <message>
         <location filename="../qml/pages/ToolsPage.qml" line="35" />

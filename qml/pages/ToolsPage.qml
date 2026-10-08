@@ -28,7 +28,7 @@ Page {
             spacing: Theme.paddingMedium
 
             PageHeader {
-                title: qsTr("Tools & Diagnostics")
+                title: qsTr("Manual Control & Diagnostics")
             }
 
             SectionHeader {

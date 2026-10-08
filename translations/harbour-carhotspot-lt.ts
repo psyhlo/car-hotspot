@@ -245,8 +245,8 @@
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="14" />
-        <source>Tools &amp; Diagnostics</source>
-        <translation>Įrankiai ir diagnostika</translation>
+        <source>Manual Control &amp; Diagnostics</source>
+        <translation>Rankinis valdymas ir diagnostika</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="154" />
@@ -440,8 +440,8 @@
     </message>
     <message>
         <location filename="../qml/pages/ToolsPage.qml" line="31" />
-        <source>Tools &amp; Diagnostics</source>
-        <translation>Įrankiai ir diagnostika</translation>
+        <source>Manual Control &amp; Diagnostics</source>
+        <translation>Rankinis valdymas ir diagnostika</translation>
     </message>
     <message>
         <location filename="../qml/pages/ToolsPage.qml" line="35" />

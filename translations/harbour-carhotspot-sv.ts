@@ -245,8 +245,8 @@
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="14" />
-        <source>Tools &amp; Diagnostics</source>
-        <translation>Verktyg och diagnostik</translation>
+        <source>Manual Control &amp; Diagnostics</source>
+        <translation>Manuell kontroll och diagnostik</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="154" />
@@ -418,7 +418,7 @@
     <message>
         <location filename="../qml/pages/MainPage.qml" line="413" />
         <source>Manual Control &amp; Diagnostics</source>
-        <translation>Manuella kontroller &amp; Diagnostik</translation>
+        <translation>Manuell kontroll och diagnostik</translation>
     </message>
     <message>
         <location filename="../qml/pages/MainPage.qml" line="418" />
@@ -440,8 +440,8 @@
     </message>
     <message>
         <location filename="../qml/pages/ToolsPage.qml" line="31" />
-        <source>Tools &amp; Diagnostics</source>
-        <translation>Verktyg och diagnostik</translation>
+        <source>Manual Control &amp; Diagnostics</source>
+        <translation>Manuell kontroll och diagnostik</translation>
     </message>
     <message>
         <location filename="../qml/pages/ToolsPage.qml" line="35" />

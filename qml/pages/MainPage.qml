@@ -11,7 +11,7 @@ Page {
 
         PullDownMenu {
             MenuItem {
-                text: qsTr("Tools & Diagnostics")
+                text: qsTr("Manual Control & Diagnostics")
                 onClicked: pageStack.push(Qt.resolvedUrl("ToolsPage.qml"))
             }
             MenuItem {
@@ -410,7 +410,7 @@ Page {
             }
 
             SectionHeader {
-                text: qsTr("Hotspot Manual Control")
+                text: qsTr("Manual Control & Diagnostics")
             }
 
             Button {
