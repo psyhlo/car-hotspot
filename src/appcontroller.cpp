@@ -764,15 +764,16 @@ void AppController::onTargetConnectionChanged(bool connected)
         }
     } else {
         // Bluetooth reported disconnected:
-        if (m_autoToggle && m_hotspot.isHotspotActive()) {
-            // Debounce for 5 seconds to filter out brief BlueZ/handshake drops
-            appendLog(QString("[%1] %2 link dropped. Filtering brief drop (5s)...").arg(timestamp, carLabel));
-            m_disconnectDebounceTimer->start(5000);
-        } else {
-            appendLog(QString("[%1] %2 disconnected.").arg(timestamp, carLabel));
-            sendNotification(tr("Car Hotspot"), tr("%1 disconnected").arg(carLabel));
-        }
+        // Always debounce brief BlueZ/handshake drops (7s) before notifying or tearing down!
+        appendLog(QString("[%1] %2 link dropped. Filtering brief drop (7s)...").arg(timestamp, carLabel));
+        m_disconnectDebounceTimer->start(7000);
     }
+}
+
+void AppController::restartBluetooth()
+{
+    appendLog(QString("[%1] Deep Bluetooth subsystem restart triggered...").arg(QDateTime::currentDateTime().toString("hh:mm:ss")));
+    m_bluetooth.restartBluetoothSubsystem();
 }
 
 void AppController::onDisconnectDebounceTimeout()
@@ -802,6 +803,9 @@ void AppController::onDisconnectDebounceTimeout()
             m_hotspot.setHotspotActive(false);
             sendNotification(tr("Car Hotspot"), tr("%1 disconnected: Wi-Fi Hotspot turned OFF").arg(carLabel));
         }
+    } else {
+        // Hotspot was not active, but car genuinely disconnected after 7s debounce
+        sendNotification(tr("Car Hotspot"), tr("%1 disconnected").arg(carLabel));
     }
 }
 

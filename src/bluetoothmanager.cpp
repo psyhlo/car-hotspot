@@ -213,17 +213,25 @@ void BluetoothManager::updateTargetStatus()
         }
     }
 
-    bool statusChanged = (m_isTargetConnected != foundConnected) ||
-                         (m_connectedTargetAddress != activeAddress) ||
-                         (m_connectedTargetName != activeName);
+    bool connChanged = (m_isTargetConnected != foundConnected);
 
     m_isTargetConnected = foundConnected;
     m_connectedTargetAddress = activeAddress;
     m_connectedTargetName = activeName;
 
-    if (statusChanged) {
+    if (connChanged) {
         emit targetConnectionChanged(m_isTargetConnected);
     }
+}
+
+void BluetoothManager::restartBluetoothSubsystem()
+{
+    qDebug() << "BluetoothManager: Deep restart of Bluetooth subsystem requested...";
+    QProcess::startDetached("sudo", QStringList() << "/usr/bin/harbour-carhotspot-helper" << "bluetooth-restart");
+    QTimer::singleShot(3500, this, [this]() {
+        refreshDevices();
+        emit bluetoothPoweredChanged(isBluetoothPowered());
+    });
 }
 
 void BluetoothManager::connectTargetDevices()

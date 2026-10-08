@@ -41,6 +41,8 @@ private:
     bool m_isHotspotActive = false;
     bool m_wifiWasPowered = false;
     bool m_wifiStateRestored = false;
+    bool m_targetHotspotState = false;
+    int m_watchdogRetryCount = 0;
     QString m_statusMessage = "Ready";
 };
 

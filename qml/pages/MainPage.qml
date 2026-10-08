@@ -11,6 +11,10 @@ Page {
 
         PullDownMenu {
             MenuItem {
+                text: qsTr("Tools & Diagnostics")
+                onClicked: pageStack.push(Qt.resolvedUrl("ToolsPage.qml"))
+            }
+            MenuItem {
                 text: qsTr("Refresh Status & Devices")
                 onClicked: {
                     bluetoothManager.refreshDevices()

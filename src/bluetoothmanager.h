@@ -34,6 +34,7 @@ public slots:
     void setTargetDevices(const QStringList &addresses);
     void ensureBluetoothPowered();
     void connectTargetDevices();
+    void restartBluetoothSubsystem();
 
 signals:
     void devicesChanged();

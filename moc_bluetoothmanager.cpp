@@ -19,8 +19,8 @@
 
 QT_BEGIN_MOC_NAMESPACE
 struct qt_meta_stringdata_BluetoothManager_t {
-    QByteArrayData data[30];
-    char stringdata0[493];
+    QByteArrayData data[31];
+    char stringdata0[519];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -43,22 +43,23 @@ QT_MOC_LITERAL(10, 138, 16), // "setTargetDevices"
 QT_MOC_LITERAL(11, 155, 9), // "addresses"
 QT_MOC_LITERAL(12, 165, 22), // "ensureBluetoothPowered"
 QT_MOC_LITERAL(13, 188, 20), // "connectTargetDevices"
-QT_MOC_LITERAL(14, 209, 19), // "onPropertiesChanged"
-QT_MOC_LITERAL(15, 229, 9), // "interface"
-QT_MOC_LITERAL(16, 239, 17), // "changedProperties"
-QT_MOC_LITERAL(17, 257, 21), // "invalidatedProperties"
-QT_MOC_LITERAL(18, 279, 17), // "onInterfacesAdded"
-QT_MOC_LITERAL(19, 297, 15), // "QDBusObjectPath"
-QT_MOC_LITERAL(20, 313, 10), // "objectPath"
-QT_MOC_LITERAL(21, 324, 25), // "QMap<QString,QVariantMap>"
-QT_MOC_LITERAL(22, 350, 23), // "interfacesAndProperties"
-QT_MOC_LITERAL(23, 374, 19), // "onInterfacesRemoved"
-QT_MOC_LITERAL(24, 394, 10), // "interfaces"
-QT_MOC_LITERAL(25, 405, 7), // "devices"
-QT_MOC_LITERAL(26, 413, 17), // "isTargetConnected"
-QT_MOC_LITERAL(27, 431, 22), // "connectedTargetAddress"
-QT_MOC_LITERAL(28, 454, 19), // "connectedTargetName"
-QT_MOC_LITERAL(29, 474, 18) // "isBluetoothPowered"
+QT_MOC_LITERAL(14, 209, 25), // "restartBluetoothSubsystem"
+QT_MOC_LITERAL(15, 235, 19), // "onPropertiesChanged"
+QT_MOC_LITERAL(16, 255, 9), // "interface"
+QT_MOC_LITERAL(17, 265, 17), // "changedProperties"
+QT_MOC_LITERAL(18, 283, 21), // "invalidatedProperties"
+QT_MOC_LITERAL(19, 305, 17), // "onInterfacesAdded"
+QT_MOC_LITERAL(20, 323, 15), // "QDBusObjectPath"
+QT_MOC_LITERAL(21, 339, 10), // "objectPath"
+QT_MOC_LITERAL(22, 350, 25), // "QMap<QString,QVariantMap>"
+QT_MOC_LITERAL(23, 376, 23), // "interfacesAndProperties"
+QT_MOC_LITERAL(24, 400, 19), // "onInterfacesRemoved"
+QT_MOC_LITERAL(25, 420, 10), // "interfaces"
+QT_MOC_LITERAL(26, 431, 7), // "devices"
+QT_MOC_LITERAL(27, 439, 17), // "isTargetConnected"
+QT_MOC_LITERAL(28, 457, 22), // "connectedTargetAddress"
+QT_MOC_LITERAL(29, 480, 19), // "connectedTargetName"
+QT_MOC_LITERAL(30, 500, 18) // "isBluetoothPowered"
 
     },
     "BluetoothManager\0devicesChanged\0\0"
@@ -67,10 +68,11 @@ QT_MOC_LITERAL(29, 474, 18) // "isBluetoothPowered"
     "refreshDevices\0setTargetDevice\0address\0"
     "setTargetDevices\0addresses\0"
     "ensureBluetoothPowered\0connectTargetDevices\0"
-    "onPropertiesChanged\0interface\0"
-    "changedProperties\0invalidatedProperties\0"
-    "onInterfacesAdded\0QDBusObjectPath\0"
-    "objectPath\0QMap<QString,QVariantMap>\0"
+    "restartBluetoothSubsystem\0onPropertiesChanged\0"
+    "interface\0changedProperties\0"
+    "invalidatedProperties\0onInterfacesAdded\0"
+    "QDBusObjectPath\0objectPath\0"
+    "QMap<QString,QVariantMap>\0"
     "interfacesAndProperties\0onInterfacesRemoved\0"
     "interfaces\0devices\0isTargetConnected\0"
     "connectedTargetAddress\0connectedTargetName\0"
@@ -84,27 +86,28 @@ static const uint qt_meta_data_BluetoothManager[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-      11,   14, // methods
-       5,  102, // properties
+      12,   14, // methods
+       5,  108, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
        3,       // signalCount
 
  // signals: name, argc, parameters, tag, flags
-       1,    0,   69,    2, 0x06 /* Public */,
-       3,    1,   70,    2, 0x06 /* Public */,
-       5,    1,   73,    2, 0x06 /* Public */,
+       1,    0,   74,    2, 0x06 /* Public */,
+       3,    1,   75,    2, 0x06 /* Public */,
+       5,    1,   78,    2, 0x06 /* Public */,
 
  // slots: name, argc, parameters, tag, flags
-       7,    0,   76,    2, 0x0a /* Public */,
-       8,    1,   77,    2, 0x0a /* Public */,
-      10,    1,   80,    2, 0x0a /* Public */,
-      12,    0,   83,    2, 0x0a /* Public */,
-      13,    0,   84,    2, 0x0a /* Public */,
-      14,    3,   85,    2, 0x08 /* Private */,
-      18,    2,   92,    2, 0x08 /* Private */,
-      23,    2,   97,    2, 0x08 /* Private */,
+       7,    0,   81,    2, 0x0a /* Public */,
+       8,    1,   82,    2, 0x0a /* Public */,
+      10,    1,   85,    2, 0x0a /* Public */,
+      12,    0,   88,    2, 0x0a /* Public */,
+      13,    0,   89,    2, 0x0a /* Public */,
+      14,    0,   90,    2, 0x0a /* Public */,
+      15,    3,   91,    2, 0x08 /* Private */,
+      19,    2,   98,    2, 0x08 /* Private */,
+      24,    2,  103,    2, 0x08 /* Private */,
 
  // signals: parameters
     QMetaType::Void,
@@ -117,16 +120,17 @@ static const uint qt_meta_data_BluetoothManager[] = {
     QMetaType::Void, QMetaType::QStringList,   11,
     QMetaType::Void,
     QMetaType::Void,
-    QMetaType::Void, QMetaType::QString, QMetaType::QVariantMap, QMetaType::QStringList,   15,   16,   17,
-    QMetaType::Void, 0x80000000 | 19, 0x80000000 | 21,   20,   22,
-    QMetaType::Void, 0x80000000 | 19, QMetaType::QStringList,   20,   24,
+    QMetaType::Void,
+    QMetaType::Void, QMetaType::QString, QMetaType::QVariantMap, QMetaType::QStringList,   16,   17,   18,
+    QMetaType::Void, 0x80000000 | 20, 0x80000000 | 22,   21,   23,
+    QMetaType::Void, 0x80000000 | 20, QMetaType::QStringList,   21,   25,
 
  // properties: name, type, flags
-      25, QMetaType::QVariantList, 0x00495001,
-      26, QMetaType::Bool, 0x00495001,
-      27, QMetaType::QString, 0x00495001,
+      26, QMetaType::QVariantList, 0x00495001,
+      27, QMetaType::Bool, 0x00495001,
       28, QMetaType::QString, 0x00495001,
-      29, QMetaType::Bool, 0x00495001,
+      29, QMetaType::QString, 0x00495001,
+      30, QMetaType::Bool, 0x00495001,
 
  // properties: notify_signal_id
        0,
@@ -152,22 +156,23 @@ void BluetoothManager::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int
         case 5: _t->setTargetDevices((*reinterpret_cast< const QStringList(*)>(_a[1]))); break;
         case 6: _t->ensureBluetoothPowered(); break;
         case 7: _t->connectTargetDevices(); break;
-        case 8: _t->onPropertiesChanged((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QVariantMap(*)>(_a[2])),(*reinterpret_cast< const QStringList(*)>(_a[3]))); break;
-        case 9: _t->onInterfacesAdded((*reinterpret_cast< const QDBusObjectPath(*)>(_a[1])),(*reinterpret_cast< const QMap<QString,QVariantMap>(*)>(_a[2]))); break;
-        case 10: _t->onInterfacesRemoved((*reinterpret_cast< const QDBusObjectPath(*)>(_a[1])),(*reinterpret_cast< const QStringList(*)>(_a[2]))); break;
+        case 8: _t->restartBluetoothSubsystem(); break;
+        case 9: _t->onPropertiesChanged((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QVariantMap(*)>(_a[2])),(*reinterpret_cast< const QStringList(*)>(_a[3]))); break;
+        case 10: _t->onInterfacesAdded((*reinterpret_cast< const QDBusObjectPath(*)>(_a[1])),(*reinterpret_cast< const QMap<QString,QVariantMap>(*)>(_a[2]))); break;
+        case 11: _t->onInterfacesRemoved((*reinterpret_cast< const QDBusObjectPath(*)>(_a[1])),(*reinterpret_cast< const QStringList(*)>(_a[2]))); break;
         default: ;
         }
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
         switch (_id) {
         default: *reinterpret_cast<int*>(_a[0]) = -1; break;
-        case 9:
+        case 10:
             switch (*reinterpret_cast<int*>(_a[1])) {
             default: *reinterpret_cast<int*>(_a[0]) = -1; break;
             case 0:
                 *reinterpret_cast<int*>(_a[0]) = qRegisterMetaType< QDBusObjectPath >(); break;
             }
             break;
-        case 10:
+        case 11:
             switch (*reinterpret_cast<int*>(_a[1])) {
             default: *reinterpret_cast<int*>(_a[0]) = -1; break;
             case 0:
@@ -244,13 +249,13 @@ int BluetoothManager::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 11)
+        if (_id < 12)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 11;
+        _id -= 12;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 11)
+        if (_id < 12)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 11;
+        _id -= 12;
     }
 #ifndef QT_NO_PROPERTIES
    else if (_c == QMetaObject::ReadProperty || _c == QMetaObject::WriteProperty

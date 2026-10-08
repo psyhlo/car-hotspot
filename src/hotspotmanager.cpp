@@ -67,6 +67,9 @@ bool HotspotManager::queryWifiPoweredState()
 
 void HotspotManager::checkStatus()
 {
+    bool tethering = false;
+    bool checked = false;
+
     // Direct QDBusInterface to ConnMan WiFi Technology
     QDBusInterface wifiTech(
         "net.connman",
@@ -78,40 +81,48 @@ void HotspotManager::checkStatus()
     if (wifiTech.isValid()) {
         QDBusReply<QVariantMap> reply = wifiTech.call("GetProperties");
         if (reply.isValid()) {
-            bool tethering = reply.value().value("Tethering", false).toBool();
-            if (m_isHotspotActive != tethering) {
-                m_isHotspotActive = tethering;
-                emit hotspotActiveChanged(m_isHotspotActive);
-            }
-            m_statusMessage = m_isHotspotActive ? "Hotspot is ON" : "Hotspot is OFF";
-            emit statusMessageChanged(m_statusMessage);
-            return;
+            tethering = reply.value().value("Tethering", false).toBool();
+            checked = true;
         }
     }
 
     // Fallback: query via dbus-send
-    QProcess p;
-    p.start("dbus-send", QStringList() 
-        << "--system" 
-        << "--print-reply" 
-        << "--dest=net.connman" 
-        << "/net/connman/technology/wifi" 
-        << "net.connman.Technology.GetProperties"
-    );
+    if (!checked) {
+        QProcess p;
+        p.start("dbus-send", QStringList() 
+            << "--system" 
+            << "--print-reply" 
+            << "--dest=net.connman" 
+            << "/net/connman/technology/wifi" 
+            << "net.connman.Technology.GetProperties"
+        );
 
-    if (p.waitForFinished(2000)) {
-        QString out = p.readAllStandardOutput();
-        int tIdx = out.indexOf("\"Tethering\"");
-        if (tIdx != -1) {
-            QString snippet = out.mid(tIdx, 80);
-            bool tethering = snippet.contains("boolean true", Qt::CaseInsensitive);
-            if (m_isHotspotActive != tethering) {
-                m_isHotspotActive = tethering;
-                emit hotspotActiveChanged(m_isHotspotActive);
+        if (p.waitForFinished(1500)) {
+            QString out = p.readAllStandardOutput();
+            int tIdx = out.indexOf("\"Tethering\"");
+            if (tIdx != -1) {
+                QString snippet = out.mid(tIdx, 80);
+                tethering = snippet.contains("boolean true", Qt::CaseInsensitive);
+                checked = true;
             }
-            m_statusMessage = m_isHotspotActive ? "Hotspot is ON" : "Hotspot is OFF";
-            emit statusMessageChanged(m_statusMessage);
         }
+    }
+
+    if (m_isHotspotActive != tethering) {
+        m_isHotspotActive = tethering;
+        emit hotspotActiveChanged(m_isHotspotActive);
+    }
+    m_statusMessage = m_isHotspotActive ? "Hotspot is ON" : "Hotspot is OFF";
+    emit statusMessageChanged(m_statusMessage);
+
+    // Watchdog: If we requested Hotspot to be ON, but it is not active yet (e.g. stuck in Wi-Fi station mode), enforce tethering-on!
+    if (m_targetHotspotState && !m_isHotspotActive && m_watchdogRetryCount < 3) {
+        m_watchdogRetryCount++;
+        qDebug() << "HotspotManager: Hotspot not active yet (watchdog retry" << m_watchdogRetryCount << "). Forcing tethering-on...";
+        QProcess::startDetached("sudo", QStringList() << "/usr/bin/harbour-carhotspot-helper" << "tethering-on");
+        QTimer::singleShot(1500, this, &HotspotManager::checkStatus);
+    } else if (m_isHotspotActive) {
+        m_watchdogRetryCount = 0;
     }
 }
 
@@ -127,6 +138,8 @@ void HotspotManager::updateHotspotState(bool active)
 
 void HotspotManager::setHotspotActive(bool active)
 {
+    m_targetHotspotState = active;
+    m_watchdogRetryCount = 0;
     m_statusMessage = active ? "Enabling Hotspot..." : "Disabling Hotspot...";
     emit statusMessageChanged(m_statusMessage);
 
@@ -142,37 +155,47 @@ void HotspotManager::setHotspotActive(bool active)
             emit wifiWasPoweredBeforeChanged(m_wifiWasPowered);
             qDebug() << "HotspotManager: Wi-Fi was powered before tethering:" << m_wifiWasPowered;
         }
-    }
 
-    // Always send D-Bus call to com.jolla.Connectiond (works in background, locked screen, daemon)
-    QDBusInterface connDaemon(
-        "com.jolla.Connectiond",
-        "/Connectiond",
-        "com.jolla.Connectiond",
-        QDBusConnection::sessionBus()
-    );
-
-    if (connDaemon.isValid()) {
-        if (active) {
+        // 1. Invoke Connectiond (Sailfish OS session daemon)
+        QDBusInterface connDaemon(
+            "com.jolla.Connectiond",
+            "/Connectiond",
+            "com.jolla.Connectiond",
+            QDBusConnection::sessionBus()
+        );
+        if (connDaemon.isValid()) {
             connDaemon.asyncCall("startTethering", QString("wifi"));
-        } else {
-            // When wifi was not powered initially, ensure connectionagent's internal state
-            // has tetheringTechPowered = false so that it will automatically power Wi-Fi off.
-            if (!m_wifiWasPowered) {
-                QSettings caSettings("nemomobile", "connectionagent");
-                caSettings.beginGroup("Connectionagent");
-                caSettings.setValue("tetheringTechPowered", false);
-                caSettings.sync();
-            }
+        }
 
-            // stopTethering expects (QString type, bool keepPowered).
-            // Passing false instructs connectionagent to restore Wi-Fi power to off if it was off!
+        // 2. Invoke privileged helper to guarantee ConnMan switches to Access Point mode
+        QProcess::startDetached("sudo", QStringList() << "/usr/bin/harbour-carhotspot-helper" << "tethering-on");
+    } else {
+        // When wifi was not powered initially, ensure connectionagent's internal state
+        // has tetheringTechPowered = false so that it will automatically power Wi-Fi off.
+        if (!m_wifiWasPowered) {
+            QSettings caSettings("nemomobile", "connectionagent");
+            caSettings.beginGroup("Connectionagent");
+            caSettings.setValue("tetheringTechPowered", false);
+            caSettings.sync();
+        }
+
+        // 1. Invoke Connectiond stopTethering
+        QDBusInterface connDaemon(
+            "com.jolla.Connectiond",
+            "/Connectiond",
+            "com.jolla.Connectiond",
+            QDBusConnection::sessionBus()
+        );
+        if (connDaemon.isValid()) {
             connDaemon.asyncCall("stopTethering", QString("wifi"), false);
         }
+
+        // 2. Invoke privileged helper tethering-off
+        QProcess::startDetached("sudo", QStringList() << "/usr/bin/harbour-carhotspot-helper" << "tethering-off");
     }
 
-    // Check status after brief delay
-    QTimer::singleShot(1000, this, &HotspotManager::checkStatus);
+    // Check status after 1200ms delay
+    QTimer::singleShot(1200, this, &HotspotManager::checkStatus);
 }
 
 void HotspotManager::restoreWifiStateIfNeeded()

@@ -100,6 +100,7 @@ public slots:
     void checkDaemonStatus();
     void openApp();
     void activate();
+    void restartBluetooth();
 
 signals:
     void requestActivateWindow();
