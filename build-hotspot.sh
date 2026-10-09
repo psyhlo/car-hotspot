@@ -167,9 +167,7 @@ case "$COMMAND" in
         fi
 
         sfdk config target=SailfishOS-5.1.0.11-aarch64
-        if [ -f harbour-carhotspot ] && file harbour-carhotspot | grep -q -i "80386"; then
-            rm -f *.o moc_* harbour-carhotspot
-        fi
+        rm -f *.o moc_* harbour-carhotspot
         sfdk qmake
         sfdk make
         sfdk package
@@ -183,7 +181,8 @@ case "$COMMAND" in
         echo "🚀 Прехвърляне и инсталиране на телефона ($RPM_FILE)..."
         scp $SSH_OPTS "$RPM_FILE" "defaultuser@$DEVICE_IP:/tmp/app.rpm"
         ssh $SSH_OPTS "root@$DEVICE_IP" "pkcon -y install-local /tmp/app.rpm"
-        echo "✅ Пакетът е инсталиран успешно на телефона."
+        ssh $SSH_OPTS "defaultuser@$DEVICE_IP" "killall -9 harbour-carhotspot 2>/dev/null || true; sleep 1; nohup invoker --type=silica-qt5 -d 5 /usr/bin/harbour-carhotspot >/dev/null 2>&1 &"
+        echo "✅ Пакетът е инсталиран успешно и приложението е рестартирано на телефона."
         ;;
     device-shell)
         SSH_OPTS="-o StrictHostKeyChecking=no"
