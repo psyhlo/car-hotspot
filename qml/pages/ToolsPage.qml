@@ -48,10 +48,28 @@ Page {
 
             Button {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: qsTr("Restart Bluetooth Subsystem")
+                enabled: !bluetoothManager.isRestartingBluetooth
+                text: bluetoothManager.isRestartingBluetooth
+                      ? qsTr("Restarting Bluetooth...")
+                      : qsTr("Restart Bluetooth Subsystem")
                 onClicked: {
                     appController.restartBluetooth()
                 }
+            }
+
+            BusyIndicator {
+                anchors.horizontalCenter: parent.horizontalCenter
+                size: BusyIndicatorSize.Small
+                running: bluetoothManager.isRestartingBluetooth
+                visible: running
+            }
+
+            Label {
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible: bluetoothManager.isRestartingBluetooth
+                color: Theme.highlightColor
+                font.pixelSize: Theme.fontSizeSmall
+                text: qsTr("Recovering Bluetooth subsystem...")
             }
 
             SectionHeader {

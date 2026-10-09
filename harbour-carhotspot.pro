@@ -3,7 +3,7 @@ TARGET = harbour-carhotspot
 # Single Source of Truth for Version: read directly from rpm spec file
 SPEC_FILE = $$_PRO_FILE_PWD_/rpm/harbour-carhotspot.spec
 APP_VERSION = $$system(sed -n -e 's/^Version:[[:space:]]*//p' $$SPEC_FILE)
-isEmpty(APP_VERSION): APP_VERSION = 0.2.5
+isEmpty(APP_VERSION): APP_VERSION = 0.3.0
 DEFINES += APP_VERSION=$$APP_VERSION
 
 CONFIG += sailfishapp c++17
@@ -47,7 +47,13 @@ TRANSLATIONS += $$files(translations/*.ts)
 translations.files = translations/*.qm
 translations.path = /usr/share/TARGET/translations
 
+helper_bin.target = harbour-carhotspot-helper
+helper_bin.commands = $$QMAKE_CC $$QMAKE_CFLAGS -O2 $$_PRO_FILE_PWD_/src/helper.c -o harbour-carhotspot-helper
+QMAKE_EXTRA_TARGETS += helper_bin
+PRE_TARGETDEPS += harbour-carhotspot-helper
+
 helper.files = harbour-carhotspot-helper
 helper.path = /usr/bin
 
 INSTALLS += target qml desktop icon86 icon108 icon128 icon172 translations helper
+

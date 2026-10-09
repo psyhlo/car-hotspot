@@ -54,17 +54,39 @@ BluetoothManager::BluetoothManager(QObject *parent)
 
 bool BluetoothManager::isBluetoothPowered()
 {
-    // 1. Check BlueZ default adapter first (reflects actual hardware/driver state)
+    QString path = m_adapterPath;
+    if (path.isEmpty()) {
+        path = "/org/bluez/hci0";
+    }
+
+    // 1. Check detected BlueZ adapter first (reflects actual hardware/driver state)
     QDBusInterface adapter(
         "org.bluez",
-        "/org/bluez/hci0",
+        path,
         "org.bluez.Adapter1",
         QDBusConnection::systemBus()
     );
     if (adapter.isValid()) {
         QVariant powered = adapter.property("Powered");
-        if (powered.isValid() && powered.toBool()) {
-            return true;
+        if (powered.isValid()) {
+            return powered.toBool();
+        }
+    }
+
+    // Fallback: if default hci0 failed, try hci1
+    if (path == "/org/bluez/hci0") {
+        QDBusInterface adapter1(
+            "org.bluez",
+            "/org/bluez/hci1",
+            "org.bluez.Adapter1",
+            QDBusConnection::systemBus()
+        );
+        if (adapter1.isValid()) {
+            QVariant powered = adapter1.property("Powered");
+            if (powered.isValid()) {
+                m_adapterPath = "/org/bluez/hci1";
+                return powered.toBool();
+            }
         }
     }
 
@@ -102,9 +124,8 @@ void BluetoothManager::ensureBluetoothPowered()
 
     qDebug() << "BluetoothManager: Bluetooth is OFF. Powering ON via privileged helper...";
 
-    // Power on asynchronously via helper (unblocks rfkill and enables ConnMan technology)
-    // Avoid direct adapter.setProperty("Powered", true) to prevent desynchronization with ConnMan and rfkill.
-    QProcess::startDetached("sudo", QStringList() << "/usr/bin/harbour-carhotspot-helper" << "bluetooth-on");
+    // Power on asynchronously via privileged helper (NO SUDO!)
+    QProcess::startDetached("/usr/bin/harbour-carhotspot-helper", QStringList() << "bluetooth-on");
 }
 
 void BluetoothManager::refreshDevices()
@@ -141,6 +162,15 @@ void BluetoothManager::refreshDevices()
             QMap<QString, QVariantMap> interfaces;
             arg >> interfaces;
             
+            if (interfaces.contains("org.bluez.Adapter1")) {
+                QString foundAdapter = path.path();
+                if (m_adapterPath != foundAdapter) {
+                    m_adapterPath = foundAdapter;
+                    qDebug() << "BluetoothManager: Detected Bluetooth adapter at" << m_adapterPath;
+                    emit adapterPathChanged(m_adapterPath);
+                }
+            }
+
             if (interfaces.contains("org.bluez.Device1")) {
                 const QVariantMap props = interfaces.value("org.bluez.Device1");
                 QVariantMap item;
@@ -226,11 +256,22 @@ void BluetoothManager::updateTargetStatus()
 
 void BluetoothManager::restartBluetoothSubsystem()
 {
+    if (m_isRestartingBluetooth) {
+        return;
+    }
+
+    m_isRestartingBluetooth = true;
+    emit restartingBluetoothChanged(true);
     qDebug() << "BluetoothManager: Deep restart of Bluetooth subsystem requested...";
-    QProcess::startDetached("sudo", QStringList() << "/usr/bin/harbour-carhotspot-helper" << "bluetooth-restart");
+
+    // Run privileged helper directly (NO SUDO!)
+    QProcess::startDetached("/usr/bin/harbour-carhotspot-helper", QStringList() << "bluetooth-restart");
+
     QTimer::singleShot(3500, this, [this]() {
         refreshDevices();
         emit bluetoothPoweredChanged(isBluetoothPowered());
+        m_isRestartingBluetooth = false;
+        emit restartingBluetoothChanged(false);
     });
 }
 
@@ -318,7 +359,11 @@ void BluetoothManager::onPropertiesChanged(const QString &interface, const QVari
 
 void BluetoothManager::onInterfacesAdded(const QDBusObjectPath &objectPath, const QMap<QString, QVariantMap> &interfacesAndProperties)
 {
-    Q_UNUSED(objectPath);
+    if (interfacesAndProperties.contains("org.bluez.Adapter1")) {
+        m_adapterPath = objectPath.path();
+        qDebug() << "BluetoothManager: Adapter added at" << m_adapterPath;
+        emit adapterPathChanged(m_adapterPath);
+    }
     if (interfacesAndProperties.contains("org.bluez.Device1")) {
         refreshDevices();
     }
@@ -326,7 +371,11 @@ void BluetoothManager::onInterfacesAdded(const QDBusObjectPath &objectPath, cons
 
 void BluetoothManager::onInterfacesRemoved(const QDBusObjectPath &objectPath, const QStringList &interfaces)
 {
-    Q_UNUSED(objectPath);
+    if (interfaces.contains("org.bluez.Adapter1") && objectPath.path() == m_adapterPath) {
+        qDebug() << "BluetoothManager: Adapter removed at" << m_adapterPath;
+        m_adapterPath.clear();
+        emit adapterPathChanged(m_adapterPath);
+    }
     if (interfaces.contains("org.bluez.Device1")) {
         refreshDevices();
     }

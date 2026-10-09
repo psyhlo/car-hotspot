@@ -454,9 +454,19 @@
         <translation>Изпълнява рестарт на системния Bluetooth демон, отблокира rfkill състоянието в ядрото и реинициализира ConnMan. Използвайте при увисване на връзката или блокиране на превключвателя в системата.</translation>
     </message>
     <message>
-        <location filename="../qml/pages/ToolsPage.qml" line="51" />
+        <location filename="../qml/pages/ToolsPage.qml" line="53" />
+        <source>Restarting Bluetooth...</source>
+        <translation>Рестартиране на Bluetooth...</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ToolsPage.qml" line="54" />
         <source>Restart Bluetooth Subsystem</source>
-        <translation>Рестартиране на Bluetooth модула</translation>
+        <translation>Рестартиране на Bluetooth подсистемата</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/ToolsPage.qml" line="69" />
+        <source>Recovering Bluetooth subsystem...</source>
+        <translation>Възстановяване на Bluetooth подсистемата...</translation>
     </message>
     <message>
         <location filename="../qml/pages/ToolsPage.qml" line="58" />

@@ -15,6 +15,7 @@ SRPMS/
 *.user*
 moc_*
 harbour-carhotspot
+harbour-carhotspot-helper
 harbour-hotspotincar
 translations/*.qm
 debug*.list
