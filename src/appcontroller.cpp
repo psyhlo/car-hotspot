@@ -701,7 +701,7 @@ void AppController::ensureCellularConnected()
     }
 
     // 2. Privileged helper fallback in case unprivileged call was blocked by D-Bus policy
-    QProcess::execute("sudo", QStringList() << "/usr/bin/harbour-carhotspot-helper" << "cellular-on");
+    QProcess::execute("/usr/bin/harbour-carhotspot-helper", QStringList() << "cellular-on");
 }
 
 void AppController::onTargetConnectionChanged(bool connected)

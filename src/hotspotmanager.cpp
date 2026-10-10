@@ -156,16 +156,9 @@ void HotspotManager::setHotspotActive(bool active)
             qDebug() << "HotspotManager: Wi-Fi was powered before tethering:" << m_wifiWasPowered;
         }
 
-        // 1. Request cellular connection via Lipstick ConnectionSelector (required by Sailfish OS tethering)
-        QDBusInterface lipstickConn(
-            "com.jolla.lipstick.ConnectionSelector",
-            "/",
-            "com.jolla.lipstick.ConnectionSelectorIf",
-            QDBusConnection::sessionBus()
-        );
-        if (lipstickConn.isValid()) {
-            lipstickConn.asyncCall("openConnectionNow", QString("cellular"));
-        }
+        // NOTE: We intentionally do NOT call Lipstick ConnectionSelector::openConnectionNow here —
+        // it pops up the "select connection / SIM" dialog every time. Connectiond + ConnMan
+        // use the OS-wide default data SIM automatically.
 
         // 2. Invoke Connectiond (Sailfish OS session daemon)
         QDBusInterface connDaemon(
