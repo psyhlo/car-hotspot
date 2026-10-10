@@ -115,23 +115,28 @@ void HotspotManager::checkStatus()
     m_statusMessage = m_isHotspotActive ? "Hotspot is ON" : "Hotspot is OFF";
     emit statusMessageChanged(m_statusMessage);
 
-    // Watchdog: If we requested Hotspot to be ON, but it is not active yet (e.g. stuck in Wi-Fi station mode), enforce tethering-on!
-    if (m_targetHotspotState && !m_isHotspotActive && m_watchdogRetryCount < 3) {
-        m_watchdogRetryCount++;
-        qDebug() << "HotspotManager: Hotspot not active yet (watchdog retry" << m_watchdogRetryCount << "). Forcing tethering-on...";
-        QProcess::startDetached("/usr/bin/harbour-carhotspot-helper", QStringList() << "tethering-on");
-        QTimer::singleShot(1500, this, &HotspotManager::checkStatus);
-    } else if (m_targetHotspotState && !m_isHotspotActive && !m_startFailureReported) {
-        // All retries exhausted: report whether plain Wi-Fi came up instead of the access point
-        m_startFailureReported = true;
-        bool wifiOn = queryWifiPoweredState();
-        QString reason = wifiOn
-            ? QStringLiteral("Wi-Fi was turned on in client mode instead of Hotspot. Try toggling Wi-Fi off/on or restart the Wi-Fi module.")
-            : QStringLiteral("Hotspot failed to start and Wi-Fi is off. Check that mobile data/SIM is available.");
-        qWarning() << "HotspotManager:" << reason;
-        emit hotspotStartFailed(reason);
+    // Watchdog: Allow up to 4 retries (~8-10 seconds total) for ConnMan and the Wi-Fi chip
+    // to bring up the Access Point. Do NOT trigger a false alarm while AP is initializing.
+    if (m_targetHotspotState && !m_isHotspotActive) {
+        if (m_watchdogRetryCount < 4) {
+            m_watchdogRetryCount++;
+            qDebug() << "HotspotManager: Hotspot AP initializing (retry" << m_watchdogRetryCount << "/4)...";
+            // Re-assert tethering-on to make sure ConnMan hasn't stalled
+            QProcess::startDetached("/usr/bin/harbour-carhotspot-helper", QStringList() << "tethering-on");
+            QTimer::singleShot(2000, this, &HotspotManager::checkStatus);
+        } else if (!m_startFailureReported) {
+            // All retries exhausted (>8-10 seconds elapsed) and tethering is genuinely not running
+            m_startFailureReported = true;
+            bool wifiOn = queryWifiPoweredState();
+            QString reason = wifiOn
+                ? QStringLiteral("Wi-Fi was turned on in client mode instead of Hotspot. Try toggling Wi-Fi off/on or restart the Wi-Fi module.")
+                : QStringLiteral("Hotspot failed to start and Wi-Fi is off. Check that mobile data/SIM is available.");
+            qWarning() << "HotspotManager:" << reason;
+            emit hotspotStartFailed(reason);
+        }
     } else if (m_isHotspotActive) {
         m_watchdogRetryCount = 0;
+        m_startFailureReported = false;
     }
 }
 
@@ -184,6 +189,10 @@ void HotspotManager::setHotspotActive(bool active)
         // 3. Invoke privileged helper to guarantee ConnMan switches to Access Point mode (NO SUDO!)
         QProcess::startDetached("/usr/bin/harbour-carhotspot-helper", QStringList() << "tethering-on");
     } else {
+        // When turning off, clear failure flag and reset watchdog
+        m_watchdogRetryCount = 0;
+        m_startFailureReported = false;
+
         // When wifi was not powered initially, ensure connectionagent's internal state
         // has tetheringTechPowered = false so that it will automatically power Wi-Fi off.
         if (!m_wifiWasPowered) {
@@ -208,8 +217,8 @@ void HotspotManager::setHotspotActive(bool active)
         QProcess::startDetached("/usr/bin/harbour-carhotspot-helper", QStringList() << "tethering-off");
     }
 
-    // Check status after 1200ms delay
-    QTimer::singleShot(1200, this, &HotspotManager::checkStatus);
+    // Check status after initial 2000ms delay to give ConnMan time to change states
+    QTimer::singleShot(2000, this, &HotspotManager::checkStatus);
 }
 
 void HotspotManager::restoreWifiStateIfNeeded()
@@ -277,6 +286,10 @@ void HotspotManager::onPropertyChanged(const QString &name, const QDBusVariant &
         bool tethering = value.variant().toBool();
         if (m_isHotspotActive != tethering) {
             m_isHotspotActive = tethering;
+            if (m_isHotspotActive) {
+                m_watchdogRetryCount = 0;
+                m_startFailureReported = false;
+            }
             emit hotspotActiveChanged(m_isHotspotActive);
             m_statusMessage = m_isHotspotActive ? "Hotspot is ON" : "Hotspot is OFF";
             emit statusMessageChanged(m_statusMessage);

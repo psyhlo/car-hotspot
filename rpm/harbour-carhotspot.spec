@@ -1,6 +1,6 @@
 Name:       harbour-carhotspot
 Summary:    Car Hotspot for Sailfish OS
-Version:    0.3.1
+Version:    0.3.2
 Release:    1
 License:    GPLv3
 URL:        https://github.com
