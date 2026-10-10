@@ -121,6 +121,15 @@ void HotspotManager::checkStatus()
         qDebug() << "HotspotManager: Hotspot not active yet (watchdog retry" << m_watchdogRetryCount << "). Forcing tethering-on...";
         QProcess::startDetached("/usr/bin/harbour-carhotspot-helper", QStringList() << "tethering-on");
         QTimer::singleShot(1500, this, &HotspotManager::checkStatus);
+    } else if (m_targetHotspotState && !m_isHotspotActive && !m_startFailureReported) {
+        // All retries exhausted: report whether plain Wi-Fi came up instead of the access point
+        m_startFailureReported = true;
+        bool wifiOn = queryWifiPoweredState();
+        QString reason = wifiOn
+            ? QStringLiteral("Wi-Fi was turned on in client mode instead of Hotspot. Try toggling Wi-Fi off/on or restart the Wi-Fi module.")
+            : QStringLiteral("Hotspot failed to start and Wi-Fi is off. Check that mobile data/SIM is available.");
+        qWarning() << "HotspotManager:" << reason;
+        emit hotspotStartFailed(reason);
     } else if (m_isHotspotActive) {
         m_watchdogRetryCount = 0;
     }
@@ -140,6 +149,7 @@ void HotspotManager::setHotspotActive(bool active)
 {
     m_targetHotspotState = active;
     m_watchdogRetryCount = 0;
+    m_startFailureReported = false;
     m_statusMessage = active ? "Enabling Hotspot..." : "Disabling Hotspot...";
     emit statusMessageChanged(m_statusMessage);
 

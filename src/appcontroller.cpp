@@ -50,6 +50,10 @@ AppController::AppController(bool isDaemon, QObject *parent)
             this, &AppController::onBatteryChanged);
     connect(&m_systemMonitor, &SystemMonitor::roamingChanged,
             this, &AppController::onRoamingChanged);
+    connect(&m_hotspot, &HotspotManager::hotspotStartFailed, this, [this](const QString &reason) {
+        appendLog(QString("[%1] WARNING: %2").arg(QDateTime::currentDateTime().toString("hh:mm:ss"), reason));
+        sendNotification(tr("Hotspot problem"), reason);
+    });
 
     // Automation timers are only active in the daemon process (or standalone GUI if daemon is disabled)
     bool isHandlingAutomation = m_isDaemon || (!m_isDaemonActive && !m_autostartService);

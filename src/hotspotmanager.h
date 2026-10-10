@@ -31,11 +31,13 @@ signals:
     void statusMessageChanged(const QString &msg);
     void restoreWifiRequested(bool powered);
     void wifiWasPoweredBeforeChanged(bool powered);
+    void hotspotStartFailed(const QString &reason);
 
 private slots:
     void onPropertyChanged(const QString &name, const QDBusVariant &value);
 
 private:
+    bool m_startFailureReported = false;
     void restoreWifiStateIfNeeded();
 
     bool m_isHotspotActive = false;
