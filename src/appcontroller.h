@@ -12,11 +12,13 @@
 class AppController : public QObject
 {
     Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface", "org.sailfishos.coveraction.carhotspot")
     Q_PROPERTY(BluetoothManager* bluetooth READ bluetooth CONSTANT)
     Q_PROPERTY(HotspotManager* hotspot READ hotspot CONSTANT)
     Q_PROPERTY(SystemMonitor* systemMonitor READ systemMonitor CONSTANT)
     Q_PROPERTY(bool allowMultipleDevices READ allowMultipleDevices WRITE setAllowMultipleDevices NOTIFY allowMultipleDevicesChanged)
     Q_PROPERTY(QStringList targetAddresses READ targetAddresses NOTIFY targetAddressesChanged)
+    Q_PROPERTY(QVariantList selectedDevices READ selectedDevices NOTIFY selectedDevicesChanged)
     Q_PROPERTY(int selectedDevicesCount READ selectedDevicesCount NOTIFY selectedDevicesCountChanged)
     Q_PROPERTY(QString connectedTargetName READ connectedTargetName NOTIFY connectedTargetNameChanged)
     Q_PROPERTY(QString targetAddress READ targetAddress WRITE setTargetAddress NOTIFY targetAddressChanged)
@@ -44,6 +46,7 @@ public:
     void setAllowMultipleDevices(bool enabled);
 
     QStringList targetAddresses() const { return m_targetAddresses; }
+    QVariantList selectedDevices() const;
     int selectedDevicesCount() const { return m_targetAddresses.size(); }
     QString connectedTargetName() const;
 
@@ -101,11 +104,13 @@ public slots:
     void openApp();
     void activate();
     void restartBluetooth();
+    void reloadSettingsFromGui();
 
 signals:
     void requestActivateWindow();
     void allowMultipleDevicesChanged(bool enabled);
     void targetAddressesChanged();
+    void selectedDevicesChanged();
     void selectedDevicesCountChanged();
     void connectedTargetNameChanged();
     void targetAddressChanged(const QString &address);
@@ -145,6 +150,7 @@ private:
     QTimer *m_delayedStopTimer = nullptr;
     QTimer *m_disconnectDebounceTimer = nullptr;
     QTimer *m_pollTimer = nullptr;
+    uint m_wakeupCookie = 0;
     qint64 m_lastFeedbackTime = 0;
 
     bool m_allowMultipleDevices = false;

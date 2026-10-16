@@ -3,7 +3,7 @@ TARGET = harbour-carhotspot
 # Single Source of Truth for Version: read directly from rpm spec file
 SPEC_FILE = $$_PRO_FILE_PWD_/rpm/harbour-carhotspot.spec
 APP_VERSION = $$system(sed -n -e 's/^Version:[[:space:]]*//p' $$SPEC_FILE)
-isEmpty(APP_VERSION): APP_VERSION = 0.3.2
+isEmpty(APP_VERSION): APP_VERSION = 0.4.0
 DEFINES += APP_VERSION=$$APP_VERSION
 
 CONFIG += sailfishapp c++17
@@ -17,6 +17,7 @@ SOURCES += \
     src/appcontroller.cpp
 
 HEADERS += \
+    src/timeddbus.h \
     src/bluetoothmanager.h \
     src/hotspotmanager.h \
     src/systemmonitor.h \
@@ -25,7 +26,7 @@ HEADERS += \
 target.path = /usr/bin
 
 qml.files = qml
-qml.path = /usr/share/TARGET
+qml.path = /usr/share/$$TARGET
 
 desktop.files = harbour-carhotspot.desktop
 desktop.path = /usr/share/applications
@@ -45,15 +46,8 @@ icon172.path = /usr/share/icons/hicolor/172x172/apps
 TRANSLATIONS += $$files(translations/*.ts)
 
 translations.files = translations/*.qm
-translations.path = /usr/share/TARGET/translations
+translations.path = /usr/share/$$TARGET/translations
 
-helper_bin.target = harbour-carhotspot-helper
-helper_bin.commands = $$QMAKE_CC $$QMAKE_CFLAGS -O2 $$_PRO_FILE_PWD_/src/helper.c -o harbour-carhotspot-helper
-QMAKE_EXTRA_TARGETS += helper_bin
-PRE_TARGETDEPS += harbour-carhotspot-helper
+INSTALLS += target qml desktop icon86 icon108 icon128 icon172 translations
 
-helper.files = harbour-carhotspot-helper
-helper.path = /usr/bin
-
-INSTALLS += target qml desktop icon86 icon108 icon128 icon172 translations helper
 

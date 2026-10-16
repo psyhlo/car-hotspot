@@ -2,7 +2,7 @@
 Type=Application
 X-Nemo-Application-Type=silica-qt5
 Icon=harbour-carhotspot
-Exec=/usr/bin/harbour-carhotspot
+Exec=harbour-carhotspot
 Name=Car Hotspot
 Name[bg]=Хотспот за кола
 Name[de]=Fahrzeug-Hotspot
@@ -12,7 +12,8 @@ Name[it]=Hotspot auto
 Name[ru]=Точка доступа авто
 Name[sv]=Mobil hotspot för bil
 Name[fi]=Auton yhteyspiste
-X-DBusActivatable=true
-DBusActivatable=true
+
 [X-Sailjail]
-Sandboxing=Disabled
+OrganizationName=harbour-carhotspot
+ApplicationName=harbour-carhotspot
+Permissions=Bluetooth;Internet

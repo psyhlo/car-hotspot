@@ -19,7 +19,26 @@ SystemMonitor::SystemMonitor(QObject *parent)
         SLOT(onOfonoPropertyChanged(QString, QVariant))
     );
 
-    // Connect to UPower DisplayDevice property changes
+    // Connect to Sailfish OS MCE battery and charger signals (permitted in Sailjail Base.permission)
+    QDBusConnection::systemBus().connect(
+        "com.nokia.mce",
+        "/com/nokia/mce/signal",
+        "com.nokia.mce.signal",
+        "battery_level_ind",
+        this,
+        SLOT(onMceBatteryLevelChanged(int))
+    );
+
+    QDBusConnection::systemBus().connect(
+        "com.nokia.mce",
+        "/com/nokia/mce/signal",
+        "com.nokia.mce.signal",
+        "charger_state_ind",
+        this,
+        SLOT(onMceChargerStateChanged(QString))
+    );
+
+    // Connect to UPower DisplayDevice property changes (fallback)
     QDBusConnection::systemBus().connect(
         "org.freedesktop.UPower",
         "/org/freedesktop/UPower/devices/DisplayDevice",
@@ -40,7 +59,28 @@ void SystemMonitor::refreshStatus()
 
 void SystemMonitor::queryBattery()
 {
-    // 1. Try UPower DisplayDevice via D-Bus
+    // 1. Primary: Sailfish OS MCE via D-Bus (works inside Sailjail Base.permission)
+    QDBusInterface mce(
+        "com.nokia.mce",
+        "/com/nokia/mce/request",
+        "com.nokia.mce.request",
+        QDBusConnection::systemBus()
+    );
+
+    if (mce.isValid()) {
+        QDBusReply<int> levelReply = mce.call("get_battery_level");
+        QDBusReply<QString> chargerReply = mce.call("get_charger_state");
+        if (levelReply.isValid() && levelReply.value() >= 0 && levelReply.value() <= 100) {
+            m_batteryPercentage = levelReply.value();
+            if (chargerReply.isValid()) {
+                m_isCharging = (chargerReply.value() == QLatin1String("on"));
+            }
+            emit batteryChanged(m_batteryPercentage, m_isCharging);
+            return;
+        }
+    }
+
+    // 2. Fallback: UPower DisplayDevice via D-Bus
     QDBusInterface upower(
         "org.freedesktop.UPower",
         "/org/freedesktop/UPower/devices/DisplayDevice",
@@ -60,7 +100,7 @@ void SystemMonitor::queryBattery()
         }
     }
 
-    // 2. Direct Linux sysfs fallback (/sys/class/power_supply/battery)
+    // 3. Fallback: Direct Linux sysfs (/sys/class/power_supply/battery)
     QFile capFile("/sys/class/power_supply/battery/capacity");
     if (capFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
         QTextStream in(&capFile);
@@ -169,6 +209,7 @@ void SystemMonitor::queryRoaming()
 
 void SystemMonitor::onOfonoPropertyChanged(const QString &name, const QVariant &value)
 {
+    Q_UNUSED(value);
     if (name == "Status") {
         queryRoaming();
     }
@@ -182,3 +223,21 @@ void SystemMonitor::onUpowerPropertyChanged(const QString &interface, const QVar
         queryBattery();
     }
 }
+
+void SystemMonitor::onMceBatteryLevelChanged(int level)
+{
+    if (level >= 0 && level <= 100 && m_batteryPercentage != level) {
+        m_batteryPercentage = level;
+        emit batteryChanged(m_batteryPercentage, m_isCharging);
+    }
+}
+
+void SystemMonitor::onMceChargerStateChanged(const QString &state)
+{
+    bool charging = (state == QLatin1String("on"));
+    if (m_isCharging != charging) {
+        m_isCharging = charging;
+        emit batteryChanged(m_batteryPercentage, m_isCharging);
+    }
+}
+

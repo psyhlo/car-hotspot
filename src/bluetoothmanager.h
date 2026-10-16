@@ -53,6 +53,7 @@ private slots:
     void onInterfacesRemoved(const QDBusObjectPath &objectPath, const QStringList &interfaces);
 
 private:
+    void setAdapterPoweredDbus(bool powered);
     void updateTargetStatus();
     QVariantList m_devices;
     QStringList m_targetAddresses;

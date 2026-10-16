@@ -339,6 +339,16 @@
         <translation>Избор на Bluetooth устройство на колата</translation>
     </message>
     <message>
+        <location filename="../qml/pages/MainPage.qml" line="270" />
+        <source>Selected Cars (%1)</source>
+        <translation>Избрани коли (%1)</translation>
+    </message>
+    <message>
+        <location filename="../qml/pages/MainPage.qml" line="271" />
+        <source>Selected Car</source>
+        <translation>Избрана кола</translation>
+    </message>
+    <message>
         <location filename="../qml/pages/MainPage.qml" line="272" />
         <source>Selected Cars (%1):
 %2</source>

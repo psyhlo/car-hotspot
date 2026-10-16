@@ -254,34 +254,133 @@ Page {
                 onCheckedChanged: appController.allowMultipleDevices = checked
             }
 
-            Label {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.leftMargin: Theme.horizontalPageMargin
-                anchors.rightMargin: Theme.horizontalPageMargin
-                text: {
-                    if (appController.allowMultipleDevices) {
-                        if (appController.selectedDevicesCount > 0) {
-                            var listStr = ""
-                            for (var i = 0; i < appController.targetAddresses.length; ++i) {
-                                var addr = appController.targetAddresses[i]
-                                var dname = appController.getDeviceName(addr)
-                                if (listStr.length > 0) listStr += ", "
-                                listStr += (dname !== "" ? dname : addr)
-                            }
-                            return qsTr("Selected Cars (%1):\n%2").arg(appController.selectedDevicesCount).arg(listStr)
-                        } else {
-                            return qsTr("No car Bluetooth devices selected yet. Choose from list below:")
-                        }
-                    } else {
-                        return appController.targetAddress !== ""
-                            ? qsTr("Selected Car: %1\n(%2)").arg(appController.targetName !== "" ? appController.targetName : qsTr("Car BT")).arg(appController.targetAddress)
-                            : qsTr("No car Bluetooth device selected yet. Choose from list below:")
+            // Selected Cars Visual Cards Section
+            Column {
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: Theme.paddingSmall
+
+                Row {
+                    width: parent.width
+                    visible: appController.selectedDevices.length > 0
+                    Label {
+                        width: parent.width - (clearAllBtn.visible ? clearAllBtn.width : 0)
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: appController.allowMultipleDevices
+                              ? qsTr("Selected Cars (%1)").arg(appController.selectedDevices.length)
+                              : qsTr("Selected Car")
+                        color: Theme.highlightColor
+                        font.pixelSize: Theme.fontSizeSmall
+                        font.bold: true
+                    }
+                    IconButton {
+                        id: clearAllBtn
+                        visible: appController.allowMultipleDevices && appController.selectedDevices.length > 1
+                        icon.source: "image://theme/icon-m-delete"
+                        width: Theme.iconSizeMedium
+                        height: Theme.iconSizeMedium
+                        onClicked: appController.clearDevices()
                     }
                 }
-                color: (appController.allowMultipleDevices ? appController.selectedDevicesCount > 0 : appController.targetAddress !== "") ? Theme.highlightColor : Theme.secondaryColor
-                wrapMode: Text.Wrap
-                font.pixelSize: Theme.fontSizeSmall
+
+                Rectangle {
+                    visible: appController.selectedDevices.length === 0
+                    width: parent.width
+                    height: emptyLabel.height + 2 * Theme.paddingMedium
+                    radius: Theme.paddingSmall
+                    color: Theme.rgba(Theme.highlightBackgroundColor, 0.1)
+
+                    Label {
+                        id: emptyLabel
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.margins: Theme.paddingMedium
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: appController.allowMultipleDevices
+                              ? qsTr("No car Bluetooth devices selected yet. Choose from list below:")
+                              : qsTr("No car Bluetooth device selected yet. Choose from list below:")
+                        color: Theme.secondaryColor
+                        wrapMode: Text.Wrap
+                        font.pixelSize: Theme.fontSizeSmall
+                    }
+                }
+
+                Repeater {
+                    model: appController.selectedDevices
+                    delegate: Rectangle {
+                        width: parent.width
+                        height: Theme.itemSizeSmall
+                        radius: Theme.paddingSmall
+                        color: Theme.rgba(modelData.connected ? "#00FF66" : Theme.highlightBackgroundColor,
+                                          modelData.connected ? 0.22 : 0.18)
+
+                        // Left accent indicator bar
+                        Rectangle {
+                            width: Theme.paddingSmall / 1.5
+                            height: parent.height
+                            radius: Theme.paddingSmall
+                            color: modelData.connected ? "#00FF66" : Theme.highlightColor
+                            anchors.left: parent.left
+                        }
+
+                        Row {
+                            anchors.fill: parent
+                            anchors.leftMargin: Theme.paddingMedium + Theme.paddingSmall
+                            anchors.rightMargin: Theme.paddingSmall
+                            spacing: Theme.paddingSmall
+
+                            // Live status dot
+                            Rectangle {
+                                width: Theme.paddingMedium
+                                height: width
+                                radius: width / 2
+                                color: modelData.connected ? "#00FF66" : Theme.highlightColor
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            Column {
+                                width: parent.width - removeCarBtn.width - Theme.paddingMedium * 3
+                                anchors.verticalCenter: parent.verticalCenter
+
+                                Row {
+                                    width: parent.width
+                                    spacing: Theme.paddingSmall
+
+                                    Label {
+                                        text: modelData.name
+                                        color: Theme.primaryColor
+                                        font.bold: true
+                                        font.pixelSize: Theme.fontSizeSmall
+                                        truncationMode: TruncationMode.Fade
+                                        width: Math.min(implicitWidth, parent.width - (modelData.connected ? 120 : 0))
+                                    }
+
+                                    Label {
+                                        visible: modelData.connected
+                                        text: qsTr("[connected]")
+                                        color: "#00FF66"
+                                        font.bold: true
+                                        font.pixelSize: Theme.fontSizeExtraSmall
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                }
+
+                                Label {
+                                    text: modelData.address
+                                    color: Theme.secondaryColor
+                                    font.pixelSize: Theme.fontSizeExtraSmall
+                                }
+                            }
+
+                            IconButton {
+                                id: removeCarBtn
+                                icon.source: "image://theme/icon-m-clear"
+                                anchors.verticalCenter: parent.verticalCenter
+                                onClicked: appController.removeDevice(modelData.address)
+                            }
+                        }
+                    }
+                }
             }
 
             // Manual MAC input option for full flexibility
@@ -349,52 +448,79 @@ Page {
                     id: deviceItem
                     contentHeight: Theme.itemSizeMedium
 
-                    property bool isSelected: appController.isDeviceSelected(modelData.address)
+                    // Directly reactive to both modelData.selected and appController.targetAddresses
+                    property bool isSelected: (modelData.selected === true) || (appController.targetAddresses.indexOf(modelData.address.toUpperCase()) !== -1)
 
                     Rectangle {
                         anchors.fill: parent
-                        color: Theme.rgba(Theme.highlightBackgroundColor, isSelected ? 0.35 : 0.0)
+                        color: Theme.rgba(Theme.highlightBackgroundColor, isSelected ? 0.30 : 0.0)
                     }
 
-                    Column {
+                    Row {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.leftMargin: Theme.horizontalPageMargin
                         anchors.rightMargin: Theme.horizontalPageMargin
                         anchors.verticalCenter: parent.verticalCenter
+                        spacing: Theme.paddingMedium
 
-                        Row {
-                            width: parent.width
-                            spacing: Theme.paddingSmall
+                        // Visual checkbox / selection indicator
+                        Rectangle {
+                            width: Theme.iconSizeSmall
+                            height: Theme.iconSizeSmall
+                            radius: appController.allowMultipleDevices ? Theme.paddingSmall / 1.5 : width / 2
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: isSelected ? Theme.highlightColor : "transparent"
+                            border.width: 2
+                            border.color: isSelected ? Theme.highlightColor : Theme.secondaryColor
 
-                            Label {
-                                text: modelData.name
-                                color: isSelected ? Theme.highlightColor : Theme.primaryColor
-                                font.bold: isSelected
-                                truncationMode: TruncationMode.Fade
-                                width: parent.width - (modelData.connected ? 140 : 0) - (isSelected ? 90 : 0) - Theme.paddingSmall * 2
-                            }
-
-                            Label {
+                            Rectangle {
                                 visible: isSelected
-                                text: qsTr("[CAR]")
-                                color: Theme.highlightColor
-                                font.bold: true
-                                font.pixelSize: Theme.fontSizeExtraSmall
-                            }
-
-                            Label {
-                                visible: modelData.connected
-                                text: qsTr("[connected]")
-                                color: "#00FF66"
-                                font.pixelSize: Theme.fontSizeExtraSmall
+                                width: parent.width * 0.5
+                                height: parent.height * 0.5
+                                radius: parent.radius / 2
+                                anchors.centerIn: parent
+                                color: Theme.primaryColor
                             }
                         }
 
-                        Label {
-                            text: modelData.address
-                            color: Theme.secondaryColor
-                            font.pixelSize: Theme.fontSizeExtraSmall
+                        Column {
+                            width: parent.width - Theme.iconSizeSmall - Theme.paddingMedium
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            Row {
+                                width: parent.width
+                                spacing: Theme.paddingSmall
+
+                                Label {
+                                    text: modelData.name
+                                    color: isSelected ? Theme.highlightColor : Theme.primaryColor
+                                    font.bold: isSelected
+                                    truncationMode: TruncationMode.Fade
+                                    width: parent.width - (modelData.connected ? 130 : 0) - (isSelected ? 85 : 0) - Theme.paddingSmall * 2
+                                }
+
+                                Label {
+                                    visible: isSelected
+                                    text: qsTr("[CAR]")
+                                    color: Theme.highlightColor
+                                    font.bold: true
+                                    font.pixelSize: Theme.fontSizeExtraSmall
+                                }
+
+                                Label {
+                                    visible: modelData.connected
+                                    text: qsTr("[connected]")
+                                    color: "#00FF66"
+                                    font.pixelSize: Theme.fontSizeExtraSmall
+                                }
+                            }
+
+                            Label {
+                                text: modelData.address
+                                color: Theme.secondaryColor
+                                font.pixelSize: Theme.fontSizeExtraSmall
+                            }
                         }
                     }
 

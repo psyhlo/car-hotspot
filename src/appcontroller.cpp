@@ -1,14 +1,17 @@
 #include "appcontroller.h"
+#include "timeddbus.h"
 #include <QDateTime>
-#include <QProcess>
 #include <QDir>
 #include <QFile>
+#include <QTextStream>
 #include <QStandardPaths>
 #include <QTimer>
 #include <QtDBus/QDBusMessage>
 #include <QtDBus/QDBusConnection>
+#include <QtDBus/QDBusConnectionInterface>
 #include <QtDBus/QDBusVariant>
 #include <QtDBus/QDBusInterface>
+#include <QtDBus/QDBusReply>
 #include <QDebug>
 
 AppController::AppController(bool isDaemon, QObject *parent)
@@ -16,6 +19,8 @@ AppController::AppController(bool isDaemon, QObject *parent)
     , m_isDaemon(isDaemon)
     , m_settings("harbour-carhotspot", "harbour-carhotspot")
 {
+    TimedDbus::registerTypes();
+
     // Migrate old settings if present
     QSettings oldSettings("harbour-hotspotincar", "harbour-hotspotincar");
     if (m_settings.allKeys().isEmpty() && !oldSettings.allKeys().isEmpty()) {
@@ -25,8 +30,19 @@ AppController::AppController(bool isDaemon, QObject *parent)
         m_settings.sync();
     }
 
+    if (m_isDaemon) {
+        // org.sailfishos.coveraction.* is explicitly permitted in Sailjail Base.permission
+        QDBusConnection::sessionBus().registerService("org.sailfishos.coveraction.carhotspot");
+        QDBusConnection::sessionBus().registerService("harbour.carhotspot.daemon");
+    }
+
     checkDaemonStatus();
     loadSettings();
+
+    // Ensure background user service is synced if autostart is enabled and we are not the daemon
+    if (!m_isDaemon && m_autostartService && !m_isDaemonActive) {
+        syncSystemdService(true);
+    }
 
     // If autoEnableBluetooth is turned on, give system boot 2 seconds to settle, then ensure Bluetooth is powered
     if (m_autoEnableBluetooth) {
@@ -40,12 +56,18 @@ AppController::AppController(bool isDaemon, QObject *parent)
         QTimer::singleShot(3000, &m_bluetooth, &BluetoothManager::connectTargetDevices);
     }
 
+    connect(this, &AppController::targetAddressesChanged,
+            this, &AppController::selectedDevicesChanged);
     connect(&m_bluetooth, &BluetoothManager::targetConnectionChanged,
             this, &AppController::onTargetConnectionChanged);
     connect(&m_bluetooth, &BluetoothManager::targetConnectionChanged,
             this, &AppController::connectedTargetNameChanged);
+    connect(&m_bluetooth, &BluetoothManager::targetConnectionChanged,
+            this, &AppController::selectedDevicesChanged);
     connect(&m_bluetooth, &BluetoothManager::devicesChanged,
             this, &AppController::onDevicesChanged);
+    connect(&m_bluetooth, &BluetoothManager::devicesChanged,
+            this, &AppController::selectedDevicesChanged);
     connect(&m_systemMonitor, &SystemMonitor::batteryChanged,
             this, &AppController::onBatteryChanged);
     connect(&m_systemMonitor, &SystemMonitor::roamingChanged,
@@ -55,8 +77,8 @@ AppController::AppController(bool isDaemon, QObject *parent)
         sendNotification(tr("Hotspot problem"), reason);
     });
 
-    // Automation timers are only active in the daemon process (or standalone GUI if daemon is disabled)
-    bool isHandlingAutomation = m_isDaemon || (!m_isDaemonActive && !m_autostartService);
+    // Automation timers are active in the daemon process, or in the main process when no external daemon is active
+    bool isHandlingAutomation = m_isDaemon || !m_isDaemonActive;
 
     // Check if target car is already connected at startup (only if handling automation)
     if (isHandlingAutomation && m_bluetooth.isTargetConnected() && !m_hotspot.isHotspotActive()) {
@@ -97,11 +119,11 @@ AppController::AppController(bool isDaemon, QObject *parent)
     }
 
     // Register D-Bus object so notification clicks and remote actions activate/open the app
-    QDBusConnection::sessionBus().registerService("harbour.carhotspot");
+    QDBusConnection::sessionBus().registerService("harbour-carhotspot.harbour-carhotspot");
     QDBusConnection::sessionBus().registerObject("/", this, QDBusConnection::ExportAllSlots);
 
     if (!m_isDaemon) {
-        QDBusConnection::sessionBus().registerService("harbour.carhotspot.ui");
+        QDBusConnection::sessionBus().registerService("org.sailfishos.coveraction.carhotspot_ui");
     }
 }
 
@@ -179,6 +201,25 @@ void AppController::saveSettings()
     m_settings.setValue("enableCellularAuto", m_enableCellularAuto);
     m_settings.setValue("vibrateOnConnect", m_vibrateOnConnect);
     m_settings.sync();
+
+    if (!m_isDaemon && m_isDaemonActive) {
+        QDBusMessage msg = QDBusMessage::createMethodCall(
+            "org.sailfishos.coveraction.carhotspot",
+            "/",
+            "org.sailfishos.coveraction.carhotspot",
+            "reloadSettingsFromGui"
+        );
+        QDBusConnection::sessionBus().call(msg, QDBus::NoBlock);
+    }
+}
+
+void AppController::reloadSettingsFromGui()
+{
+    if (m_isDaemon) {
+        m_settings.sync();
+        loadSettings();
+        reloadSharedLog();
+    }
 }
 
 void AppController::setAutoEnableBluetooth(bool enabled)
@@ -301,37 +342,70 @@ bool AppController::checkSafetyConditions(QString &reason)
 
 void AppController::checkDaemonStatus()
 {
-    QProcess p;
-    p.start("systemctl", QStringList() << "--user" << "is-active" << "harbour-carhotspot.service");
-    if (p.waitForFinished(1000)) {
-        QString out = p.readAllStandardOutput().trimmed();
-        bool active = (out == "active");
-        if (m_isDaemonActive != active) {
-            m_isDaemonActive = active;
-            emit isDaemonActiveChanged(m_isDaemonActive);
+    bool active = m_isDaemon;
+
+    if (!active) {
+        // Fast non-blocking D-Bus check if background daemon service is registered on session bus
+        // org.sailfishos.coveraction.carhotspot is visible inside Sailjail Base.permission
+        QDBusConnectionInterface *busIface = QDBusConnection::sessionBus().interface();
+        if (busIface && (busIface->isServiceRegistered("org.sailfishos.coveraction.carhotspot") ||
+                         busIface->isServiceRegistered("harbour.carhotspot.daemon"))) {
+            active = true;
         }
+    }
+
+    if (m_isDaemonActive != active) {
+        m_isDaemonActive = active;
+        emit isDaemonActiveChanged(m_isDaemonActive);
     }
 }
 
 void AppController::syncSystemdService(bool enable)
 {
-    QString configDir = QDir::homePath() + "/.config/systemd/user";
-    QString legacyServicePath = configDir + "/harbour-carhotspot.service";
-    if (QFile::exists(legacyServicePath)) {
-        QFile::remove(legacyServicePath);
-    }
+    QString home = QDir::homePath();
+    // Write unit template inside ~/.config/harbour-carhotspot (whitelisted by Sailjail)
+    QString appConfigDir = home + "/.config/harbour-carhotspot";
+    QDir().mkpath(appConfigDir);
+    QString stagedServicePath = appConfigDir + "/harbour-carhotspot.service";
 
     if (enable) {
-        QProcess::execute("systemctl", QStringList() << "--user" << "daemon-reload");
-        QProcess::execute("systemctl", QStringList() << "--user" << "enable" << "harbour-carhotspot.service");
-        QProcess::execute("systemctl", QStringList() << "--user" << "restart" << "harbour-carhotspot.service");
-        checkDaemonStatus();
+        QFile stagedFile(stagedServicePath);
+        if (stagedFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
+            QTextStream out(&stagedFile);
+            out << "[Unit]\n"
+                << "Description=Car Hotspot Background Bluetooth Monitor\n"
+                << "After=dbus.socket\n\n"
+                << "[Service]\n"
+                << "Type=simple\n"
+                << "ExecStart=/usr/bin/harbour-carhotspot --daemon\n"
+                << "Restart=always\n"
+                << "RestartSec=5\n\n"
+                << "[Install]\n"
+                << "WantedBy=user-session.target\n";
+            stagedFile.close();
+        }
+
+        // Install and start user systemd unit via com.nokia.time (permitted by Sailjail Base.permission)
+        TimedDbus::runInstantCommand(
+            QStringLiteral("mkdir -p %1/.config/systemd/user/user-session.target.wants && "
+                           "cp -f %1/.config/harbour-carhotspot/harbour-carhotspot.service %1/.config/systemd/user/harbour-carhotspot.service && "
+                           "ln -sf ../harbour-carhotspot.service %1/.config/systemd/user/user-session.target.wants/harbour-carhotspot.service && "
+                           "systemctl --user daemon-reload && "
+                           "systemctl --user restart harbour-carhotspot.service").arg(home)
+        );
+
+        QTimer::singleShot(1200, this, &AppController::checkDaemonStatus);
         sendNotification(tr("Car Hotspot"), tr("Background service is ACTIVE and monitoring Bluetooth"));
     } else {
-        QProcess::execute("systemctl", QStringList() << "--user" << "stop" << "harbour-carhotspot.service");
-        QProcess::execute("systemctl", QStringList() << "--user" << "disable" << "harbour-carhotspot.service");
-        QProcess::execute("systemctl", QStringList() << "--user" << "daemon-reload");
-        checkDaemonStatus();
+        TimedDbus::runInstantCommand(
+            QStringLiteral("systemctl --user stop harbour-carhotspot.service; "
+                           "systemctl --user disable harbour-carhotspot.service; "
+                           "rm -f %1/.config/systemd/user/user-session.target.wants/harbour-carhotspot.service "
+                           "%1/.config/systemd/user/harbour-carhotspot.service; "
+                           "systemctl --user daemon-reload").arg(home)
+        );
+        QFile::remove(stagedServicePath);
+        QTimer::singleShot(1200, this, &AppController::checkDaemonStatus);
         sendNotification(tr("Car Hotspot"), tr("Background service STOPPED"));
     }
 }
@@ -353,7 +427,7 @@ void AppController::sendNotification(const QString &summary, const QString &body
     hints.insert("x-nemo-preview-summary", summary);
     hints.insert("x-nemo-preview-body", body);
     hints.insert("sound-file", "message-new-email");
-    hints.insert("x-nemo-remote-action-default", "harbour.carhotspot / harbour.carhotspot openApp");
+    hints.insert("x-nemo-remote-action-default", "harbour-carhotspot.harbour-carhotspot / org.sailfishos.coveraction.carhotspot openApp");
 
     QStringList actions;
     actions << "default" << "";
@@ -377,16 +451,13 @@ void AppController::openApp()
     qDebug() << "AppController::openApp() called from notification. Daemon:" << m_isDaemon;
     if (m_isDaemon) {
         QDBusInterface guiApp(
-            "harbour.carhotspot.ui",
+            "org.sailfishos.coveraction.carhotspot_ui",
             "/",
-            "harbour.carhotspot.ui",
+            "org.sailfishos.coveraction.carhotspot",
             QDBusConnection::sessionBus()
         );
         if (guiApp.isValid()) {
-            guiApp.call("activate");
-        } else {
-            // Launch GUI application
-            QProcess::startDetached("/usr/bin/harbour-carhotspot");
+            guiApp.asyncCall("activate");
         }
     } else {
         emit requestActivateWindow();
@@ -396,6 +467,44 @@ void AppController::openApp()
 void AppController::activate()
 {
     openApp();
+}
+
+QVariantList AppController::selectedDevices() const
+{
+    QVariantList result;
+    const QVariantList btDevices = m_bluetooth.devices();
+
+    for (const QString &rawAddr : m_targetAddresses) {
+        QString addr = rawAddr.trimmed().toUpper();
+        if (addr.isEmpty())
+            continue;
+
+        QString name = m_targetNames.value(addr, addr);
+        bool connected = false;
+        bool paired = false;
+
+        for (const QVariant &v : btDevices) {
+            QVariantMap m = v.toMap();
+            if (m.value("address").toString().trimmed().toUpper() == addr) {
+                connected = m.value("connected", false).toBool();
+                paired = m.value("paired", false).toBool();
+                QString liveName = m.value("name").toString().trimmed();
+                if (!liveName.isEmpty()) {
+                    name = liveName;
+                }
+                break;
+            }
+        }
+
+        QVariantMap item;
+        item["address"] = addr;
+        item["name"] = name;
+        item["connected"] = connected;
+        item["paired"] = paired;
+        result.append(item);
+    }
+
+    return result;
 }
 
 void AppController::setAllowMultipleDevices(bool enabled)
@@ -579,12 +688,31 @@ void AppController::selectDevice(const QString &address, const QString &name)
 
 void AppController::toggleHotspotManual(bool active)
 {
+    if (!m_isDaemon && m_isDaemonActive) {
+        QDBusMessage msg = QDBusMessage::createMethodCall(
+            "org.sailfishos.coveraction.carhotspot",
+            "/",
+            "org.sailfishos.coveraction.carhotspot",
+            "toggleHotspotManual"
+        );
+        msg << active;
+        QDBusMessage reply = QDBusConnection::sessionBus().call(msg);
+        if (reply.type() != QDBusMessage::ErrorMessage) {
+            QTimer::singleShot(300, this, &AppController::reloadSharedLog);
+            return;
+        }
+    }
+
     // If manual toggle occurs, stop any running grace or debounce timer
     if (m_disconnectDebounceTimer && m_disconnectDebounceTimer->isActive()) {
         m_disconnectDebounceTimer->stop();
     }
     if (m_delayedStopTimer && m_delayedStopTimer->isActive()) {
         m_delayedStopTimer->stop();
+    }
+    if (m_wakeupCookie > 0) {
+        TimedDbus::cancelCookie(m_wakeupCookie);
+        m_wakeupCookie = 0;
     }
 
     if (active) {
@@ -671,7 +799,7 @@ void AppController::triggerFeedback()
         }
     }
 
-    // 2. Trigger Sailfish OS NGF (Non-Graphical Feedback) on SYSTEM bus
+    // 2. Trigger Sailfish OS NGF (Non-Graphical Feedback) on SYSTEM bus (permitted by Base.permission)
     QDBusInterface ngf(
         "com.nokia.NonGraphicFeedback1.Backend",
         "/",
@@ -680,11 +808,8 @@ void AppController::triggerFeedback()
     );
 
     if (ngf.isValid()) {
-        ngf.call("Play", "vibra", QVariantMap());
+        ngf.asyncCall("Play", QString("vibra"), QVariantMap());
     }
-
-    // 3. Direct timedclient vibration fallback
-    QProcess::startDetached("timedclient-qt5", QStringList() << "--vibrate" << "350");
 }
 
 void AppController::ensureCellularConnected()
@@ -692,7 +817,17 @@ void AppController::ensureCellularConnected()
     if (!m_enableCellularAuto)
         return;
 
-    // 1. Enable cellular technology via ConnMan
+    // 1. Request cellular connection via Connectiond (Sailfish OS session service running as privileged)
+    QDBusMessage connMsg = QDBusMessage::createMethodCall(
+        "com.jolla.Connectiond",
+        "/Connectiond",
+        "com.jolla.Connectiond",
+        "connectToType"
+    );
+    connMsg << QStringLiteral("cellular");
+    QDBusConnection::sessionBus().asyncCall(connMsg);
+
+    // 2. Enable cellular technology via ConnMan
     QDBusInterface cellTech(
         "net.connman",
         "/net/connman/technology/cellular",
@@ -701,18 +836,15 @@ void AppController::ensureCellularConnected()
     );
 
     if (cellTech.isValid()) {
-        cellTech.call("SetProperty", "Powered", QVariant::fromValue(QDBusVariant(true)));
+        cellTech.asyncCall("SetProperty", QString("Powered"), QVariant::fromValue(QDBusVariant(true)));
     }
-
-    // 2. Privileged helper fallback in case unprivileged call was blocked by D-Bus policy
-    QProcess::execute("/usr/bin/harbour-carhotspot-helper", QStringList() << "cellular-on");
 }
 
 void AppController::onTargetConnectionChanged(bool connected)
 {
-    // If background systemd daemon is active or configured to autostart, it handles connection automation.
-    // The GUI should NOT duplicate actions, timers, vibrations or notifications.
-    if (!m_isDaemon && (m_isDaemonActive || m_autostartService)) {
+    // If background daemon is currently active, it handles connection automation.
+    // When no separate daemon is active (e.g. Harbour / Sailjail mode), this process handles automation.
+    if (!m_isDaemon && m_isDaemonActive) {
         return;
     }
 
@@ -732,8 +864,12 @@ void AppController::onTargetConnectionChanged(bool connected)
         }
 
         // 2. If a delayed shutdown grace timer was ticking (driver returned within grace period):
-        if (m_delayedStopTimer && m_delayedStopTimer->isActive()) {
-            m_delayedStopTimer->stop();
+        if ((m_delayedStopTimer && m_delayedStopTimer->isActive()) || m_wakeupCookie > 0) {
+            if (m_delayedStopTimer) m_delayedStopTimer->stop();
+            if (m_wakeupCookie > 0) {
+                TimedDbus::cancelCookie(m_wakeupCookie);
+                m_wakeupCookie = 0;
+            }
             appendLog(QString("[%1] Reconnected to %2 within grace period. Hotspot maintained.").arg(timestamp, carLabel));
             // Hotspot was already active! Do NOT vibrate, do NOT send annoying popup notification.
             return;
@@ -782,7 +918,7 @@ void AppController::restartBluetooth()
 
 void AppController::onDisconnectDebounceTimeout()
 {
-    if (!m_isDaemon && (m_isDaemonActive || m_autostartService)) {
+    if (!m_isDaemon && m_isDaemonActive) {
         return;
     }
 
@@ -802,6 +938,10 @@ void AppController::onDisconnectDebounceTimeout()
             appendLog(QString("[%1] Starting turn-off grace timer (%2 min)...").arg(timestamp).arg(m_stopDelayMinutes));
             sendNotification(tr("Car Hotspot"), tr("%1 disconnected. Hotspot will turn OFF in %2 min").arg(carLabel).arg(m_stopDelayMinutes));
             m_delayedStopTimer->start(m_stopDelayMinutes * 60 * 1000);
+            if (m_wakeupCookie > 0) {
+                TimedDbus::cancelCookie(m_wakeupCookie);
+            }
+            m_wakeupCookie = TimedDbus::scheduleWakeup(m_stopDelayMinutes * 60);
         } else {
             appendLog(QString("[%1] Auto-disabling Hotspot immediately...").arg(timestamp));
             m_hotspot.setHotspotActive(false);
@@ -815,8 +955,13 @@ void AppController::onDisconnectDebounceTimeout()
 
 void AppController::onDelayedStopTimeout()
 {
-    if (!m_isDaemon && (m_isDaemonActive || m_autostartService)) {
+    if (!m_isDaemon && m_isDaemonActive) {
         return;
+    }
+
+    if (m_wakeupCookie > 0) {
+        TimedDbus::cancelCookie(m_wakeupCookie);
+        m_wakeupCookie = 0;
     }
 
     QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss");
@@ -835,7 +980,7 @@ void AppController::onDelayedStopTimeout()
 
 void AppController::onBatteryChanged(int percentage, bool charging)
 {
-    if (!m_isDaemon && (m_isDaemonActive || m_autostartService)) {
+    if (!m_isDaemon && m_isDaemonActive) {
         return;
     }
 
@@ -850,7 +995,7 @@ void AppController::onBatteryChanged(int percentage, bool charging)
 
 void AppController::onRoamingChanged(bool roaming)
 {
-    if (!m_isDaemon && (m_isDaemonActive || m_autostartService)) {
+    if (!m_isDaemon && m_isDaemonActive) {
         return;
     }
 

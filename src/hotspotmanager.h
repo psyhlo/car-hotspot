@@ -38,6 +38,7 @@ private slots:
 
 private:
     bool m_startFailureReported = false;
+    void enableWifiTetheringDbus();
     void restoreWifiStateIfNeeded();
 
     bool m_isHotspotActive = false;

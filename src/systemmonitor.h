@@ -29,6 +29,8 @@ signals:
 private slots:
     void onOfonoPropertyChanged(const QString &name, const QVariant &value);
     void onUpowerPropertyChanged(const QString &interface, const QVariantMap &changedProperties, const QStringList &invalidatedProperties);
+    void onMceBatteryLevelChanged(int level);
+    void onMceChargerStateChanged(const QString &state);
 
 private:
     void queryBattery();

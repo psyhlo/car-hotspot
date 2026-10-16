@@ -3,7 +3,7 @@
 #include <QtDBus/QDBusReply>
 #include <QtDBus/QDBusArgument>
 #include <QtDBus/QDBusMetaType>
-#include <QProcess>
+#include <QtDBus/QDBusVariant>
 #include <QDateTime>
 #include <QTimer>
 #include <QDebug>
@@ -50,6 +50,53 @@ BluetoothManager::BluetoothManager(QObject *parent)
     );
 
     refreshDevices();
+}
+
+void BluetoothManager::setAdapterPoweredDbus(bool powered)
+{
+    // 1. Official Sailfish OS session service for Bluetooth power control (permitted by Bluetooth.permission)
+    QDBusInterface jollaBt(
+        "com.jolla.Bluetooth",
+        "/BluetoothSessionControl",
+        "com.jolla.Bluetooth",
+        QDBusConnection::sessionBus()
+    );
+    if (jollaBt.isValid()) {
+        jollaBt.asyncCall(powered ? QStringLiteral("startSession") : QStringLiteral("endSession"));
+    } else {
+        // Activate com.jolla.Bluetooth via QDBusMessage if not yet running
+        QDBusMessage sessionMsg = QDBusMessage::createMethodCall(
+            "com.jolla.Bluetooth",
+            "/BluetoothSessionControl",
+            "com.jolla.Bluetooth",
+            powered ? QStringLiteral("startSession") : QStringLiteral("endSession")
+        );
+        QDBusConnection::sessionBus().asyncCall(sessionMsg);
+    }
+
+    // 2. Set ConnMan Bluetooth technology Powered state
+    QDBusInterface btTech(
+        "net.connman",
+        "/net/connman/technology/bluetooth",
+        "net.connman.Technology",
+        QDBusConnection::systemBus()
+    );
+    if (btTech.isValid()) {
+        btTech.asyncCall("SetProperty", QString("Powered"), QVariant::fromValue(QDBusVariant(powered)));
+    }
+
+    // 3. Set BlueZ Adapter1 Powered property directly via org.freedesktop.DBus.Properties
+    QString path = m_adapterPath.isEmpty() ? QStringLiteral("/org/bluez/hci0") : m_adapterPath;
+    QDBusMessage propMsg = QDBusMessage::createMethodCall(
+        "org.bluez",
+        path,
+        "org.freedesktop.DBus.Properties",
+        "Set"
+    );
+    propMsg << QStringLiteral("org.bluez.Adapter1")
+            << QStringLiteral("Powered")
+            << QVariant::fromValue(QDBusVariant(powered));
+    QDBusConnection::systemBus().asyncCall(propMsg);
 }
 
 bool BluetoothManager::isBluetoothPowered()
@@ -122,10 +169,15 @@ void BluetoothManager::ensureBluetoothPowered()
     }
     m_lastPowerOnAttempt = now;
 
-    qDebug() << "BluetoothManager: Bluetooth is OFF. Powering ON via privileged helper...";
+    qDebug() << "BluetoothManager: Bluetooth is OFF. Powering ON via D-Bus...";
+    setAdapterPoweredDbus(true);
 
-    // Power on asynchronously via privileged helper (NO SUDO!)
-    QProcess::startDetached("/usr/bin/harbour-carhotspot-helper", QStringList() << "bluetooth-on");
+    // Re-assert Adapter1 Powered after 900ms in case ConnMan took a moment to initialize the HCI adapter
+    QTimer::singleShot(900, this, [this]() {
+        if (!isBluetoothPowered()) {
+            setAdapterPoweredDbus(true);
+        }
+    });
 }
 
 void BluetoothManager::refreshDevices()
@@ -173,14 +225,15 @@ void BluetoothManager::refreshDevices()
 
             if (interfaces.contains("org.bluez.Device1")) {
                 const QVariantMap props = interfaces.value("org.bluez.Device1");
+                QString addr = props.value("Address").toString().trimmed().toUpper();
                 QVariantMap item;
                 item["path"] = path.path();
-                item["address"] = props.value("Address").toString();
-                item["name"] = props.value("Alias", props.value("Name", props.value("Address"))).toString();
+                item["address"] = addr;
+                item["name"] = props.value("Alias", props.value("Name", addr)).toString();
                 item["connected"] = props.value("Connected", false).toBool();
                 item["paired"] = props.value("Paired", false).toBool();
+                item["selected"] = m_targetAddressesSet.contains(addr);
                 list.append(item);
-                qDebug() << "Found Bluetooth device:" << item["name"] << item["address"];
             }
             arg.endMapEntry();
         }
@@ -218,6 +271,15 @@ void BluetoothManager::setTargetDevices(const QStringList &addresses)
 
     m_targetAddresses = cleanList;
     m_targetAddressesSet = cleanSet;
+
+    // Update "selected" property on all cached devices so QML Repeater updates immediately
+    for (int i = 0; i < m_devices.size(); ++i) {
+        QVariantMap map = m_devices[i].toMap();
+        QString addr = map.value("address").toString().trimmed().toUpper();
+        map["selected"] = m_targetAddressesSet.contains(addr);
+        m_devices[i] = map;
+    }
+    emit devicesChanged();
     updateTargetStatus();
 }
 
@@ -244,12 +306,13 @@ void BluetoothManager::updateTargetStatus()
     }
 
     bool connChanged = (m_isTargetConnected != foundConnected);
+    bool nameChanged = (m_connectedTargetName != activeName || m_connectedTargetAddress != activeAddress);
 
     m_isTargetConnected = foundConnected;
     m_connectedTargetAddress = activeAddress;
     m_connectedTargetName = activeName;
 
-    if (connChanged) {
+    if (connChanged || nameChanged) {
         emit targetConnectionChanged(m_isTargetConnected);
     }
 }
@@ -262,16 +325,26 @@ void BluetoothManager::restartBluetoothSubsystem()
 
     m_isRestartingBluetooth = true;
     emit restartingBluetoothChanged(true);
-    qDebug() << "BluetoothManager: Deep restart of Bluetooth subsystem requested...";
+    qDebug() << "BluetoothManager: Power-cycling Bluetooth adapter via D-Bus...";
 
-    // Run privileged helper directly (NO SUDO!)
-    QProcess::startDetached("/usr/bin/harbour-carhotspot-helper", QStringList() << "bluetooth-restart");
+    // Step 1: Power OFF Bluetooth technology and adapter via D-Bus
+    setAdapterPoweredDbus(false);
 
+    // Step 2: Power ON after 1500ms
+    QTimer::singleShot(1500, this, [this]() {
+        setAdapterPoweredDbus(true);
+    });
+
+    // Step 3: Refresh devices and complete restart after 3500ms
     QTimer::singleShot(3500, this, [this]() {
+        setAdapterPoweredDbus(true);
         refreshDevices();
         emit bluetoothPoweredChanged(isBluetoothPowered());
         m_isRestartingBluetooth = false;
         emit restartingBluetoothChanged(false);
+        if (isBluetoothPowered() && !m_isTargetConnected) {
+            connectTargetDevices();
+        }
     });
 }
 
