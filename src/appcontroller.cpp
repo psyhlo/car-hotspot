@@ -36,25 +36,15 @@ AppController::AppController(bool isDaemon, QObject *parent)
         QDBusConnection::sessionBus().registerService("harbour.carhotspot.daemon");
     }
 
+    m_delayedStopTimer = new QTimer(this);
+    m_delayedStopTimer->setSingleShot(true);
+    connect(m_delayedStopTimer, &QTimer::timeout, this, &AppController::onDelayedStopTimeout);
+
+    m_disconnectDebounceTimer = new QTimer(this);
+    m_disconnectDebounceTimer->setSingleShot(true);
+    connect(m_disconnectDebounceTimer, &QTimer::timeout, this, &AppController::onDisconnectDebounceTimeout);
+
     checkDaemonStatus();
-    loadSettings();
-
-    // Ensure background user service is synced if autostart is enabled and we are not the daemon
-    if (!m_isDaemon && m_autostartService && !m_isDaemonActive) {
-        syncSystemdService(true);
-    }
-
-    // If autoEnableBluetooth is turned on, give system boot 2 seconds to settle, then ensure Bluetooth is powered
-    if (m_autoEnableBluetooth) {
-        QTimer::singleShot(2000, this, [this]() {
-            if (m_autoEnableBluetooth && !m_bluetooth.isBluetoothPowered()) {
-                m_bluetooth.ensureBluetoothPowered();
-            }
-        });
-    } else if (m_bluetooth.isBluetoothPowered() && !m_bluetooth.isTargetConnected()) {
-        // Bluetooth already on at boot, proactively attempt to connect to target car
-        QTimer::singleShot(3000, &m_bluetooth, &BluetoothManager::connectTargetDevices);
-    }
 
     connect(this, &AppController::targetAddressesChanged,
             this, &AppController::selectedDevicesChanged);
@@ -72,41 +62,100 @@ AppController::AppController(bool isDaemon, QObject *parent)
             this, &AppController::onBatteryChanged);
     connect(&m_systemMonitor, &SystemMonitor::roamingChanged,
             this, &AppController::onRoamingChanged);
+    connect(&m_systemMonitor, &SystemMonitor::displayWokeUp, this, [this]() {
+        bool handlingAutomation = m_isDaemon || !m_isDaemonActive;
+        if (!handlingAutomation)
+            return;
+        if (m_autoEnableBluetooth && !m_bluetooth.isBluetoothPowered()) {
+            m_bluetooth.ensureBluetoothPowered();
+        }
+        m_bluetooth.refreshDevices();
+        m_hotspot.checkStatus();
+        if (m_bluetooth.isBluetoothPowered() && !m_bluetooth.isTargetConnected()) {
+            m_bluetooth.connectTargetDevices();
+        } else if (m_autoToggle && m_bluetooth.isTargetConnected() && !m_hotspot.isHotspotActive() && !m_manualOverrideOff) {
+            onTargetConnectionChanged(true);
+        }
+    });
     connect(&m_hotspot, &HotspotManager::hotspotStartFailed, this, [this](const QString &reason) {
         appendLog(QString("[%1] WARNING: %2").arg(QDateTime::currentDateTime().toString("hh:mm:ss"), reason));
         sendNotification(tr("Hotspot problem"), reason);
     });
 
+    loadSettings();
+
+    // Ensure background user service is synced if autostart is enabled and we are not the daemon
+    if (!m_isDaemon && m_autostartService && !m_isDaemonActive) {
+        syncSystemdService(true);
+    }
+
     // Automation timers are active in the daemon process, or in the main process when no external daemon is active
     bool isHandlingAutomation = m_isDaemon || !m_isDaemonActive;
+
+    // Proactively ensure Bluetooth / car connection at boot (3s and 10s after service start, once BlueZ is ready)
+    if (isHandlingAutomation) {
+        if (m_autoEnableBluetooth) {
+            QTimer::singleShot(2000, this, [this]() {
+                if (m_autoEnableBluetooth && !m_bluetooth.isBluetoothPowered()) {
+                    m_bluetooth.ensureBluetoothPowered();
+                }
+            });
+        }
+        for (int delayMs : {3000, 10000}) {
+            QTimer::singleShot(delayMs, this, [this]() {
+                if (m_autoEnableBluetooth && !m_bluetooth.isBluetoothPowered()) {
+                    m_bluetooth.ensureBluetoothPowered();
+                }
+                m_bluetooth.refreshDevices();
+                if (m_bluetooth.isBluetoothPowered() && !m_bluetooth.isTargetConnected()) {
+                    m_bluetooth.connectTargetDevices();
+                } else if (m_autoToggle && m_bluetooth.isTargetConnected() && !m_hotspot.isHotspotActive() && !m_manualOverrideOff) {
+                    onTargetConnectionChanged(true);
+                }
+            });
+        }
+    }
 
     // Check if target car is already connected at startup (only if handling automation)
     if (isHandlingAutomation && m_bluetooth.isTargetConnected() && !m_hotspot.isHotspotActive()) {
         onTargetConnectionChanged(true);
     }
 
-    m_delayedStopTimer = new QTimer(this);
-    m_delayedStopTimer->setSingleShot(true);
-    connect(m_delayedStopTimer, &QTimer::timeout, this, &AppController::onDelayedStopTimeout);
-
-    m_disconnectDebounceTimer = new QTimer(this);
-    m_disconnectDebounceTimer->setSingleShot(true);
-    connect(m_disconnectDebounceTimer, &QTimer::timeout, this, &AppController::onDisconnectDebounceTimeout);
-
     // Periodic watchdog timer: keeps monitoring Bluetooth and Hotspot even if system D-Bus signals are missed in background/lockscreen
     m_pollTimer = new QTimer(this);
     connect(m_pollTimer, &QTimer::timeout, this, [this]() {
-        if (m_autoEnableBluetooth && !m_bluetooth.isBluetoothPowered()) {
-            m_bluetooth.ensureBluetoothPowered();
-        }
-        m_bluetooth.refreshDevices();
-        m_hotspot.checkStatus();
         if (m_isDaemon) {
             m_settings.sync();
             loadSettings();
         } else {
             checkDaemonStatus();
             reloadSharedLog();
+        }
+
+        if (m_autoEnableBluetooth && !m_bluetooth.isBluetoothPowered()) {
+            m_bluetooth.ensureBluetoothPowered();
+        }
+        m_bluetooth.refreshDevices();
+        m_hotspot.checkStatus();
+
+        bool handlingAutomation = m_isDaemon || !m_isDaemonActive;
+        if (handlingAutomation && m_autoToggle) {
+            qint64 now = QDateTime::currentMSecsSinceEpoch();
+            if (m_bluetooth.isBluetoothPowered() && !m_bluetooth.isTargetConnected()) {
+                // Proactively attempt Bluetooth connection to paired car every 15s when not connected
+                if (now - m_lastAutoConnectAttempt >= 15000) {
+                    m_lastAutoConnectAttempt = now;
+                    m_bluetooth.connectTargetDevices();
+                }
+            } else if (m_bluetooth.isTargetConnected() && !m_hotspot.isHotspotActive() && !m_manualOverrideOff) {
+                bool timersIdle = (!m_disconnectDebounceTimer || !m_disconnectDebounceTimer->isActive()) &&
+                                  (!m_delayedStopTimer || !m_delayedStopTimer->isActive()) &&
+                                  (m_wakeupCookie == 0);
+                if (timersIdle && (now - m_lastAutoHotspotAttempt >= 15000)) {
+                    m_lastAutoHotspotAttempt = now;
+                    onTargetConnectionChanged(true);
+                }
+            }
         }
     });
     m_pollTimer->start(3000); // Poll every 3s
@@ -374,7 +423,7 @@ void AppController::syncSystemdService(bool enable)
             QTextStream out(&stagedFile);
             out << "[Unit]\n"
                 << "Description=Car Hotspot Background Bluetooth Monitor\n"
-                << "After=dbus.socket\n\n"
+                << "After=dbus.socket bluetooth.service connman.service\n\n"
                 << "[Service]\n"
                 << "Type=simple\n"
                 << "ExecStart=/usr/bin/harbour-carhotspot --daemon\n"
@@ -423,9 +472,14 @@ void AppController::sendNotification(const QString &summary, const QString &body
     );
 
     QVariantMap hints;
-    hints.insert("category", "x-nemo.general");
     hints.insert("x-nemo-preview-summary", summary);
     hints.insert("x-nemo-preview-body", body);
+    hints.insert("x-nemo-icon", "harbour-carhotspot");
+    hints.insert("x-nemo-item-count", 1);
+    hints.insert("x-nemo-priority", 100);
+    hints.insert("x-nemo-user-removable", true);
+    hints.insert("x-nemo-timestamp", QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
+    hints.insert("desktop-entry", "harbour-carhotspot");
     hints.insert("sound-file", "message-new-email");
     hints.insert("x-nemo-remote-action-default", "harbour-carhotspot.harbour-carhotspot / org.sailfishos.coveraction.carhotspot openApp");
 
@@ -440,7 +494,7 @@ void AppController::sendNotification(const QString &summary, const QString &body
     args << body;
     args << actions;
     args << hints;
-    args << (int)4000;
+    args << (int)-1; // -1 keeps the notification in the Events View / notification bar after the banner closes
 
     msg.setArguments(args);
     QDBusConnection::sessionBus().send(msg);
@@ -715,6 +769,8 @@ void AppController::toggleHotspotManual(bool active)
         m_wakeupCookie = 0;
     }
 
+    m_manualOverrideOff = !active;
+
     if (active) {
         QString failReason;
         if (!checkSafetyConditions(failReason)) {
@@ -931,6 +987,7 @@ void AppController::onDisconnectDebounceTimeout()
         return;
     }
 
+    m_manualOverrideOff = false;
     appendLog(QString("[%1] %2 disconnect confirmed.").arg(timestamp, carLabel));
 
     if (m_autoToggle && m_hotspot.isHotspotActive()) {

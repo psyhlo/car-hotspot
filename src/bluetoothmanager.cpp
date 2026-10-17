@@ -221,6 +221,18 @@ void BluetoothManager::refreshDevices()
                     qDebug() << "BluetoothManager: Detected Bluetooth adapter at" << m_adapterPath;
                     emit adapterPathChanged(m_adapterPath);
                 }
+                const QVariantMap adapterProps = interfaces.value("org.bluez.Adapter1");
+                if (adapterProps.contains("Powered")) {
+                    bool poweredNow = adapterProps.value("Powered", false).toBool();
+                    if (m_lastKnownPowered != poweredNow) {
+                        m_lastKnownPowered = poweredNow;
+                        emit bluetoothPoweredChanged(poweredNow);
+                        if (poweredNow && !m_isTargetConnected) {
+                            m_reconnectAttemptsLeft = 2;
+                            QTimer::singleShot(2000, this, &BluetoothManager::connectTargetDevices);
+                        }
+                    }
+                }
             }
 
             if (interfaces.contains("org.bluez.Device1")) {
@@ -365,7 +377,18 @@ void BluetoothManager::connectTargetDevices()
         return;
     }
 
+    qint64 now = QDateTime::currentMSecsSinceEpoch();
+    if (now - m_lastConnectAttempt < 8000) {
+        return;
+    }
+
     refreshDevices();
+    if (m_isTargetConnected) {
+        m_reconnectAttemptsLeft = 0;
+        return;
+    }
+
+    m_lastConnectAttempt = now;
 
     bool attempted = false;
     for (const QVariant &item : m_devices) {

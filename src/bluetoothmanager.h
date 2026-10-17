@@ -63,7 +63,9 @@ private:
     QString m_connectedTargetName;
     QString m_adapterPath;
     bool m_isRestartingBluetooth = false;
+    bool m_lastKnownPowered = false;
     qint64 m_lastPowerOnAttempt = 0;
+    qint64 m_lastConnectAttempt = 0;
     int m_reconnectAttemptsLeft = 0;
 };
 

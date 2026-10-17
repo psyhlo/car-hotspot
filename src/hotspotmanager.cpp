@@ -2,6 +2,7 @@
 #include "timeddbus.h"
 #include <QtDBus/QDBusInterface>
 #include <QtDBus/QDBusReply>
+#include <QDateTime>
 #include <QSettings>
 #include <QTimer>
 #include <QDebug>
@@ -47,21 +48,6 @@ bool HotspotManager::queryWifiPoweredState()
 
 void HotspotManager::enableWifiTetheringDbus()
 {
-    // 1. Invoke Connectiond (Sailfish OS session daemon, runs as privileged)
-    QDBusMessage startMsg = QDBusMessage::createMethodCall(
-        "com.jolla.Connectiond",
-        "/Connectiond",
-        "com.jolla.Connectiond",
-        "startTethering"
-    );
-    startMsg << QStringLiteral("wifi");
-    QDBusMessage connReply = QDBusConnection::sessionBus().call(startMsg);
-    if (connReply.type() == QDBusMessage::ErrorMessage) {
-        // Running inside Sailjail where session bus filters Connectiond -> trigger via com.nokia.time
-        TimedDbus::runInstantCommand(QStringLiteral("/usr/bin/dbus-send --session --type=method_call --dest=com.jolla.Connectiond /Connectiond com.jolla.Connectiond.startTethering string:wifi"));
-    }
-
-    // 2. Direct D-Bus call to ConnMan Wi-Fi Technology (permitted by Internet/Connman permission)
     QDBusInterface wifiTech(
         "net.connman",
         "/net/connman/technology/wifi",
@@ -69,15 +55,40 @@ void HotspotManager::enableWifiTetheringDbus()
         QDBusConnection::systemBus()
     );
 
+    bool isPowered = false;
+    bool isTethering = false;
     if (wifiTech.isValid()) {
         QDBusReply<QVariantMap> reply = wifiTech.call("GetProperties");
-        bool isPowered = reply.isValid() && reply.value().value("Powered", false).toBool();
-        bool isTethering = reply.isValid() && reply.value().value("Tethering", false).toBool();
-
-        if (isTethering) {
-            return;
+        if (reply.isValid()) {
+            isPowered = reply.value().value("Powered", false).toBool();
+            isTethering = reply.value().value("Tethering", false).toBool();
         }
+    }
 
+    if (isTethering) {
+        return;
+    }
+
+    // 1. Invoke Connectiond ONLY on initial attempt (when retryCount == 0 and Powered matches initial state).
+    // Calling startTethering again after Wi-Fi is already Powered=true causes Connectiond to overwrite
+    // its internal tetheringTechPowered=true setting and leave Wi-Fi ON when tethering stops!
+    if (m_watchdogRetryCount == 0 && (isPowered == m_wifiWasPowered)) {
+        QDBusMessage startMsg = QDBusMessage::createMethodCall(
+            "com.jolla.Connectiond",
+            "/Connectiond",
+            "com.jolla.Connectiond",
+            "startTethering"
+        );
+        startMsg << QStringLiteral("wifi");
+        QDBusMessage connReply = QDBusConnection::sessionBus().call(startMsg);
+        if (connReply.type() == QDBusMessage::ErrorMessage) {
+            // Running inside Sailjail where session bus filters Connectiond -> trigger via com.nokia.time
+            TimedDbus::runInstantCommand(QStringLiteral("/usr/bin/dbus-send --session --type=method_call --dest=com.jolla.Connectiond /Connectiond com.jolla.Connectiond.startTethering string:wifi"));
+        }
+    }
+
+    // 2. Direct D-Bus call to ConnMan Wi-Fi Technology (permitted by Internet/Connman permission)
+    if (wifiTech.isValid()) {
         if (!isPowered) {
             wifiTech.asyncCall("SetProperty", QString("Powered"), QVariant::fromValue(QDBusVariant(true)));
             // Give Wi-Fi chip 650ms to power on before enabling Access Point mode
@@ -146,6 +157,12 @@ void HotspotManager::checkStatus()
     } else if (m_isHotspotActive) {
         m_watchdogRetryCount = 0;
         m_startFailureReported = false;
+    } else if (!m_targetHotspotState && !m_isHotspotActive) {
+        QSettings settings("harbour-carhotspot", "harbour-carhotspot");
+        settings.sync();
+        if (settings.value("wifiStateNeedsRestoration", false).toBool()) {
+            restoreWifiStateIfNeeded();
+        }
     }
 }
 
@@ -161,6 +178,7 @@ void HotspotManager::updateHotspotState(bool active)
 
 void HotspotManager::setHotspotActive(bool active)
 {
+    bool wasTargetingActive = m_targetHotspotState;
     m_targetHotspotState = active;
     m_watchdogRetryCount = 0;
     m_startFailureReported = false;
@@ -168,11 +186,18 @@ void HotspotManager::setHotspotActive(bool active)
     emit statusMessageChanged(m_statusMessage);
 
     QSettings settings("harbour-carhotspot", "harbour-carhotspot");
+    settings.sync();
 
     if (active) {
-        // Only capture Wi-Fi powered state if tethering wasn't already running
-        if (!m_isHotspotActive) {
-            m_wifiWasPowered = queryWifiPoweredState();
+        // Only capture Wi-Fi powered state if tethering wasn't already running or starting
+        if (!m_isHotspotActive && !wasTargetingActive) {
+            bool pendingRestore = settings.value("wifiStateNeedsRestoration", false).toBool();
+            if (pendingRestore) {
+                // Previous hotspot session had Wi-Fi OFF and hadn't finished powering down yet
+                m_wifiWasPowered = false;
+            } else {
+                m_wifiWasPowered = queryWifiPoweredState();
+            }
             settings.setValue("wifiWasPoweredBeforeTethering", m_wifiWasPowered);
             settings.setValue("wifiStateNeedsRestoration", !m_wifiWasPowered);
             settings.sync();
@@ -185,6 +210,13 @@ void HotspotManager::setHotspotActive(bool active)
         // When turning off, clear failure flag and reset watchdog
         m_watchdogRetryCount = 0;
         m_startFailureReported = false;
+        m_lastStopTimestamp = QDateTime::currentMSecsSinceEpoch();
+
+        m_wifiWasPowered = settings.value("wifiWasPoweredBeforeTethering", false).toBool();
+        if (!m_wifiWasPowered) {
+            settings.setValue("wifiStateNeedsRestoration", true);
+            settings.sync();
+        }
 
         // 1. Invoke Connectiond stopTethering(type, keepPowered)
         // Passing m_wifiWasPowered tells Connectiond whether to leave Wi-Fi ON or turn it OFF!
@@ -213,6 +245,14 @@ void HotspotManager::setHotspotActive(bool active)
         if (wifiTech.isValid()) {
             wifiTech.asyncCall("SetProperty", QString("Tethering"), QVariant::fromValue(QDBusVariant(false)));
         }
+
+        // Schedule multi-stage Wi-Fi restoration checks so even if ConnMan/wpa_supplicant
+        // re-powers station mode ~1.5-3s after tearing down the AP, Wi-Fi is reliably turned OFF.
+        if (!m_wifiWasPowered) {
+            for (int delayMs : {1000, 2500, 4500}) {
+                QTimer::singleShot(delayMs, this, &HotspotManager::restoreWifiStateIfNeeded);
+            }
+        }
     }
 
     // Check status after initial 2000ms delay to give ConnMan time to change states
@@ -221,13 +261,15 @@ void HotspotManager::setHotspotActive(bool active)
 
 void HotspotManager::restoreWifiStateIfNeeded()
 {
-    // Guard 1: NEVER restore (turn off) Wi-Fi if Hotspot is currently active!
-    if (m_isHotspotActive) {
+    // Guard 1: NEVER restore (turn off) Wi-Fi if Hotspot is currently active or being enabled!
+    if (m_isHotspotActive || m_targetHotspotState) {
         qDebug() << "HotspotManager: restoreWifiStateIfNeeded skipped: Hotspot is currently active.";
         return;
     }
 
-    // Guard 2: Double check with ConnMan directly to ensure Tethering is genuinely stopped
+    // Guard 2: Query ConnMan directly for both Tethering and Powered states
+    bool tethering = false;
+    bool powered = false;
     QDBusInterface wifiTech(
         "net.connman",
         "/net/connman/technology/wifi",
@@ -237,7 +279,8 @@ void HotspotManager::restoreWifiStateIfNeeded()
     if (wifiTech.isValid()) {
         QDBusReply<QVariantMap> reply = wifiTech.call("GetProperties");
         if (reply.isValid()) {
-            bool tethering = reply.value().value("Tethering", false).toBool();
+            tethering = reply.value().value("Tethering", false).toBool();
+            powered = reply.value().value("Powered", false).toBool();
             if (tethering) {
                 qDebug() << "HotspotManager: restoreWifiStateIfNeeded aborted: ConnMan reports Tethering is still active!";
                 m_isHotspotActive = true;
@@ -249,40 +292,42 @@ void HotspotManager::restoreWifiStateIfNeeded()
 
     // Guard 3: Only restore if a restoration was explicitly scheduled by Car Hotspot
     QSettings settings("harbour-carhotspot", "harbour-carhotspot");
+    settings.sync();
     bool needsRestoration = settings.value("wifiStateNeedsRestoration", false).toBool();
     if (!needsRestoration) {
         return;
     }
 
-    // Clear restoration flag immediately so no other thread/process duplicates this
-    settings.setValue("wifiStateNeedsRestoration", false);
-    settings.sync();
-
     // Guard 4: Check if Wi-Fi was powered before tethering
-    bool wifiWasPowered = settings.value("wifiWasPoweredBeforeTethering", true).toBool();
+    bool wifiWasPowered = settings.value("wifiWasPoweredBeforeTethering", false).toBool();
     if (wifiWasPowered) {
         qDebug() << "HotspotManager: Wi-Fi was originally ON before tethering, leaving it ON.";
+        settings.setValue("wifiStateNeedsRestoration", false);
+        settings.sync();
         return;
     }
 
-    qDebug() << "HotspotManager: Wi-Fi was OFF before tethering. Powering off Wi-Fi technology now...";
+    qint64 elapsedSinceStop = QDateTime::currentMSecsSinceEpoch() - m_lastStopTimestamp;
 
-    // Ask Connectiond (which runs with privileged group) to ensure Wi-Fi is powered off
-    QDBusMessage stopMsg = QDBusMessage::createMethodCall(
-        "com.jolla.Connectiond",
-        "/Connectiond",
-        "com.jolla.Connectiond",
-        "stopTethering"
-    );
-    stopMsg << QStringLiteral("wifi") << false;
-    QDBusMessage connReply = QDBusConnection::sessionBus().call(stopMsg);
-    if (connReply.type() == QDBusMessage::ErrorMessage) {
-        TimedDbus::runInstantCommand(QStringLiteral("/usr/bin/dbus-send --session --type=method_call --dest=com.jolla.Connectiond /Connectiond com.jolla.Connectiond.stopTethering string:wifi boolean:false"));
+    // If Wi-Fi is already OFF and at least 3.5s have passed since tethering stopped
+    // (so ConnMan has finished its AP -> station mode transition), restoration is complete!
+    if (!powered) {
+        if (m_lastStopTimestamp == 0 || elapsedSinceStop >= 3500) {
+            settings.setValue("wifiStateNeedsRestoration", false);
+            settings.sync();
+            qDebug() << "HotspotManager: Confirmed Wi-Fi is OFF after tethering. Restoration complete.";
+        }
+        return;
     }
+
+    qDebug() << "HotspotManager: Wi-Fi was OFF before tethering but is currently ON. Powering off Wi-Fi technology now...";
 
     if (wifiTech.isValid()) {
         wifiTech.asyncCall("SetProperty", QString("Powered"), QVariant::fromValue(QDBusVariant(false)));
     }
+
+    // Verify again in 1500ms until ConnMan confirms Powered == false
+    QTimer::singleShot(1500, this, &HotspotManager::restoreWifiStateIfNeeded);
 
     emit restoreWifiRequested(false);
 }
@@ -296,17 +341,25 @@ void HotspotManager::onPropertyChanged(const QString &name, const QDBusVariant &
             if (m_isHotspotActive) {
                 m_watchdogRetryCount = 0;
                 m_startFailureReported = false;
+            } else {
+                m_lastStopTimestamp = QDateTime::currentMSecsSinceEpoch();
             }
             emit hotspotActiveChanged(m_isHotspotActive);
             m_statusMessage = m_isHotspotActive ? "Hotspot is ON" : "Hotspot is OFF";
             emit statusMessageChanged(m_statusMessage);
 
-            if (!tethering) {
-                // When ConnMan reports tethering actually stopped, restore Wi-Fi
-                QTimer::singleShot(800, this, [this]() {
-                    restoreWifiStateIfNeeded();
-                });
+            if (!tethering && !m_targetHotspotState) {
+                // When ConnMan reports tethering actually stopped, restore Wi-Fi across transition window
+                for (int delayMs : {800, 2200, 4000}) {
+                    QTimer::singleShot(delayMs, this, &HotspotManager::restoreWifiStateIfNeeded);
+                }
             }
+        }
+    } else if (name == "Powered") {
+        bool powered = value.variant().toBool();
+        if (powered && !m_isHotspotActive && !m_targetHotspotState) {
+            // If ConnMan/Connectiond re-powered Wi-Fi right after AP teardown while restoration is pending, turn it back off
+            QTimer::singleShot(500, this, &HotspotManager::restoreWifiStateIfNeeded);
         }
     }
 }

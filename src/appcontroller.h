@@ -152,6 +152,9 @@ private:
     QTimer *m_pollTimer = nullptr;
     uint m_wakeupCookie = 0;
     qint64 m_lastFeedbackTime = 0;
+    qint64 m_lastAutoConnectAttempt = 0;
+    qint64 m_lastAutoHotspotAttempt = 0;
+    bool m_manualOverrideOff = false;
 
     bool m_allowMultipleDevices = false;
     QStringList m_targetAddresses;

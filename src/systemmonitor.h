@@ -25,12 +25,14 @@ public slots:
 signals:
     void batteryChanged(int percentage, bool charging);
     void roamingChanged(bool roaming);
+    void displayWokeUp();
 
 private slots:
     void onOfonoPropertyChanged(const QString &name, const QVariant &value);
     void onUpowerPropertyChanged(const QString &interface, const QVariantMap &changedProperties, const QStringList &invalidatedProperties);
     void onMceBatteryLevelChanged(int level);
     void onMceChargerStateChanged(const QString &state);
+    void onMceDisplayStatusChanged(const QString &state);
 
 private:
     void queryBattery();

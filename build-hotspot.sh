@@ -32,6 +32,7 @@ usage() {
 Опции за устройство (Jolla Phone 2026):
   run-device        Компилира, инсталира и пуска приложението на телефона директно
   deploy-device     Компилира и инсталира пакета на телефона (без стартиране)
+  refresh-icons     Рестартира home screen-а (lipstick), за да се покаже обновена иконка
   device-shell      Отваря интерактивен SSH шел на телефона (или изпълнява команда)
   device-logs       Следи системния дневник (journalctl) на телефона в реално време
 
@@ -147,16 +148,16 @@ case "$COMMAND" in
         fi
 
         echo "🚀 Прехвърляне и инсталиране на телефона ($RPM_FILE)..."
-        SSH_OPTS="-o BatchMode=yes -o StrictHostKeyChecking=no"
+        SSH_OPTS="-F /dev/null -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=no"
         if [ -f "$SSH_SDK_KEY" ]; then
             SSH_OPTS="$SSH_OPTS -i $SSH_SDK_KEY"
         fi
 
-        scp $SSH_OPTS "$RPM_FILE" "defaultuser@$DEVICE_IP:/tmp/app.rpm"
-        ssh $SSH_OPTS "root@$DEVICE_IP" "pkcon -y install-local /tmp/app.rpm"
+        SSH_AUTH_SOCK="" scp $SSH_OPTS "$RPM_FILE" "defaultuser@$DEVICE_IP:/tmp/app.rpm"
+        SSH_AUTH_SOCK="" ssh $SSH_OPTS "root@$DEVICE_IP" "pkcon -y install-local /tmp/app.rpm"
 
         echo "🎉 Стартиране на Car Hotspot на екрана на телефона..."
-        ssh $SSH_OPTS "defaultuser@$DEVICE_IP" "killall harbour-carhotspot 2>/dev/null || true; nohup invoker --type=silica-qt5 -d 5 /usr/bin/harbour-carhotspot >/dev/null 2>&1 &"
+        SSH_AUTH_SOCK="" ssh $SSH_OPTS "defaultuser@$DEVICE_IP" "systemctl --user restart harbour-carhotspot.service 2>/dev/null || true; sleep 1; nohup invoker --type=silica-qt5 --id=harbour-carhotspot --single-instance /usr/bin/harbour-carhotspot >/dev/null 2>&1 &"
         echo "✅ Приложението стартира на телефона!"
         ;;
     deploy-device|device-deploy)
@@ -173,31 +174,51 @@ case "$COMMAND" in
         sfdk package
 
         RPM_FILE="$(ls -1t RPMS/harbour-carhotspot-[0-9]*.aarch64.rpm 2>/dev/null | head -n 1)"
-        SSH_OPTS="-o BatchMode=yes -o StrictHostKeyChecking=no"
+        SSH_OPTS="-F /dev/null -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=no"
         if [ -f "$SSH_SDK_KEY" ]; then
             SSH_OPTS="$SSH_OPTS -i $SSH_SDK_KEY"
         fi
 
         echo "🚀 Прехвърляне и инсталиране на телефона ($RPM_FILE)..."
-        scp $SSH_OPTS "$RPM_FILE" "defaultuser@$DEVICE_IP:/tmp/app.rpm"
-        ssh $SSH_OPTS "root@$DEVICE_IP" "pkcon -y install-local /tmp/app.rpm"
-        ssh $SSH_OPTS "defaultuser@$DEVICE_IP" "killall -9 harbour-carhotspot 2>/dev/null || true; sleep 1; nohup invoker --type=silica-qt5 -d 5 /usr/bin/harbour-carhotspot >/dev/null 2>&1 &"
-        echo "✅ Пакетът е инсталиран успешно и приложението е рестартирано на телефона."
+        SSH_AUTH_SOCK="" scp $SSH_OPTS "$RPM_FILE" "defaultuser@$DEVICE_IP:/tmp/app.rpm"
+        SSH_AUTH_SOCK="" ssh $SSH_OPTS "root@$DEVICE_IP" "pkcon -y install-local /tmp/app.rpm"
+        SSH_AUTH_SOCK="" ssh $SSH_OPTS "defaultuser@$DEVICE_IP" "systemctl --user restart harbour-carhotspot.service 2>/dev/null || true"
+        echo "✅ Пакетът е инсталиран успешно и фоновият сървис е рестартиран на телефона."
+        ;;
+    refresh-icons)
+        echo "📱 Проверка на връзката с Jolla Phone на $DEVICE_IP..."
+        if ! ping -c 1 -W 2 "$DEVICE_IP" >/dev/null 2>&1; then
+            echo "❌ Грешка: Няма връзка с телефон на адрес $DEVICE_IP."
+            exit 1
+        fi
+
+        SSH_OPTS="-F /dev/null -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=no"
+        if [ -f "$SSH_SDK_KEY" ]; then
+            SSH_OPTS="$SSH_OPTS -i $SSH_SDK_KEY"
+        fi
+
+        echo "🔄 Рестартиране на home screen (lipstick) на телефона..."
+        SSH_AUTH_SOCK="" ssh $SSH_OPTS "defaultuser@$DEVICE_IP" "systemctl --user restart lipstick" || {
+            echo "⚠️  Неуспешен рестарт на lipstick. Опитвам през killall..."
+            SSH_AUTH_SOCK="" ssh $SSH_OPTS "defaultuser@$DEVICE_IP" "killall lipstick 2>/dev/null || true"
+        }
+        echo "✅ Home screen-ът е рестартиран. Новата иконка трябва да се покаже до няколко секунди."
+        echo "   Ако иконката все още е стара, рестартирайте телефона: ssh $DEVICE_IP reboot"
         ;;
     device-shell)
-        SSH_OPTS="-o StrictHostKeyChecking=no"
+        SSH_OPTS="-F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
         if [ -f "$SSH_SDK_KEY" ]; then
             SSH_OPTS="$SSH_OPTS -i $SSH_SDK_KEY"
         fi
         shift || true
-        ssh $SSH_OPTS "defaultuser@$DEVICE_IP" "$@"
+        SSH_AUTH_SOCK="" ssh $SSH_OPTS "defaultuser@$DEVICE_IP" "$@"
         ;;
     device-logs)
-        SSH_OPTS="-o StrictHostKeyChecking=no"
+        SSH_OPTS="-F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
         if [ -f "$SSH_SDK_KEY" ]; then
             SSH_OPTS="$SSH_OPTS -i $SSH_SDK_KEY"
         fi
-        ssh $SSH_OPTS "defaultuser@$DEVICE_IP" "journalctl -f | grep harbour-carhotspot"
+        SSH_AUTH_SOCK="" ssh $SSH_OPTS "defaultuser@$DEVICE_IP" "journalctl -f | grep harbour-carhotspot"
         ;;
     emulator-start)
         echo "📱 Стартиране на емулатора..."

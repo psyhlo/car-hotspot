@@ -1,9 +1,9 @@
 Name:       harbour-carhotspot
 Summary:    Car Hotspot for Sailfish OS
-Version:    0.4.0
+Version:    0.4.1
 Release:    1
 License:    GPLv3
-URL:        https://github.com/milen/Sailfish
+URL:        https://github.com/psyhlo/car-hotspot
 Source0:    %{name}-%{version}.tar.bz2
 Requires:   sailfishsilica-qt5 >= 0.10.9
 BuildRequires:  pkgconfig(sailfishapp) >= 1.0.2
@@ -44,6 +44,11 @@ desktop-file-install --delete-original \
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Sat Oct 17 2026 Milen <milen@github.com> - 0.4.1-1
+- Fix background service car Bluetooth auto-reconnect after device reboot and screen wakeups
+- Fix Wi-Fi remaining powered on in client mode after Hotspot shuts down
+- Fix notifications disappearing instead of staying in the Events View notification bar
+
 * Fri Oct 16 2026 Milen <milen@github.com> - 0.4.0-1
 - Pure D-Bus Harbour-compliant architecture for Sailfish OS 5.2
 - Redesigned Multiple Car Devices selection and status UI

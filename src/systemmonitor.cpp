@@ -38,6 +38,15 @@ SystemMonitor::SystemMonitor(QObject *parent)
         SLOT(onMceChargerStateChanged(QString))
     );
 
+    QDBusConnection::systemBus().connect(
+        "com.nokia.mce",
+        "/com/nokia/mce/signal",
+        "com.nokia.mce.signal",
+        "display_status_ind",
+        this,
+        SLOT(onMceDisplayStatusChanged(QString))
+    );
+
     // Connect to UPower DisplayDevice property changes (fallback)
     QDBusConnection::systemBus().connect(
         "org.freedesktop.UPower",
@@ -240,4 +249,12 @@ void SystemMonitor::onMceChargerStateChanged(const QString &state)
         emit batteryChanged(m_batteryPercentage, m_isCharging);
     }
 }
+
+void SystemMonitor::onMceDisplayStatusChanged(const QString &state)
+{
+    if (state == QLatin1String("on")) {
+        emit displayWokeUp();
+    }
+}
+
 
