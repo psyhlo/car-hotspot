@@ -7,6 +7,7 @@ Makefile*
 *.tar.bz2
 .sfdk/
 RPMS/
+RPMS-sfos5.0/
 BUILD/
 BUILDROOT/
 SOURCES/

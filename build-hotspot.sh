@@ -43,7 +43,8 @@ usage() {
 
 Основни опции за компилация:
   build             Компилира проекта за текущия активен target
-  build-all         Компилира RPM пакети за двете архитектури (aarch64 и armv7hl)
+  build-all         Компилира RPM пакети за aarch64, armv7hl (5.1+) и armv7hl (5.0)
+  build-sfos50      Компилира armv7hl RPM съвместим със Sailfish OS 4.x / 5.0 (в RPMS-sfos5.0/)
   package           Компилира и създава RPM пакет (в директория RPMS/)
   clean             Изчиства генерираните build файлове
   targets           Показва списък с инсталираните build targets
@@ -101,16 +102,54 @@ case "$COMMAND" in
         fi
         ;;
     build-all)
-        echo "🔨 Компилиране за aarch64..."
-        rm -f *.o moc_* harbour-carhotspot
-        sfdk config target=SailfishOS-5.1.0.11-aarch64
-        sfdk build
-        echo "🔨 Компилиране за armv7hl..."
-        rm -f *.o moc_* harbour-carhotspot
-        sfdk config target=SailfishOS-5.1.0.11-armv7hl
-        sfdk build
+        echo "🔨 Компилиране за aarch64 (Sailfish OS 5.1+)..."
+        rm -f Makefile *.o moc_* harbour-carhotspot
+        sfdk -c target=SailfishOS-5.1.0.11-aarch64 -c device= build
+        echo "🔨 Компилиране за armv7hl (Sailfish OS 5.1+)..."
+        rm -f Makefile *.o moc_* harbour-carhotspot
+        sfdk -c target=SailfishOS-5.1.0.11-armv7hl -c device= build
+        if sfdk tools list | grep -q "SailfishOS-5.0.0.62-armv7hl"; then
+            echo "🔨 Компилиране за armv7hl (Sailfish OS 4.x / 5.0 съвместима версия)..."
+            mkdir -p /tmp/rpms_sfos51_backup RPMS-sfos5.0
+            cp -a RPMS/*.rpm /tmp/rpms_sfos51_backup/
+            rm -f Makefile *.o moc_* harbour-carhotspot
+            sfdk -c target=SailfishOS-5.0.0.62-armv7hl -c device= build
+            ARMV7_RPM="$(ls -1t RPMS/harbour-carhotspot-[0-9]*.armv7hl.rpm 2>/dev/null | head -n 1)"
+            if [ -n "$ARMV7_RPM" ]; then
+                BASE_RPM="$(basename "$ARMV7_RPM")"
+                SFOS50_RPM="${BASE_RPM%.armv7hl.rpm}.sfos5.0.armv7hl.rpm"
+                cp -a "$ARMV7_RPM" "RPMS-sfos5.0/$BASE_RPM"
+                cp -a "$ARMV7_RPM" "RPMS-sfos5.0/$SFOS50_RPM"
+            fi
+            cp -a /tmp/rpms_sfos51_backup/*.rpm RPMS/
+            rm -rf /tmp/rpms_sfos51_backup
+        fi
+        rm -f Makefile *.o moc_* harbour-carhotspot
         echo "✅ Готово! Всички RPM пакети:"
-        ls -lh RPMS/*.rpm
+        ls -lh RPMS/*.rpm RPMS-sfos5.0/*.rpm 2>/dev/null || true
+        ;;
+    build-sfos50)
+        echo "🔨 Компилиране на armv7hl пакет за Sailfish OS 4.x / 5.0 (glibc 2.30)..."
+        if ! sfdk tools list | grep -q "SailfishOS-5.0.0.62-armv7hl"; then
+            echo "📥 Инсталиране на SDK таргет SailfishOS-5.0.0.62-armv7hl..."
+            sfdk tools install SailfishOS-5.0.0.62-armv7hl
+        fi
+        mkdir -p /tmp/rpms_sfos51_backup RPMS-sfos5.0
+        cp -a RPMS/*.rpm /tmp/rpms_sfos51_backup/ 2>/dev/null || true
+        rm -f Makefile *.o moc_* harbour-carhotspot
+        sfdk -c target=SailfishOS-5.0.0.62-armv7hl -c device= build
+        ARMV7_RPM="$(ls -1t RPMS/harbour-carhotspot-[0-9]*.armv7hl.rpm 2>/dev/null | head -n 1)"
+        if [ -n "$ARMV7_RPM" ]; then
+            BASE_RPM="$(basename "$ARMV7_RPM")"
+            SFOS50_RPM="${BASE_RPM%.armv7hl.rpm}.sfos5.0.armv7hl.rpm"
+            cp -a "$ARMV7_RPM" "RPMS-sfos5.0/$BASE_RPM"
+            cp -a "$ARMV7_RPM" "RPMS-sfos5.0/$SFOS50_RPM"
+        fi
+        cp -a /tmp/rpms_sfos51_backup/*.rpm RPMS/ 2>/dev/null || true
+        rm -rf /tmp/rpms_sfos51_backup
+        rm -f Makefile *.o moc_* harbour-carhotspot
+        echo "✅ Готово! Пакети за Sailfish OS 5.0 в RPMS-sfos5.0/:"
+        ls -lh RPMS-sfos5.0/*.rpm
         ;;
     set-emulator)
         TARGET="$(sfdk tools list | grep -oE "[a-zA-Z0-9._-]*(i486|x86_64)[a-zA-Z0-9._-]*" | head -n 1)"
