@@ -17,6 +17,8 @@ public:
     explicit HotspotManager(QObject *parent = nullptr);
 
     bool isHotspotActive() const { return m_isHotspotActive; }
+    // An enable request that ConnMan has not confirmed yet (AP initializing / watchdog retries)
+    bool startPending() const { return m_targetHotspotState && !m_isHotspotActive; }
     QString statusMessage() const { return m_statusMessage; }
     bool wifiWasPoweredBefore() const { return m_wifiWasPowered; }
 

@@ -97,6 +97,10 @@
         <source>Roaming detected! Wi-Fi Hotspot turned off to avoid extra carrier charges.</source>
         <translation>Roaming detected! Wi-Fi Hotspot turned off to avoid extra carrier charges.</translation>
     </message>
+    <message>
+        <source>Hotspot problem</source>
+        <translation>Težava z dostopno točko</translation>
+    </message>
 </context>
 <context>
     <name>CoverPage</name>
@@ -430,7 +434,15 @@
         <source>Turn Hotspot ON</source>
         <translation>Vklopi točko</translation>
     </message>
-    </context>
+        <message>
+        <source>Selected Car</source>
+        <translation>Izbrani avtomobil</translation>
+    </message>
+    <message>
+        <source>Selected Cars (%1)</source>
+        <translation>Izbrani avtomobili (%1)</translation>
+    </message>
+</context>
 <context>
     <name>ToolsPage</name>
     <message>
@@ -492,6 +504,14 @@
         <location filename="../qml/pages/ToolsPage.qml" line="79" />
         <source>System Diagnostics Log</source>
         <translation>Dnevnik diagnostike sistema</translation>
+    </message>
+    <message>
+        <source>Recovering Bluetooth subsystem...</source>
+        <translation>Obnovovanje podsistema Bluetooth...</translation>
+    </message>
+    <message>
+        <source>Restarting Bluetooth...</source>
+        <translation>Znova zaganjanje Bluetooth...</translation>
     </message>
 </context>
 </TS>

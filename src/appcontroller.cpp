@@ -6,6 +6,8 @@
 #include <QTextStream>
 #include <QStandardPaths>
 #include <QTimer>
+#include <QEvent>
+#include <QGuiApplication>
 #include <QtDBus/QDBusMessage>
 #include <QtDBus/QDBusConnection>
 #include <QtDBus/QDBusConnectionInterface>
@@ -66,16 +68,24 @@ AppController::AppController(bool isDaemon, QObject *parent)
         bool handlingAutomation = m_isDaemon || !m_isDaemonActive;
         if (!handlingAutomation)
             return;
+        // Waking up the display means the user is near the phone/car: stop backing off.
+        m_autoConnectBackoffMs = AUTO_CONNECT_BASE_MS;
+        m_lastAutoConnectAttempt = 0;
         if (m_autoEnableBluetooth && !m_bluetooth.isBluetoothPowered()) {
             m_bluetooth.ensureBluetoothPowered();
         }
         m_bluetooth.refreshDevices();
         m_hotspot.checkStatus();
+        m_lastHotspotCheck = QDateTime::currentMSecsSinceEpoch();
         if (m_bluetooth.isBluetoothPowered() && !m_bluetooth.isTargetConnected()) {
             m_bluetooth.connectTargetDevices();
         } else if (m_autoToggle && m_bluetooth.isTargetConnected() && !m_hotspot.isHotspotActive() && !m_manualOverrideOff) {
             onTargetConnectionChanged(true);
         }
+        updatePollInterval();
+    });
+    connect(&m_hotspot, &HotspotManager::hotspotActiveChanged, this, [this]() {
+        updatePollInterval();
     });
     connect(&m_hotspot, &HotspotManager::hotspotStartFailed, this, [this](const QString &reason) {
         appendLog(QString("[%1] WARNING: %2").arg(QDateTime::currentDateTime().toString("hh:mm:ss"), reason));
@@ -121,44 +131,18 @@ AppController::AppController(bool isDaemon, QObject *parent)
         onTargetConnectionChanged(true);
     }
 
-    // Periodic watchdog timer: keeps monitoring Bluetooth and Hotspot even if system D-Bus signals are missed in background/lockscreen
+    // Periodic watchdog timer: keeps monitoring Bluetooth and Hotspot even if system D-Bus
+    // signals are missed in background/lockscreen. Runs at 3s only while something is in
+    // flight, otherwise at 10s - see pollTick()/updatePollInterval().
     m_pollTimer = new QTimer(this);
-    connect(m_pollTimer, &QTimer::timeout, this, [this]() {
-        if (m_isDaemon) {
-            m_settings.sync();
-            loadSettings();
-        } else {
-            checkDaemonStatus();
-            reloadSharedLog();
-        }
+    connect(m_pollTimer, &QTimer::timeout, this, &AppController::pollTick);
+    m_pollTimer->start(POLL_BUSY_MS);
+    updatePollInterval();
 
-        if (m_autoEnableBluetooth && !m_bluetooth.isBluetoothPowered()) {
-            m_bluetooth.ensureBluetoothPowered();
-        }
-        m_bluetooth.refreshDevices();
-        m_hotspot.checkStatus();
-
-        bool handlingAutomation = m_isDaemon || !m_isDaemonActive;
-        if (handlingAutomation && m_autoToggle) {
-            qint64 now = QDateTime::currentMSecsSinceEpoch();
-            if (m_bluetooth.isBluetoothPowered() && !m_bluetooth.isTargetConnected()) {
-                // Proactively attempt Bluetooth connection to paired car every 15s when not connected
-                if (now - m_lastAutoConnectAttempt >= 15000) {
-                    m_lastAutoConnectAttempt = now;
-                    m_bluetooth.connectTargetDevices();
-                }
-            } else if (m_bluetooth.isTargetConnected() && !m_hotspot.isHotspotActive() && !m_manualOverrideOff) {
-                bool timersIdle = (!m_disconnectDebounceTimer || !m_disconnectDebounceTimer->isActive()) &&
-                                  (!m_delayedStopTimer || !m_delayedStopTimer->isActive()) &&
-                                  (m_wakeupCookie == 0);
-                if (timersIdle && (now - m_lastAutoHotspotAttempt >= 15000)) {
-                    m_lastAutoHotspotAttempt = now;
-                    onTargetConnectionChanged(true);
-                }
-            }
-        }
-    });
-    m_pollTimer->start(3000); // Poll every 3s
+    // Track foreground/background so the GUI idles when it is not visible
+    if (QGuiApplication::instance()) {
+        QGuiApplication::instance()->installEventFilter(this);
+    }
 
     if (m_isDaemon) {
         appendLog(QString("[%1] Background daemon started").arg(QDateTime::currentDateTime().toString("hh:mm:ss")));
@@ -174,6 +158,94 @@ AppController::AppController(bool isDaemon, QObject *parent)
     if (!m_isDaemon) {
         QDBusConnection::sessionBus().registerService("org.sailfishos.coveraction.carhotspot_ui");
     }
+}
+
+void AppController::pollTick()
+{
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+
+    if (m_isDaemon) {
+        // The GUI pushes reloadSettingsFromGui() on every change, so this is only a safety
+        // net for edits made while the daemon was asleep. No sync() here: the daemon flushes
+        // its own writes (activity log, Wi-Fi restore flag) explicitly, and a periodic sync
+        // could clobber newer values written by the GUI.
+        if (now - m_lastSettingsReload >= SETTINGS_RELOAD_MS) {
+            m_lastSettingsReload = now;
+            loadSettings();
+        }
+    } else {
+        checkDaemonStatus();
+        reloadSharedLog();
+    }
+
+    if (m_autoEnableBluetooth && !m_bluetooth.isBluetoothPowered()) {
+        m_bluetooth.ensureBluetoothPowered();
+    }
+
+    m_bluetooth.refreshDevices();
+
+    // Tethering state arrives through net.connman.Technology.PropertyChanged, so ConnMan is
+    // queried on every tick only while the AP is expected to be up (enable watchdog);
+    // otherwise once a minute as a safety net and for the Wi-Fi restoration path.
+    if (m_hotspot.startPending() || m_hotspot.isHotspotActive()
+            || now - m_lastHotspotCheck >= HOTSPOT_CHECK_MS) {
+        m_lastHotspotCheck = now;
+        m_hotspot.checkStatus();
+    }
+
+    const bool handlingAutomation = m_isDaemon || !m_isDaemonActive;
+    if (handlingAutomation && m_autoToggle) {
+        if (m_bluetooth.isBluetoothPowered() && !m_bluetooth.isTargetConnected()) {
+            // Phone-initiated paging of the car, with exponential back-off (15s -> 60s) while
+            // it is out of range. A car that connects on its own is reported by BlueZ signals
+            // and the display-wake handler resets the back-off, so a real drive is never delayed.
+            if (now - m_lastAutoConnectAttempt >= m_autoConnectBackoffMs) {
+                m_lastAutoConnectAttempt = now;
+                m_bluetooth.connectTargetDevices();
+                m_autoConnectBackoffMs = qMin(m_autoConnectBackoffMs * 2,
+                                              static_cast<qint64>(AUTO_CONNECT_BACKOFF_MAX_MS));
+            }
+        } else if (m_bluetooth.isTargetConnected() && !m_hotspot.isHotspotActive() && !m_manualOverrideOff) {
+            bool timersIdle = (!m_disconnectDebounceTimer || !m_disconnectDebounceTimer->isActive()) &&
+                              (!m_delayedStopTimer || !m_delayedStopTimer->isActive()) &&
+                              (m_wakeupCookie == 0);
+            if (timersIdle && (now - m_lastAutoHotspotAttempt >= 15000)) {
+                m_lastAutoHotspotAttempt = now;
+                onTargetConnectionChanged(true);
+            }
+        }
+    }
+
+    updatePollInterval();
+}
+
+void AppController::updatePollInterval()
+{
+    if (!m_pollTimer)
+        return;
+
+    const bool busy = m_bluetooth.isTargetConnected()
+                   || m_hotspot.isHotspotActive()
+                   || m_hotspot.startPending()
+                   || (m_disconnectDebounceTimer && m_disconnectDebounceTimer->isActive())
+                   || (m_delayedStopTimer && m_delayedStopTimer->isActive());
+
+    // The GUI polls fast while visible; both processes idle when nothing is happening.
+    const bool uiVisible = !m_isDaemon
+                           && QGuiApplication::applicationState() != Qt::ApplicationHidden;
+
+    const int wanted = (busy || uiVisible) ? POLL_BUSY_MS : POLL_IDLE_MS;
+    if (m_pollTimer->interval() != wanted) {
+        m_pollTimer->setInterval(wanted);
+    }
+}
+
+bool AppController::eventFilter(QObject *obj, QEvent *event)
+{
+    if (event->type() == QEvent::ApplicationStateChange) {
+        updatePollInterval();
+    }
+    return QObject::eventFilter(obj, event);
 }
 
 void AppController::loadSettings()
@@ -286,7 +358,17 @@ void AppController::setAutoEnableBluetooth(bool enabled)
 
 void AppController::setTargetAddress(const QString &address)
 {
-    selectDevice(address, address);
+    // Property setter: always *select* the address, never toggle it off
+    // (toggling is only meaningful for the explicit multi-device UI action).
+    if (address.trimmed().isEmpty())
+        return;
+
+    if (m_allowMultipleDevices) {
+        if (!isDeviceSelected(address))
+            addDevice(address, address);
+    } else {
+        selectDevice(address, address);
+    }
 }
 
 void AppController::setAutoToggle(bool enabled)
@@ -833,39 +915,33 @@ void AppController::triggerFeedback()
     }
     m_lastFeedbackTime = now;
 
-    // 1. Direct hardware vibrator sysfs (/sys/class/leds/vibrator/) used by Sony Xperia & Sailfish OS
-    QFile vibDuration("/sys/class/leds/vibrator/duration");
-    QFile vibActivate("/sys/class/leds/vibrator/activate");
-    if (vibDuration.open(QIODevice::WriteOnly | QIODevice::Text) &&
-        vibActivate.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QTextStream durStream(&vibDuration);
-        durStream << "350\n";
-        vibDuration.close();
+    // Sailfish OS plays haptic/sound feedback through NGF (Non-Graphical Feedback).
+    // On Sailfish OS 5.x ngf-runner provides it on the SYSTEM bus (verified on a
+    // Jolla Phone running 5.2.0.20); older releases expose it on the session bus.
+    // Writing the vibrator sysfs nodes (/sys/class/leds/vibrator/*,
+    // /sys/class/timed_output/vibrator/*) is not possible from a Sailjail-sandboxed
+    // Harbour app, so NGF is the only working path.
+    auto playOn = [](const QDBusConnection &bus) -> bool {
+        if (!bus.isConnected())
+            return false;
 
-        QTextStream actStream(&vibActivate);
-        actStream << "1\n";
-        vibActivate.close();
-    } else {
-        // Fallback for devices with legacy timed_output vibrator
-        QFile legacyVib("/sys/class/timed_output/vibrator/enable");
-        if (legacyVib.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            QTextStream out(&legacyVib);
-            out << "350\n";
-            legacyVib.close();
-        }
-    }
+        QDBusConnectionInterface *iface = bus.interface();
+        if (!iface || !iface->isServiceRegistered("com.nokia.NonGraphicFeedback1.Backend"))
+            return false;
 
-    // 2. Trigger Sailfish OS NGF (Non-Graphical Feedback) on SYSTEM bus (permitted by Base.permission)
-    QDBusInterface ngf(
-        "com.nokia.NonGraphicFeedback1.Backend",
-        "/",
-        "com.nokia.NonGraphicFeedback1.Backend",
-        QDBusConnection::systemBus()
-    );
+        QDBusInterface ngf("com.nokia.NonGraphicFeedback1.Backend",
+                           "/",
+                           "com.nokia.NonGraphicFeedback1.Backend",
+                           bus);
+        if (!ngf.isValid())
+            return false;
 
-    if (ngf.isValid()) {
         ngf.asyncCall("Play", QString("vibra"), QVariantMap());
-    }
+        return true;
+    };
+
+    if (!playOn(QDBusConnection::systemBus()))
+        playOn(QDBusConnection::sessionBus());
 }
 
 void AppController::ensureCellularConnected()
@@ -906,6 +982,10 @@ void AppController::onTargetConnectionChanged(bool connected)
 
     QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss");
     QString activeName = connectedTargetName();
+    // A real connect/disconnect event proves the car is in range: stop backing off, and
+    // let the watchdog run fast while the (dis)connection sequence is being handled.
+    m_autoConnectBackoffMs = AUTO_CONNECT_BASE_MS;
+    updatePollInterval();
     if (!activeName.isEmpty()) {
         m_lastConnectedCarLabel = activeName;
     }
@@ -963,6 +1043,7 @@ void AppController::onTargetConnectionChanged(bool connected)
         // Always debounce brief BlueZ/handshake drops (7s) before notifying or tearing down!
         appendLog(QString("[%1] %2 link dropped. Filtering brief drop (7s)...").arg(timestamp, carLabel));
         m_disconnectDebounceTimer->start(7000);
+        updatePollInterval();
     }
 }
 
@@ -995,6 +1076,7 @@ void AppController::onDisconnectDebounceTimeout()
             appendLog(QString("[%1] Starting turn-off grace timer (%2 min)...").arg(timestamp).arg(m_stopDelayMinutes));
             sendNotification(tr("Car Hotspot"), tr("%1 disconnected. Hotspot will turn OFF in %2 min").arg(carLabel).arg(m_stopDelayMinutes));
             m_delayedStopTimer->start(m_stopDelayMinutes * 60 * 1000);
+            updatePollInterval();
             if (m_wakeupCookie > 0) {
                 TimedDbus::cancelCookie(m_wakeupCookie);
             }

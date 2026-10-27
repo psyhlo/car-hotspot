@@ -9,6 +9,8 @@
 #include "hotspotmanager.h"
 #include "systemmonitor.h"
 
+class QEvent;
+
 class AppController : public QObject
 {
     Q_OBJECT
@@ -140,6 +142,19 @@ private:
     void saveSettings();
     void syncSystemdService(bool enable);
     bool checkSafetyConditions(QString &reason);
+    void pollTick();
+    void updatePollInterval();
+    bool eventFilter(QObject *obj, QEvent *event) override;
+
+    // Watchdog cadence: fast only while something is actually in flight, so an idle
+    // daemon wakes the CPU three times less often (D-Bus calls + flash reads otherwise
+    // run every 3s around the clock).
+    static const int POLL_BUSY_MS = 3000;
+    static const int POLL_IDLE_MS = 10000;
+    static const int SETTINGS_RELOAD_MS = 30000;
+    static const int HOTSPOT_CHECK_MS = 60000;
+    static const int AUTO_CONNECT_BASE_MS = 15000;
+    static const int AUTO_CONNECT_BACKOFF_MAX_MS = 60000;
 
     bool m_isDaemon = false;
 
@@ -154,6 +169,9 @@ private:
     qint64 m_lastFeedbackTime = 0;
     qint64 m_lastAutoConnectAttempt = 0;
     qint64 m_lastAutoHotspotAttempt = 0;
+    qint64 m_lastHotspotCheck = 0;
+    qint64 m_lastSettingsReload = 0;
+    qint64 m_autoConnectBackoffMs = AUTO_CONNECT_BASE_MS;
     bool m_manualOverrideOff = false;
 
     bool m_allowMultipleDevices = false;

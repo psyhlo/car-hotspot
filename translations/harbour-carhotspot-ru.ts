@@ -97,6 +97,10 @@
         <source>Roaming detected! Wi-Fi Hotspot turned off to avoid extra carrier charges.</source>
         <translation>Обнаружен роуминг! Wi-Fi точка доступа отключена во избежание расходов.</translation>
     </message>
+    <message>
+        <source>Hotspot problem</source>
+        <translation>Проблема точки доступа</translation>
+    </message>
 </context>
 <context>
     <name>CoverPage</name>
@@ -430,7 +434,15 @@
         <source>Turn Hotspot ON</source>
         <translation>Включить хотспот</translation>
     </message>
-    </context>
+        <message>
+        <source>Selected Car</source>
+        <translation>Выбранный автомобиль</translation>
+    </message>
+    <message>
+        <source>Selected Cars (%1)</source>
+        <translation>Выбранные автомобили (%1)</translation>
+    </message>
+</context>
 <context>
     <name>ToolsPage</name>
     <message>
@@ -492,6 +504,14 @@
         <location filename="../qml/pages/ToolsPage.qml" line="79" />
         <source>System Diagnostics Log</source>
         <translation>Журнал диагностики системы</translation>
+    </message>
+    <message>
+        <source>Recovering Bluetooth subsystem...</source>
+        <translation>Восстановление подсистемы Bluetooth...</translation>
+    </message>
+    <message>
+        <source>Restarting Bluetooth...</source>
+        <translation>Перезапуск Bluetooth...</translation>
     </message>
 </context>
 </TS>

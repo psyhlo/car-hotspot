@@ -1,0 +1,11 @@
+# Sailfish OS / Harbour requires LF line endings in sources and packaging files.
+* text=auto eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.ico binary
+*.qm binary
+*.rpm binary
+*.vdi binary
+*.tar.bz2 binary

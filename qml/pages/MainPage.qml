@@ -394,12 +394,31 @@ Page {
                     width: parent.width - setBtn.width - Theme.paddingMedium
                     placeholderText: qsTr("Or enter MAC (e.g. AA:BB:CC:DD:EE:FF)")
                     label: qsTr("Custom Bluetooth MAC")
-                    text: appController.allowMultipleDevices ? "" : appController.targetAddress
+
+                    // In single-device mode the field mirrors appController.targetAddress
+                    // through a live binding; in multi-device mode it shows what the user
+                    // typed. Assigning to `text` directly would destroy that binding.
+                    property string typedMac: ""
+                    text: appController.allowMultipleDevices ? typedMac : appController.targetAddress
+                    onTextChanged: if (appController.allowMultipleDevices) typedMac = text
+
+                    // Typing into the field destroys the binding (Qt Quick behaviour),
+                    // so re-establish it whenever the multi-device mode is toggled.
+                    Connections {
+                        target: appController
+                        function onAllowMultipleDevicesChanged() {
+                            customMacField.text = Qt.binding(function() {
+                                return appController.allowMultipleDevices ? customMacField.typedMac
+                                                                          : appController.targetAddress
+                            })
+                        }
+                    }
+
                     EnterKey.onClicked: {
                         if (text.trim().length > 0) {
                             if (appController.allowMultipleDevices) {
                                 appController.addDevice(text.trim(), qsTr("Car Bluetooth"))
-                                text = ""
+                                typedMac = ""
                             } else {
                                 appController.selectDevice(text.trim(), qsTr("Car Bluetooth"))
                                 focus = false
@@ -416,7 +435,7 @@ Page {
                         if (customMacField.text.trim().length > 0) {
                             if (appController.allowMultipleDevices) {
                                 appController.addDevice(customMacField.text.trim(), qsTr("Car Bluetooth"))
-                                customMacField.text = ""
+                                customMacField.typedMac = ""
                             } else {
                                 appController.selectDevice(customMacField.text.trim(), qsTr("Car Bluetooth"))
                                 customMacField.focus = false
@@ -528,7 +547,8 @@ Page {
                         if (appController.allowMultipleDevices) {
                             appController.toggleDeviceSelection(modelData.address, modelData.name)
                         } else {
-                            customMacField.text = modelData.address
+                            // customMacField.text is bound to appController.targetAddress,
+                            // so no imperative assignment here (it would break the binding).
                             appController.selectDevice(modelData.address, modelData.name)
                         }
                     }

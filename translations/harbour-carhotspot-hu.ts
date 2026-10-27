@@ -97,6 +97,10 @@
         <source>Roaming detected! Wi-Fi Hotspot turned off to avoid extra carrier charges.</source>
         <translation>Roaming detected! Wi-Fi Hotspot turned off to avoid extra carrier charges.</translation>
     </message>
+    <message>
+        <source>Hotspot problem</source>
+        <translation>Hotspot-probléma</translation>
+    </message>
 </context>
 <context>
     <name>CoverPage</name>
@@ -430,7 +434,15 @@
         <source>Turn Hotspot ON</source>
         <translation>Hotspot bekapcsolása</translation>
     </message>
-    </context>
+        <message>
+        <source>Selected Car</source>
+        <translation>Kiválasztott autó</translation>
+    </message>
+    <message>
+        <source>Selected Cars (%1)</source>
+        <translation>Kiválasztott autók (%1)</translation>
+    </message>
+</context>
 <context>
     <name>ToolsPage</name>
     <message>
@@ -492,6 +504,14 @@
         <location filename="../qml/pages/ToolsPage.qml" line="79" />
         <source>System Diagnostics Log</source>
         <translation>Rendszerdiagnosztikai napló</translation>
+    </message>
+    <message>
+        <source>Recovering Bluetooth subsystem...</source>
+        <translation>Bluetooth alrendszer helyreállítása...</translation>
+    </message>
+    <message>
+        <source>Restarting Bluetooth...</source>
+        <translation>Bluetooth újraindítása...</translation>
     </message>
 </context>
 </TS>

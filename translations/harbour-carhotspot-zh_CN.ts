@@ -97,6 +97,10 @@
         <source>Roaming detected! Wi-Fi Hotspot turned off to avoid extra carrier charges.</source>
         <translation>Roaming detected! Wi-Fi Hotspot turned off to avoid extra carrier charges.</translation>
     </message>
+    <message>
+        <source>Hotspot problem</source>
+        <translation>热点问题</translation>
+    </message>
 </context>
 <context>
     <name>CoverPage</name>
@@ -430,7 +434,15 @@
         <source>Turn Hotspot ON</source>
         <translation>开启热点</translation>
     </message>
-    </context>
+        <message>
+        <source>Selected Car</source>
+        <translation>已选车辆</translation>
+    </message>
+    <message>
+        <source>Selected Cars (%1)</source>
+        <translation>已选车辆 (%1)</translation>
+    </message>
+</context>
 <context>
     <name>ToolsPage</name>
     <message>
@@ -492,6 +504,14 @@
         <location filename="../qml/pages/ToolsPage.qml" line="79" />
         <source>System Diagnostics Log</source>
         <translation>系统诊断日志</translation>
+    </message>
+    <message>
+        <source>Recovering Bluetooth subsystem...</source>
+        <translation>正在恢复蓝牙子系统...</translation>
+    </message>
+    <message>
+        <source>Restarting Bluetooth...</source>
+        <translation>正在重启蓝牙...</translation>
     </message>
 </context>
 </TS>

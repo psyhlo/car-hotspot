@@ -8,6 +8,7 @@ Makefile*
 .sfdk/
 RPMS/
 RPMS-sfos5.0/
+RPMS-sfos5.1/
 BUILD/
 BUILDROOT/
 SOURCES/

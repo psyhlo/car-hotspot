@@ -97,6 +97,10 @@
         <source>Roaming detected! Wi-Fi Hotspot turned off to avoid extra carrier charges.</source>
         <translation>Засечен е роуминг! Wi-Fi хотспотът е изключен за избягване на допълнителни такси.</translation>
     </message>
+    <message>
+        <source>Hotspot problem</source>
+        <translation>Проблем с хотспота</translation>
+    </message>
 </context>
 <context>
     <name>CoverPage</name>

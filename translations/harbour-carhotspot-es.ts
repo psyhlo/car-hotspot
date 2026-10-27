@@ -97,6 +97,10 @@
         <source>Roaming detected! Wi-Fi Hotspot turned off to avoid extra carrier charges.</source>
         <translation>¡Itinerancia detectada! Punto de acceso Wi-Fi apagado para evitar cargos.</translation>
     </message>
+    <message>
+        <source>Hotspot problem</source>
+        <translation>Problema del punto de acceso</translation>
+    </message>
 </context>
 <context>
     <name>CoverPage</name>
@@ -430,7 +434,15 @@
         <source>Turn Hotspot ON</source>
         <translation>Encender punto de acceso</translation>
     </message>
-    </context>
+        <message>
+        <source>Selected Car</source>
+        <translation>Coche seleccionado</translation>
+    </message>
+    <message>
+        <source>Selected Cars (%1)</source>
+        <translation>Coches seleccionados (%1)</translation>
+    </message>
+</context>
 <context>
     <name>ToolsPage</name>
     <message>
@@ -492,6 +504,14 @@
         <location filename="../qml/pages/ToolsPage.qml" line="79" />
         <source>System Diagnostics Log</source>
         <translation>Registro de diagnóstico del sistema</translation>
+    </message>
+    <message>
+        <source>Recovering Bluetooth subsystem...</source>
+        <translation>Recuperando el subsistema Bluetooth...</translation>
+    </message>
+    <message>
+        <source>Restarting Bluetooth...</source>
+        <translation>Reiniciando Bluetooth...</translation>
     </message>
 </context>
 </TS>
