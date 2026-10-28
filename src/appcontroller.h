@@ -3,9 +3,12 @@
 
 #include <QObject>
 #include <QSettings>
+
+#include "carhotspotsettings.h"
 #include <QTimer>
 #include <QSet>
 #include "bluetoothmanager.h"
+#include "dbusadapter.h"
 #include "hotspotmanager.h"
 #include "systemmonitor.h"
 
@@ -14,10 +17,14 @@ class QEvent;
 class AppController : public QObject
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.sailfishos.coveraction.carhotspot")
     Q_PROPERTY(BluetoothManager* bluetooth READ bluetooth CONSTANT)
     Q_PROPERTY(HotspotManager* hotspot READ hotspot CONSTANT)
     Q_PROPERTY(SystemMonitor* systemMonitor READ systemMonitor CONSTANT)
+    // True in the OpenRepos build that ships the background user service
+    // (qmake CONFIG+=service). False in the Jolla Harbour build, where monitoring
+    // lives with the application process itself.
+    Q_PROPERTY(bool serviceBuild READ isServiceBuild CONSTANT)
+    Q_PROPERTY(QString openReposUrl READ openReposUrl CONSTANT)
     Q_PROPERTY(bool allowMultipleDevices READ allowMultipleDevices WRITE setAllowMultipleDevices NOTIFY allowMultipleDevicesChanged)
     Q_PROPERTY(QStringList targetAddresses READ targetAddresses NOTIFY targetAddressesChanged)
     Q_PROPERTY(QVariantList selectedDevices READ selectedDevices NOTIFY selectedDevicesChanged)
@@ -43,6 +50,15 @@ public:
     BluetoothManager* bluetooth() { return &m_bluetooth; }
     HotspotManager* hotspot() { return &m_hotspot; }
     SystemMonitor* systemMonitor() { return &m_systemMonitor; }
+
+    // Q_PROPERTY accessors are kept non-static: moc only guarantees
+    // non-static READ members.
+    bool isServiceBuild() const;
+    QString openReposUrl() const;
+
+    // True when this process drives the automation: the background service, or the
+    // application process while no service is running.
+    Q_INVOKABLE bool handlesAutomation() const;
 
     bool allowMultipleDevices() const { return m_allowMultipleDevices; }
     void setAllowMultipleDevices(bool enabled);
@@ -96,6 +112,10 @@ public:
 
 public slots:
     void selectDevice(const QString &address, const QString &name);
+    // Routed: applied locally when this process owns the automation, otherwise
+    // forwarded to the background service as a D-Bus signal. Sailjail's Base policy
+    // broadcasts between org.sailfishos.coveraction.* names but does not allow method
+    // calls between them, so signals are the only sanctioned cross-process channel.
     void toggleHotspotManual(bool active);
     void appendLog(const QString &text);
     void reloadSharedLog();
@@ -104,9 +124,7 @@ public slots:
     void ensureCellularConnected();
     void checkDaemonStatus();
     void openApp();
-    void activate();
     void restartBluetooth();
-    void reloadSettingsFromGui();
 
 signals:
     void requestActivateWindow();
@@ -136,11 +154,26 @@ private slots:
     void onRoamingChanged(bool roaming);
     void onDelayedStopTimeout();
     void onDisconnectDebounceTimeout();
+    void onActivateRequested();
+    void onManualToggleRequested(bool active);
+    void onRemoteSettingsChanged();
+    void onRemoteLog(const QString &log);
+    void onRemoteDaemonState(bool active);
+    // timed cookie callback: the grace period elapsed while the device was asleep.
+    void onTimedCookie(uint cookie);
 
 private:
     void loadSettings();
     void saveSettings();
-    void syncSystemdService(bool enable);
+    void notifySettingsChanged();
+    // Start/enable and stop/disable the user service through
+    // org.freedesktop.systemd1 (Sailjail permission "User services" = AppLaunch).
+    // No shell command, no subprocess - that would be a sandbox escape.
+    bool controlUserService(bool enable);
+    void requestServiceHandoff(int milliseconds);
+    bool inServiceHandoff() const;
+    bool applyHotspotToggleLocally(bool active);
+    static QString firstEntryTimestamp(const QString &log);
     bool checkSafetyConditions(QString &reason);
     void pollTick();
     void updatePollInterval();
@@ -161,6 +194,7 @@ private:
     BluetoothManager m_bluetooth;
     HotspotManager m_hotspot;
     SystemMonitor m_systemMonitor;
+    CarHotspotDBusAdapter *m_ipc = nullptr;
     QSettings m_settings;
     QTimer *m_delayedStopTimer = nullptr;
     QTimer *m_disconnectDebounceTimer = nullptr;
@@ -170,8 +204,10 @@ private:
     qint64 m_lastAutoConnectAttempt = 0;
     qint64 m_lastAutoHotspotAttempt = 0;
     qint64 m_lastHotspotCheck = 0;
+    qint64 m_lastManualRequestStamp = 0;
     qint64 m_lastSettingsReload = 0;
     qint64 m_autoConnectBackoffMs = AUTO_CONNECT_BASE_MS;
+    qint64 m_serviceHandoffUntilMs = 0;
     bool m_manualOverrideOff = false;
 
     bool m_allowMultipleDevices = false;

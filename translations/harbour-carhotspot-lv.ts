@@ -101,6 +101,22 @@
         <source>Hotspot problem</source>
         <translation>Tīklāja problēma</translation>
     </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Šī versija uzrauga auto, kamēr lietotne darbojas (arī fona režīmā). OpenRepos versija pievieno lietotāja servisu, kas startē līdz ar telefonu un darbojas pēc lietotnes aizvēršanas.</translation>
+    </message>
+    <message>
+        <source>User service failed to start. Install it manually with: systemctl --user enable --now harbour-carhotspot.service</source>
+        <translation>Lietotāja servisu nevarēja startēt. Instalējiet manuāli: systemctl --user enable --now harbour-carhotspot.service</translation>
+    </message>
+    <message>
+        <source>Open Car Hotspot</source>
+        <translation>Atvērt Car Hotspot</translation>
+    </message>
+    <message>
+        <source>Background automation needs the OpenRepos version</source>
+        <translation>Fona automatizācijai nepieciešama OpenRepos versija</translation>
+    </message>
 </context>
 <context>
     <name>CoverPage</name>
@@ -442,6 +458,18 @@
         <source>Selected Cars (%1)</source>
         <translation>Izvēlētie auto (%1)</translation>
     </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>Fona automatizācija ir pieejama OpenRepos versijā</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Šī versija uzrauga auto, kamēr lietotne darbojas (arī fona režīmā). OpenRepos versija pievieno lietotāja servisu, kas startē līdz ar telefonu un darbojas pēc lietotnes aizvēršanas.</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>Atvērt OpenRepos lapu</translation>
+    </message>
 </context>
 <context>
     <name>ToolsPage</name>
@@ -512,6 +540,18 @@
     <message>
         <source>Restarting Bluetooth...</source>
         <translation>Pārstartē Bluetooth...</translation>
+    </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>Fona automatizācija ir pieejama OpenRepos versijā</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Šī versija uzrauga auto, kamēr lietotne darbojas (arī fona režīmā). OpenRepos versija pievieno lietotāja servisu, kas startē līdz ar telefonu un darbojas pēc lietotnes aizvēršanas.</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>Atvērt OpenRepos lapu</translation>
     </message>
 </context>
 </TS>

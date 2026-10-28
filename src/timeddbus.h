@@ -4,6 +4,7 @@
 #include <QDateTime>
 #include <QList>
 #include <QMap>
+#include <QObject>
 #include <QString>
 #include <QVariant>
 #include <QtDBus/QDBusArgument>
@@ -158,6 +159,21 @@ inline const QDBusArgument &operator>>(const QDBusArgument &arg, TimedEvent &e) 
 
 namespace TimedDbus {
 
+// timed EventFlags (see timed/common.h). Wakeup makes the RTC wake the device
+// out of deep sleep; Keep_Alive keeps the event alive across timed restarts;
+// Missed_If_Overdue drops the event instead of firing it late.
+static const quint32 TIMED_EVENT_FLAG_MISSED_IF_OVERDUE = 0x040;
+static const quint32 TIMED_EVENT_FLAG_WAKEUP            = 0x100;
+static const quint32 TIMED_EVENT_FLAG_KEEP_ALIVE        = 0x800;
+
+// timed ActionFlags. Send_Cookie makes timed emit its `cookie` D-Bus signal when
+// the event fires - that is the only way an unprivileged application gets an
+// alarm callback. Run_Command (0x008) is deliberately NOT used anywhere in this
+// application: it executes a shell command outside of the Sailjail sandbox, which
+// a Harbour application must not do (Base.permission includes disable-exec.inc and
+// disable-programs.inc precisely to make that impossible from inside the sandbox).
+static const quint32 TIMED_ACTION_FLAG_SEND_COOKIE = 0x4000;
+
 inline void registerTypes() {
     static bool registered = false;
     if (!registered) {
@@ -175,17 +191,20 @@ inline void registerTypes() {
     }
 }
 
-inline uint runInstantCommand(const QString &command) {
+// Schedules an RTC wakeup that only fires `cookie` on com.nokia.time. No command
+// string is involved, so nothing is executed outside the sandbox.
+inline uint scheduleWakeup(int seconds) {
     registerTypes();
 
     TimedEvent ev;
-    ev.ticker = static_cast<int>(QDateTime::currentMSecsSinceEpoch() / 1000) + 1;
+    ev.ticker = static_cast<int>(QDateTime::currentMSecsSinceEpoch() / 1000) + seconds;
     ev.attr.txt.insert(QStringLiteral("APPLICATION"), QStringLiteral("harbour-carhotspot"));
+    ev.attr.txt.insert(QStringLiteral("TITLE"), QStringLiteral("carhotspot_grace"));
+    ev.flags = TIMED_EVENT_FLAG_MISSED_IF_OVERDUE | TIMED_EVENT_FLAG_WAKEUP
+             | TIMED_EVENT_FLAG_KEEP_ALIVE;
 
     TimedAction act;
-    // ActionFlags::Run_Command (0x08) | ActionFlags::When_Due (0x800)
-    act.flags = 0x808;
-    act.attr.txt.insert(QStringLiteral("COMMAND"), command);
+    act.flags = TIMED_ACTION_FLAG_SEND_COOKIE;
     ev.actions.append(act);
 
     QDBusMessage msg = QDBusMessage::createMethodCall(
@@ -203,35 +222,19 @@ inline uint runInstantCommand(const QString &command) {
     return 0;
 }
 
-inline uint scheduleWakeup(int seconds, const QString &command = QStringLiteral("/bin/true")) {
+// timed reports fired cookies as `cookie(uint)` on /com/nokia/time. Without a
+// listener a scheduled wakeup is never consumed, so the caller has no way to know
+// that the grace period elapsed while the device was asleep.
+inline void listenForCookies(QObject *receiver, const char *slot) {
     registerTypes();
-
-    TimedEvent ev;
-    ev.ticker = static_cast<int>(QDateTime::currentMSecsSinceEpoch() / 1000) + seconds;
-    ev.attr.txt.insert(QStringLiteral("APPLICATION"), QStringLiteral("harbour-carhotspot"));
-    ev.attr.txt.insert(QStringLiteral("TITLE"), QStringLiteral("carhotspot_grace"));
-    // EventFlags::Missed_If_Overdue (0x40) | EventFlags::Keep_Alive (0x800)
-    ev.flags = 0x840;
-
-    TimedAction act;
-    // ActionFlags::Run_Command (0x08) | ActionFlags::Send_Cookie (0x4000)
-    act.flags = 0x4008;
-    act.attr.txt.insert(QStringLiteral("COMMAND"), command);
-    ev.actions.append(act);
-
-    QDBusMessage msg = QDBusMessage::createMethodCall(
+    QDBusConnection::systemBus().connect(
         QStringLiteral("com.nokia.time"),
         QStringLiteral("/com/nokia/time"),
         QStringLiteral("com.nokia.time"),
-        QStringLiteral("add_event")
+        QStringLiteral("cookie"),
+        receiver,
+        slot
     );
-    msg << QVariant::fromValue(ev);
-
-    QDBusMessage reply = QDBusConnection::systemBus().call(msg);
-    if (reply.type() == QDBusMessage::ReplyMessage && !reply.arguments().isEmpty()) {
-        return reply.arguments().first().toUInt();
-    }
-    return 0;
 }
 
 inline void cancelCookie(uint cookie) {

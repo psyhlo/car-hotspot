@@ -1,9 +1,10 @@
 #include "hotspotmanager.h"
-#include "timeddbus.h"
 #include <QtDBus/QDBusInterface>
 #include <QtDBus/QDBusReply>
 #include <QDateTime>
 #include <QSettings>
+
+#include "carhotspotsettings.h"
 #include <QTimer>
 #include <QDebug>
 
@@ -11,7 +12,7 @@ HotspotManager::HotspotManager(QObject *parent)
     : QObject(parent)
 {
     // Load previously remembered Wi-Fi state if daemon/app was restarted while Hotspot was on
-    QSettings settings("harbour-carhotspot", "harbour-carhotspot");
+    QSettings settings(carhotspotSettingsFilePath(), QSettings::IniFormat);
     m_wifiWasPowered = settings.value("wifiWasPoweredBeforeTethering", false).toBool();
 
     // ConnMan technology interface for WiFi
@@ -72,6 +73,11 @@ void HotspotManager::enableWifiTetheringDbus()
     // 1. Invoke Connectiond ONLY on initial attempt (when retryCount == 0 and Powered matches initial state).
     // Calling startTethering again after Wi-Fi is already Powered=true causes Connectiond to overwrite
     // its internal tetheringTechPowered=true setting and leave Wi-Fi ON when tethering stops!
+    // 1. Ask Connectiond first (it also brings up cellular data + DHCP/NAT for the
+    // shared connection). Inside a Sailjail sandbox com.jolla.Connectiond is not part
+    // of the Bluetooth/Internet permission set, so this call usually fails there; that
+    // is fine because ConnMan's own Tethering property below does the actual work and
+    // Wi-Fi power restoration is handled by restoreWifiStateIfNeeded().
     if (m_watchdogRetryCount == 0 && (isPowered == m_wifiWasPowered)) {
         QDBusMessage startMsg = QDBusMessage::createMethodCall(
             "com.jolla.Connectiond",
@@ -80,10 +86,10 @@ void HotspotManager::enableWifiTetheringDbus()
             "startTethering"
         );
         startMsg << QStringLiteral("wifi");
-        QDBusMessage connReply = QDBusConnection::sessionBus().call(startMsg);
+        QDBusMessage connReply = QDBusConnection::sessionBus().call(startMsg, QDBus::Block, 2000);
         if (connReply.type() == QDBusMessage::ErrorMessage) {
-            // Running inside Sailjail where session bus filters Connectiond -> trigger via com.nokia.time
-            TimedDbus::runInstantCommand(QStringLiteral("/usr/bin/dbus-send --session --type=method_call --dest=com.jolla.Connectiond /Connectiond com.jolla.Connectiond.startTethering string:wifi"));
+            qDebug() << "HotspotManager: Connectiond startTethering unavailable ("
+                     << connReply.errorName() << "), relying on ConnMan Tethering property";
         }
     }
 
@@ -158,7 +164,7 @@ void HotspotManager::checkStatus()
         m_watchdogRetryCount = 0;
         m_startFailureReported = false;
     } else if (!m_targetHotspotState && !m_isHotspotActive) {
-        QSettings settings("harbour-carhotspot", "harbour-carhotspot");
+        QSettings settings(carhotspotSettingsFilePath(), QSettings::IniFormat);
         settings.sync();
         if (settings.value("wifiStateNeedsRestoration", false).toBool()) {
             restoreWifiStateIfNeeded();
@@ -185,7 +191,7 @@ void HotspotManager::setHotspotActive(bool active)
     m_statusMessage = active ? "Enabling Hotspot..." : "Disabling Hotspot...";
     emit statusMessageChanged(m_statusMessage);
 
-    QSettings settings("harbour-carhotspot", "harbour-carhotspot");
+    QSettings settings(carhotspotSettingsFilePath(), QSettings::IniFormat);
     settings.sync();
 
     if (active) {
@@ -218,8 +224,8 @@ void HotspotManager::setHotspotActive(bool active)
             settings.sync();
         }
 
-        // 1. Invoke Connectiond stopTethering(type, keepPowered)
-        // Passing m_wifiWasPowered tells Connectiond whether to leave Wi-Fi ON or turn it OFF!
+        // 1. Ask Connectiond to stop tethering, telling it whether Wi-Fi should stay
+        // powered. Best-effort only: it is not reachable from a sandboxed process.
         QDBusMessage stopMsg = QDBusMessage::createMethodCall(
             "com.jolla.Connectiond",
             "/Connectiond",
@@ -227,12 +233,10 @@ void HotspotManager::setHotspotActive(bool active)
             "stopTethering"
         );
         stopMsg << QStringLiteral("wifi") << m_wifiWasPowered;
-        QDBusMessage connReply = QDBusConnection::sessionBus().call(stopMsg);
+        QDBusMessage connReply = QDBusConnection::sessionBus().call(stopMsg, QDBus::Block, 2000);
         if (connReply.type() == QDBusMessage::ErrorMessage) {
-            TimedDbus::runInstantCommand(
-                QStringLiteral("/usr/bin/dbus-send --session --type=method_call --dest=com.jolla.Connectiond /Connectiond com.jolla.Connectiond.stopTethering string:wifi boolean:%1")
-                .arg(m_wifiWasPowered ? QStringLiteral("true") : QStringLiteral("false"))
-            );
+            qDebug() << "HotspotManager: Connectiond stopTethering unavailable ("
+                     << connReply.errorName() << "), Wi-Fi power handled by restoration logic";
         }
 
         // 2. Direct D-Bus call to ConnMan Wi-Fi Technology as fallback
@@ -291,7 +295,7 @@ void HotspotManager::restoreWifiStateIfNeeded()
     }
 
     // Guard 3: Only restore if a restoration was explicitly scheduled by Car Hotspot
-    QSettings settings("harbour-carhotspot", "harbour-carhotspot");
+    QSettings settings(carhotspotSettingsFilePath(), QSettings::IniFormat);
     settings.sync();
     bool needsRestoration = settings.value("wifiStateNeedsRestoration", false).toBool();
     if (!needsRestoration) {

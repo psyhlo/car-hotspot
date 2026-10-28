@@ -37,7 +37,7 @@ CoverBackground {
 
     CoverActionList {
         CoverAction {
-            iconSource: "image://theme/icon-m-service-wifi"
+            iconSource: "image://theme/icon-m-wifi"
             onTriggered: appController.toggleHotspotManual(!hotspotManager.isHotspotActive)
         }
     }

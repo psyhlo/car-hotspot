@@ -101,6 +101,22 @@
         <source>Hotspot problem</source>
         <translation>Problem hotspotu</translation>
     </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Ta wersja nadzoruje samochód, gdy aplikacja działa (także w tle). Wersja OpenRepos dodaje usługę użytkownika, która uruchamia się przy starcie telefonu i działa po zamknięciu aplikacji.</translation>
+    </message>
+    <message>
+        <source>User service failed to start. Install it manually with: systemctl --user enable --now harbour-carhotspot.service</source>
+        <translation>Nie udało się uruchomić usługi użytkownika. Zainstaluj ją ręcznie: systemctl --user enable --now harbour-carhotspot.service</translation>
+    </message>
+    <message>
+        <source>Open Car Hotspot</source>
+        <translation>Otwórz Car Hotspot</translation>
+    </message>
+    <message>
+        <source>Background automation needs the OpenRepos version</source>
+        <translation>Automatyzacja w tle wymaga wersji OpenRepos</translation>
+    </message>
 </context>
 <context>
     <name>CoverPage</name>
@@ -442,6 +458,18 @@
         <source>Selected Cars (%1)</source>
         <translation>Wybrane samochody (%1)</translation>
     </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>Automatyzacja w tle jest dostępna w wersji OpenRepos</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Ta wersja nadzoruje samochód, gdy aplikacja działa (także w tle). Wersja OpenRepos dodaje usługę użytkownika, która uruchamia się przy starcie telefonu i działa po zamknięciu aplikacji.</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>Otwórz stronę OpenRepos</translation>
+    </message>
 </context>
 <context>
     <name>ToolsPage</name>
@@ -512,6 +540,18 @@
     <message>
         <source>Restarting Bluetooth...</source>
         <translation>Restartowanie Bluetooth...</translation>
+    </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>Automatyzacja w tle jest dostępna w wersji OpenRepos</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Ta wersja nadzoruje samochód, gdy aplikacja działa (także w tle). Wersja OpenRepos dodaje usługę użytkownika, która uruchamia się przy starcie telefonu i działa po zamknięciu aplikacji.</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>Otwórz stronę OpenRepos</translation>
     </message>
 </context>
 </TS>

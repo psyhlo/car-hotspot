@@ -101,6 +101,22 @@
         <source>Hotspot problem</source>
         <translation>Проблем с хотспота</translation>
     </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Тази версия следя колата, докато приложението работи (и във фонов режим). Версията за OpenRepos добавя потребителска услуга, която се стартира при включване на телефона и работи след затваряне на приложението.</translation>
+    </message>
+    <message>
+        <source>User service failed to start. Install it manually with: systemctl --user enable --now harbour-carhotspot.service</source>
+        <translation>Потребителската услуга не можа да се стартира. Инсталирайте я ръчно с: systemctl --user enable --now harbour-carhotspot.service</translation>
+    </message>
+    <message>
+        <source>Open Car Hotspot</source>
+        <translation>Отваряне на Car Hotspot</translation>
+    </message>
+    <message>
+        <source>Background automation needs the OpenRepos version</source>
+        <translation>Автоматизация във фонов режим изисква версията за OpenRepos</translation>
+    </message>
 </context>
 <context>
     <name>CoverPage</name>
@@ -444,6 +460,18 @@
         <source>Turn Hotspot ON</source>
         <translation>Пусни хотспота</translation>
     </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>Автоматизация във фонов режим е налична в версията за OpenRepos</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Тази версия следя колата, докато приложението работи (и във фонов режим). Версията за OpenRepos добавя потребителска услуга, която се стартира при включване на телефона и работи след затваряне на приложението.</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>Отваряне на страницата в OpenRepos</translation>
+    </message>
 </context>
 <context>
     <name>ToolsPage</name>
@@ -516,6 +544,18 @@
         <location filename="../qml/pages/ToolsPage.qml" line="79" />
         <source>System Diagnostics Log</source>
         <translation>Системен дневник за диагностика</translation>
+    </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>Автоматизация във фонов режим е налична в версията за OpenRepos</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Тази версия следя колата, докато приложението работи (и във фонов режим). Версията за OpenRepos добавя потребителска услуга, която се стартира при включване на телефона и работи след затваряне на приложението.</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>Отваряне на страницата в OpenRepos</translation>
     </message>
 </context>
 </TS>

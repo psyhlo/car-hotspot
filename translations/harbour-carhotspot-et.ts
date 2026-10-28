@@ -101,6 +101,22 @@
         <source>Hotspot problem</source>
         <translation>Kuumkoha probleem</translation>
     </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>See versioon jälgib autot, rakenduse töös olles (ka taustal). OpenReposi versioon lisab kasutajateenuse, mis käivitub telefoni käivitamisel ja töötab pärast rakenduse sulgemist.</translation>
+    </message>
+    <message>
+        <source>User service failed to start. Install it manually with: systemctl --user enable --now harbour-carhotspot.service</source>
+        <translation>Kasutajateenust ei õnnestunud käivitada. Paigalda käsitsi: systemctl --user enable --now harbour-carhotspot.service</translation>
+    </message>
+    <message>
+        <source>Open Car Hotspot</source>
+        <translation>Ava Car Hotspot</translation>
+    </message>
+    <message>
+        <source>Background automation needs the OpenRepos version</source>
+        <translation>Tausta automatiseerimine nõuab OpenReposi versiooni</translation>
+    </message>
 </context>
 <context>
     <name>CoverPage</name>
@@ -442,6 +458,18 @@
         <source>Selected Cars (%1)</source>
         <translation>Valitud autod (%1)</translation>
     </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>Tausta automatiseerimine on saadaval OpenReposi versioonis</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>See versioon jälgib autot, rakenduse töös olles (ka taustal). OpenReposi versioon lisab kasutajateenuse, mis käivitub telefoni käivitamisel ja töötab pärast rakenduse sulgemist.</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>Ava OpenReposi leht</translation>
+    </message>
 </context>
 <context>
     <name>ToolsPage</name>
@@ -512,6 +540,18 @@
     <message>
         <source>Restarting Bluetooth...</source>
         <translation>Bluetoothi taaskäivitus...</translation>
+    </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>Tausta automatiseerimine on saadaval OpenReposi versioonis</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>See versioon jälgib autot, rakenduse töös olles (ka taustal). OpenReposi versioon lisab kasutajateenuse, mis käivitub telefoni käivitamisel ja töötab pärast rakenduse sulgemist.</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>Ava OpenReposi leht</translation>
     </message>
 </context>
 </TS>

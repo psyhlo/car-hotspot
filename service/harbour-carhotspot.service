@@ -1,0 +1,33 @@
+[Unit]
+Description=Car Hotspot background Bluetooth monitor
+After=dbus.socket bluetooth.service connman.service
+Documentation=https://openrepos.net/content/psyhlo/car-hotspot
+
+[Service]
+# The application binary is executed directly: no shell wrapper, no sudo, no root,
+# nothing is installed setuid and no command string is handed to another process.
+#
+# Why this process is NOT wrapped in "sailjail -p ...": enabling a Wi-Fi hotspot on
+# Sailfish OS requires com.jolla.Connectiond (startTethering/stopTethering), and Sailjail
+# exposes that bus name only through the "Messages" permission, which belongs to the
+# system messaging applications. ConnMan's own Technology property "Tethering" answers
+# net.connman.Error.PermissionDenied for ordinary users. Verified on a Jolla Phone 2026
+# (Sailfish OS 5.2): with the sandbox applied the enable request fails, so a sandboxed
+# service can monitor Bluetooth but cannot switch the hotspot.
+#
+# This service therefore runs with the invoking user's own privileges (uid defaultuser),
+# which is exactly what the UI process has, and it is confined by the same file and
+# permission model as any other user process. It is the reason this build is published on
+# OpenRepos and not on Jolla Harbour; the Harbour flavour has no service at all.
+#
+# If you only want Bluetooth monitoring (no hotspot switching), use the sandbox variant:
+#   systemctl --user edit harbour-carhotspot.service
+#   [Service]
+#   ExecStart=
+#   ExecStart=/usr/bin/sailjail -p harbour-carhotspot-daemon.desktop -- /usr/bin/harbour-carhotspot --daemon
+ExecStart=/usr/bin/harbour-carhotspot --daemon
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=user-session.target

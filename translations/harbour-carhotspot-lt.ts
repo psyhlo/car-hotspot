@@ -101,6 +101,22 @@
         <source>Hotspot problem</source>
         <translation>Prieigos taško problema</translation>
     </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Ši versija stebi automobilį, kol programa veikia (taip pat fone). OpenRepos versija prideda vartotojo paslaugą, kuri paleidžiama įjungus telefoną ir veikia uždarius programą.</translation>
+    </message>
+    <message>
+        <source>User service failed to start. Install it manually with: systemctl --user enable --now harbour-carhotspot.service</source>
+        <translation>Vartotojo paslaugos nepavyko paleisti. Įdiekite rankiniu būdu: systemctl --user enable --now harbour-carhotspot.service</translation>
+    </message>
+    <message>
+        <source>Open Car Hotspot</source>
+        <translation>Atidaryti Car Hotspot</translation>
+    </message>
+    <message>
+        <source>Background automation needs the OpenRepos version</source>
+        <translation>Fono automatizacijai reikia OpenRepos versijos</translation>
+    </message>
 </context>
 <context>
     <name>CoverPage</name>
@@ -442,6 +458,18 @@
         <source>Selected Cars (%1)</source>
         <translation>Pasirinkti automobiliai (%1)</translation>
     </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>Fono automatizacija yra prieinama OpenRepos versijoje</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Ši versija stebi automobilį, kol programa veikia (taip pat fone). OpenRepos versija prideda vartotojo paslaugą, kuri paleidžiama įjungus telefoną ir veikia uždarius programą.</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>Atidaryti OpenRepos puslapį</translation>
+    </message>
 </context>
 <context>
     <name>ToolsPage</name>
@@ -512,6 +540,18 @@
     <message>
         <source>Restarting Bluetooth...</source>
         <translation>Iš naujo paleidžiama Bluetooth...</translation>
+    </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>Fono automatizacija yra prieinama OpenRepos versijoje</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Ši versija stebi automobilį, kol programa veikia (taip pat fone). OpenRepos versija prideda vartotojo paslaugą, kuri paleidžiama įjungus telefoną ir veikia uždarius programą.</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>Atidaryti OpenRepos puslapį</translation>
     </message>
 </context>
 </TS>

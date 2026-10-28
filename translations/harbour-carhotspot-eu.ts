@@ -101,6 +101,22 @@
         <source>Hotspot problem</source>
         <translation>Hotspotaren arazoa</translation>
     </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Bertsio honek autoa zaintzen du aplikazioa martuan dagoen bitartean (atzekuan ere). OpenRepos bertsioak erabiltzaile-zerbitzu bat gehitzen du, telefonoa abiaraztean hasten dena eta aplikazioa itxi ondoren ere funtzionatzen duena.</translation>
+    </message>
+    <message>
+        <source>User service failed to start. Install it manually with: systemctl --user enable --now harbour-carhotspot.service</source>
+        <translation>Erabiltzaile-zerbitzua ezin izan da abiarazi. Eskuarki instalatu: systemctl --user enable --now harbour-carhotspot.service</translation>
+    </message>
+    <message>
+        <source>Open Car Hotspot</source>
+        <translation>Ireki Car Hotspot</translation>
+    </message>
+    <message>
+        <source>Background automation needs the OpenRepos version</source>
+        <translation>Atzeko automatizazioak OpenRepos bertsioa eskatzen du</translation>
+    </message>
 </context>
 <context>
     <name>CoverPage</name>
@@ -442,6 +458,18 @@
         <source>Selected Cars (%1)</source>
         <translation>Hautatako autoak (%1)</translation>
     </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>Atzeko automatizazioa OpenRepos bertsioan dago erabilgarri</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Bertsio honek autoa zaintzen du aplikazioa martuan dagoen bitartean (atzekuan ere). OpenRepos bertsioak erabiltzaile-zerbitzu bat gehitzen du, telefonoa abiaraztean hasten dena eta aplikazioa itxi ondoren ere funtzionatzen duena.</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>Ireki OpenRepos orria</translation>
+    </message>
 </context>
 <context>
     <name>ToolsPage</name>
@@ -512,6 +540,18 @@
     <message>
         <source>Restarting Bluetooth...</source>
         <translation>Bluetooth berrabiarazten...</translation>
+    </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>Atzeko automatizazioa OpenRepos bertsioan dago erabilgarri</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Bertsio honek autoa zaintzen du aplikazioa martuan dagoen bitartean (atzekuan ere). OpenRepos bertsioak erabiltzaile-zerbitzu bat gehitzen du, telefonoa abiaraztean hasten dena eta aplikazioa itxi ondoren ere funtzionatzen duena.</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>Ireki OpenRepos orria</translation>
     </message>
 </context>
 </TS>

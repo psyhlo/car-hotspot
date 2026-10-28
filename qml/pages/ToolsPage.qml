@@ -5,7 +5,17 @@ Page {
     id: toolsPage
     allowedOrientations: Orientation.All
 
+    // Used only by the screenshot mode (CARHOTSPOT_SHOTDIR in main.cpp).
+    function devPrepare(step) {
+        if (step === 3) {
+            toolsFlickable.contentY = Math.max(0, toolsFlickable.contentHeight - toolsFlickable.height)
+        }
+        console.log("ToolsPage devPrepare", step, "contentHeight", toolsFlickable.contentHeight,
+                    "height", toolsFlickable.height, "contentY", toolsFlickable.contentY)
+    }
+
     SilicaFlickable {
+        id: toolsFlickable
         anchors.fill: parent
         contentHeight: contentCol.height + Theme.paddingLarge
 
@@ -70,6 +80,36 @@ Page {
                 color: Theme.highlightColor
                 font.pixelSize: Theme.fontSizeSmall
                 text: qsTr("Recovering Bluetooth subsystem...")
+            }
+
+            // Same notice as on the main page: this build has no background service.
+            Column {
+                visible: !appController.serviceBuild
+                width: toolsPage.width - 2 * Theme.horizontalPageMargin
+                anchors.horizontalCenter: toolsPage.horizontalCenter
+                spacing: Theme.paddingSmall
+
+                Label {
+                    width: parent.width
+                    text: qsTr("Background automation is available in the OpenRepos version")
+                    color: Theme.highlightColor
+                    font.pixelSize: Theme.fontSizeSmall
+                    wrapMode: Text.Wrap
+                }
+
+                Label {
+                    width: parent.width
+                    text: qsTr("This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.")
+                    color: Theme.secondaryColor
+                    wrapMode: Text.Wrap
+                    font.pixelSize: Theme.fontSizeExtraSmall
+                }
+
+                Button {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: qsTr("Open OpenRepos page")
+                    onClicked: Qt.openUrlExternally(appController.openReposUrl)
+                }
             }
 
             SectionHeader {

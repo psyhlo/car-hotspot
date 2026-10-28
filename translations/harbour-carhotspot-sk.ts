@@ -101,6 +101,22 @@
         <source>Hotspot problem</source>
         <translation>Problém s hotspotom</translation>
     </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Táto verzia sleduje auto, kým je aplikácia spustená (aj na pozadí). Verzia pre OpenRepos pridáva používateľskú službu, ktorá sa spúšťa pri starte telefónu a funguje po zatvorení aplikácie.</translation>
+    </message>
+    <message>
+        <source>User service failed to start. Install it manually with: systemctl --user enable --now harbour-carhotspot.service</source>
+        <translation>Používateľskú službu sa nepodarilo spustiť. Inštalujte ju ručne: systemctl --user enable --now harbour-carhotspot.service</translation>
+    </message>
+    <message>
+        <source>Open Car Hotspot</source>
+        <translation>Otvoriť Car Hotspot</translation>
+    </message>
+    <message>
+        <source>Background automation needs the OpenRepos version</source>
+        <translation>Automatizácia na pozadí vyžaduje verziu pre OpenRepos</translation>
+    </message>
 </context>
 <context>
     <name>CoverPage</name>
@@ -442,6 +458,18 @@
         <source>Selected Cars (%1)</source>
         <translation>Vybrané autá (%1)</translation>
     </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>Automatizácia na pozadí je dostupná vo verzii pre OpenRepos</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Táto verzia sleduje auto, kým je aplikácia spustená (aj na pozadí). Verzia pre OpenRepos pridáva používateľskú službu, ktorá sa spúšťa pri starte telefónu a funguje po zatvorení aplikácie.</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>Otvoriť stránku OpenRepos</translation>
+    </message>
 </context>
 <context>
     <name>ToolsPage</name>
@@ -512,6 +540,18 @@
     <message>
         <source>Restarting Bluetooth...</source>
         <translation>Reštartovanie Bluetooth...</translation>
+    </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>Automatizácia na pozadí je dostupná vo verzii pre OpenRepos</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Táto verzia sleduje auto, kým je aplikácia spustená (aj na pozadí). Verzia pre OpenRepos pridáva používateľskú službu, ktorá sa spúšťa pri starte telefónu a funguje po zatvorení aplikácie.</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>Otvoriť stránku OpenRepos</translation>
     </message>
 </context>
 </TS>

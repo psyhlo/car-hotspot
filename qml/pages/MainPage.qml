@@ -5,7 +5,17 @@ Page {
     id: page
     allowedOrientations: Orientation.All
 
+    // Used only by the screenshot mode (CARHOTSPOT_SHOTDIR in main.cpp).
+    function devPrepare(step) {
+        if (step === 1) {
+            pageFlickable.contentY = Math.max(0, pageFlickable.contentHeight - pageFlickable.height)
+        }
+        console.log("MainPage devPrepare", step, "contentHeight", pageFlickable.contentHeight,
+                    "height", pageFlickable.height, "contentY", pageFlickable.contentY)
+    }
+
     SilicaFlickable {
+        id: pageFlickable
         anchors.fill: parent
         contentHeight: column.height + Theme.paddingLarge
 
@@ -120,7 +130,10 @@ Page {
                         }
                     }
 
+                    // Only the OpenRepos flavour installs a user service; the Harbour
+                    // flavour explains that below the automation switch.
                     Row {
+                        visible: appController.serviceBuild
                         spacing: Theme.paddingMedium
                         Rectangle {
                             width: Theme.itemSizeExtraSmall / 3
@@ -154,6 +167,55 @@ Page {
                 description: qsTr("Keep monitoring car in background and start automatically on phone reboot")
                 checked: appController.autostartService
                 onCheckedChanged: appController.autostartService = checked
+            }
+
+            // Jolla Harbour does not allow an application to install a background
+            // service. In this build the automation runs inside the application process,
+            // so say what that means and point to the OpenRepos build, which ships the
+            // sandboxed user service and needs no manual action after a reboot.
+            Column {
+                visible: !appController.serviceBuild
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: Theme.paddingSmall
+
+                Rectangle {
+                    width: parent.width
+                    height: noticeCol.height + 2 * Theme.paddingMedium
+                    radius: Theme.paddingSmall
+                    color: Theme.rgba(Theme.highlightBackgroundColor, 0.12)
+
+                    Column {
+                        id: noticeCol
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.margins: Theme.paddingMedium
+                        spacing: Theme.paddingSmall
+
+                        Label {
+                            width: parent.width
+                            text: qsTr("Background automation is available in the OpenRepos version")
+                            color: Theme.highlightColor
+                            font.pixelSize: Theme.fontSizeSmall
+                            wrapMode: Text.Wrap
+                        }
+
+                        Label {
+                            width: parent.width
+                            text: qsTr("This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.")
+                            color: Theme.secondaryColor
+                            wrapMode: Text.Wrap
+                            font.pixelSize: Theme.fontSizeTiny
+                        }
+
+                        Button {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: qsTr("Open OpenRepos page")
+                            onClicked: Qt.openUrlExternally(appController.openReposUrl)
+                        }
+                    }
+                }
             }
 
             TextSwitch {

@@ -1,0 +1,30 @@
+[Desktop Entry]
+Type=Application
+X-Nemo-Application-Type=silica-qt5
+Icon=harbour-carhotspot
+Exec=/usr/bin/harbour-carhotspot
+Name=Car Hotspot
+Comment=Toggles the Wi-Fi hotspot when the car Bluetooth device connects
+Categories=Application;Network;
+Name[bg]=Хотспот за кола
+Name[de]=Fahrzeug-Hotspot
+Name[es]=Punto de acceso para coche
+Name[fr]=Point d'accès voiture
+Name[it]=Hotspot auto
+Name[ru]=Точка доступа авто
+Name[sv]=Mobil hotspot för bil
+Name[fi]=Auton yhteyspiste
+
+
+# OpenRepos flavour. Identical to harbour-carhotspot.desktop except for the extra
+# "User services" permission (AppLaunch), which the application needs to
+# enable/start/stop its own systemd *user* service through
+# org.freedesktop.systemd1 on the session bus. No shell command and no subprocess is
+# involved; the RPM ships the unit file, the application only asks systemd to
+# start/stop it. The Jolla Harbour flavour (harbour-carhotspot.desktop) has no
+# service at all and therefore does not declare this permission.
+[X-Sailjail]
+OrganizationName=harbour-carhotspot
+ApplicationName=harbour-carhotspot
+Permissions=Bluetooth;Internet;AppLaunch
+ExecDBus=/usr/bin/sailjail -p harbour-carhotspot-service.desktop -- /usr/bin/harbour-carhotspot

@@ -101,6 +101,22 @@
         <source>Hotspot problem</source>
         <translation>热点问题</translation>
     </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>此版本仅在应用运行时（含后台）监控车辆。OpenRepos 版本增加了随手机启动、并在应用关闭后仍工作的用户服务。</translation>
+    </message>
+    <message>
+        <source>User service failed to start. Install it manually with: systemctl --user enable --now harbour-carhotspot.service</source>
+        <translation>用户服务启动失败。请手动安装：systemctl --user enable --now harbour-carhotspot.service</translation>
+    </message>
+    <message>
+        <source>Open Car Hotspot</source>
+        <translation>打开 Car Hotspot</translation>
+    </message>
+    <message>
+        <source>Background automation needs the OpenRepos version</source>
+        <translation>后台自动化需要 OpenRepos 版本</translation>
+    </message>
 </context>
 <context>
     <name>CoverPage</name>
@@ -442,6 +458,18 @@
         <source>Selected Cars (%1)</source>
         <translation>已选车辆 (%1)</translation>
     </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>后台自动化在 OpenRepos 版本中可用</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>此版本仅在应用运行时（含后台）监控车辆。OpenRepos 版本增加了随手机启动、并在应用关闭后仍工作的用户服务。</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>打开 OpenRepos 页面</translation>
+    </message>
 </context>
 <context>
     <name>ToolsPage</name>
@@ -512,6 +540,18 @@
     <message>
         <source>Restarting Bluetooth...</source>
         <translation>正在重启蓝牙...</translation>
+    </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>后台自动化在 OpenRepos 版本中可用</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>此版本仅在应用运行时（含后台）监控车辆。OpenRepos 版本增加了随手机启动、并在应用关闭后仍工作的用户服务。</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>打开 OpenRepos 页面</translation>
     </message>
 </context>
 </TS>

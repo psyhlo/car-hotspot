@@ -2,8 +2,10 @@
 Type=Application
 X-Nemo-Application-Type=silica-qt5
 Icon=harbour-carhotspot
-Exec=harbour-carhotspot
+Exec=/usr/bin/harbour-carhotspot
 Name=Car Hotspot
+Comment=Toggles the Wi-Fi hotspot when the car Bluetooth device connects
+Categories=Application;Network;
 Name[bg]=Хотспот за кола
 Name[de]=Fahrzeug-Hotspot
 Name[es]=Punto de acceso para coche
@@ -13,7 +15,10 @@ Name[ru]=Точка доступа авто
 Name[sv]=Mobil hotspot för bil
 Name[fi]=Auton yhteyspiste
 
+# ExecDBus is read from the X-Sailjail group by sailjaild; it lets a
+# notification tap start the application (in the sandbox) when it is closed.
 [X-Sailjail]
 OrganizationName=harbour-carhotspot
 ApplicationName=harbour-carhotspot
 Permissions=Bluetooth;Internet
+ExecDBus=/usr/bin/sailjail -p harbour-carhotspot.desktop -- /usr/bin/harbour-carhotspot

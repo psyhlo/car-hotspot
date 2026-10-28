@@ -101,6 +101,22 @@
         <source>Hotspot problem</source>
         <translation>Hotspot sorunu</translation>
     </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Bu sürüm, uygulama çalışırken (arka planda dahil) aracı izler. OpenRepos sürümü, telefon açıldığında başlayan ve uygulama kapatıldıktan sonra da çalışan bir kullanıcı hizmeti ekler.</translation>
+    </message>
+    <message>
+        <source>User service failed to start. Install it manually with: systemctl --user enable --now harbour-carhotspot.service</source>
+        <translation>Kullanıcı hizmeti başlatılamadı. Elle kurun: systemctl --user enable --now harbour-carhotspot.service</translation>
+    </message>
+    <message>
+        <source>Open Car Hotspot</source>
+        <translation>Car Hotspot'u aç</translation>
+    </message>
+    <message>
+        <source>Background automation needs the OpenRepos version</source>
+        <translation>Arka plan otomasyonu OpenRepos sürümünü gerektirir</translation>
+    </message>
 </context>
 <context>
     <name>CoverPage</name>
@@ -442,6 +458,18 @@
         <source>Selected Cars (%1)</source>
         <translation>Seçili araçlar (%1)</translation>
     </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>Arka plan otomasyonu OpenRepos sürümünde kullanılabilir</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Bu sürüm, uygulama çalışırken (arka planda dahil) aracı izler. OpenRepos sürümü, telefon açıldığında başlayan ve uygulama kapatıldıktan sonra da çalışan bir kullanıcı hizmeti ekler.</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>OpenRepos sayfasını aç</translation>
+    </message>
 </context>
 <context>
     <name>ToolsPage</name>
@@ -512,6 +540,18 @@
     <message>
         <source>Restarting Bluetooth...</source>
         <translation>Bluetooth yeniden başlatılıyor...</translation>
+    </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>Arka plan otomasyonu OpenRepos sürümünde kullanılabilir</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Bu sürüm, uygulama çalışırken (arka planda dahil) aracı izler. OpenRepos sürümü, telefon açıldığında başlayan ve uygulama kapatıldıktan sonra da çalışan bir kullanıcı hizmeti ekler.</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>OpenRepos sayfasını aç</translation>
     </message>
 </context>
 </TS>

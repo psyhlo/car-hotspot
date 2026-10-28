@@ -101,6 +101,22 @@
         <source>Hotspot problem</source>
         <translation>Hotspot-probleem</translation>
     </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Deze versie bewaakt de auto zolang de app draait (ook op de achtergrond). De OpenRepos-versie voegt een gebruikersdienst toe die bij het opstarten actief wordt en werkt nadat de app is gesloten.</translation>
+    </message>
+    <message>
+        <source>User service failed to start. Install it manually with: systemctl --user enable --now harbour-carhotspot.service</source>
+        <translation>Gebruikersdienst kon niet worden gestart. Installeer handmatig met: systemctl --user enable --now harbour-carhotspot.service</translation>
+    </message>
+    <message>
+        <source>Open Car Hotspot</source>
+        <translation>Car Hotspot openen</translation>
+    </message>
+    <message>
+        <source>Background automation needs the OpenRepos version</source>
+        <translation>Automatisering op de achtergrond vereist de OpenRepos-versie</translation>
+    </message>
 </context>
 <context>
     <name>CoverPage</name>
@@ -442,6 +458,18 @@
         <source>Selected Cars (%1)</source>
         <translation>Geselecteerde auto's (%1)</translation>
     </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>Automatisering op de achtergrond is beschikbaar in de OpenRepos-versie</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Deze versie bewaakt de auto zolang de app draait (ook op de achtergrond). De OpenRepos-versie voegt een gebruikersdienst toe die bij het opstarten actief wordt en werkt nadat de app is gesloten.</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>OpenRepos-pagina openen</translation>
+    </message>
 </context>
 <context>
     <name>ToolsPage</name>
@@ -512,6 +540,18 @@
     <message>
         <source>Restarting Bluetooth...</source>
         <translation>Bluetooth herstarten...</translation>
+    </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>Automatisering op de achtergrond is beschikbaar in de OpenRepos-versie</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>Deze versie bewaakt de auto zolang de app draait (ook op de achtergrond). De OpenRepos-versie voegt een gebruikersdienst toe die bij het opstarten actief wordt en werkt nadat de app is gesloten.</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>OpenRepos-pagina openen</translation>
     </message>
 </context>
 </TS>

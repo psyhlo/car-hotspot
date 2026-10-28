@@ -7,6 +7,7 @@ Makefile*
 *.tar.bz2
 .sfdk/
 RPMS/
+RPMS-openrepos/
 RPMS-sfos5.0/
 RPMS-sfos5.1/
 BUILD/
@@ -17,13 +18,11 @@ SRPMS/
 *.user*
 moc_*
 harbour-carhotspot
-harbour-carhotspot-helper
-harbour-hotspotincar
 translations/*.qm
-debug*.list
-elfbins.list
-yes
-yes.pub
 __pycache__/
 *.pyc
 
+documentation.list
+
+# device originals of the store screenshots (the uploads live in screenshots/harbour/)
+screenshots/raw/

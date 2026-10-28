@@ -1,0 +1,21 @@
+[Desktop Entry]
+Type=Application
+Icon=harbour-carhotspot
+Exec=/usr/bin/harbour-carhotspot --daemon
+Name=Car Hotspot Background Service
+Name[de]=Car Hotspot Hintergrunddienst
+Name[fi]=Car Hotspot - taustapalvelu
+Name[ru]=Фоновая служба Car Hotspot
+Comment=Background Bluetooth monitor for Car Hotspot
+NoDisplay=true
+
+# Sailjail profile used by the systemd user unit:
+#   ExecStart=/usr/bin/sailjail -p harbour-carhotspot-daemon.desktop -- ... --daemon
+# The sandboxed daemon gets exactly the same permissions as the UI and the same
+# data directory (OrganizationName/ApplicationName below are identical), so the
+# background process is confined as well instead of escaping the sandbox.
+[X-Sailjail]
+OrganizationName=harbour-carhotspot
+ApplicationName=harbour-carhotspot
+Permissions=Bluetooth;Internet
+ExecDBus=/usr/bin/sailjail -p harbour-carhotspot-daemon.desktop -- /usr/bin/harbour-carhotspot

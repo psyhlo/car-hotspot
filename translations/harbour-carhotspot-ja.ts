@@ -101,6 +101,22 @@
         <source>Hotspot problem</source>
         <translation>テザリングの問題</translation>
     </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>この版はアプリが実行中（バックグラウンドを含む）の間、車を監視します。OpenRepos 版では、端末の起動時に開始し、アプリを閉じた後も動作するユーザーサービスが追加されます。</translation>
+    </message>
+    <message>
+        <source>User service failed to start. Install it manually with: systemctl --user enable --now harbour-carhotspot.service</source>
+        <translation>ユーザーサービスを開始できませんでした。次を手動で実行してインストールしてください: systemctl --user enable --now harbour-carhotspot.service</translation>
+    </message>
+    <message>
+        <source>Open Car Hotspot</source>
+        <translation>Car Hotspot を開く</translation>
+    </message>
+    <message>
+        <source>Background automation needs the OpenRepos version</source>
+        <translation>バックグラウンドの自動機能には OpenRepos 版が必要です</translation>
+    </message>
 </context>
 <context>
     <name>CoverPage</name>
@@ -442,6 +458,18 @@
         <source>Selected Cars (%1)</source>
         <translation>選択した車 (%1)</translation>
     </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>バックグラウンドの自動機能は OpenRepos 版で利用できます</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>この版はアプリが実行中（バックグラウンドを含む）の間、車を監視します。OpenRepos 版では、端末の起動時に開始し、アプリを閉じた後も動作するユーザーサービスが追加されます。</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>OpenRepos のページを開く</translation>
+    </message>
 </context>
 <context>
     <name>ToolsPage</name>
@@ -512,6 +540,18 @@
     <message>
         <source>Restarting Bluetooth...</source>
         <translation>Bluetoothを再起動中...</translation>
+    </message>
+    <message>
+        <source>Background automation is available in the OpenRepos version</source>
+        <translation>バックグラウンドの自動機能は OpenRepos 版で利用できます</translation>
+    </message>
+    <message>
+        <source>This version monitors the car while the app is running (also in background). The OpenRepos version adds a user service that starts on boot and works after the app is closed.</source>
+        <translation>この版はアプリが実行中（バックグラウンドを含む）の間、車を監視します。OpenRepos 版では、端末の起動時に開始し、アプリを閉じた後も動作するユーザーサービスが追加されます。</translation>
+    </message>
+    <message>
+        <source>Open OpenRepos page</source>
+        <translation>OpenRepos のページを開く</translation>
     </message>
 </context>
 </TS>
