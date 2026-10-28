@@ -53,24 +53,22 @@ and preferences.
 
 ## Packages
 
-Jolla Harbour (2 files):
+GitHub assets (name-version-release-flavour.arch.rpm so the two flavours cannot collide in one release):
 
-| File | Target | Runs on |
-|---|---|---|
-| `harbour-carhotspot-0.4.3-1.armv7hl.rpm` | `SailfishOS-5.1.0.11-armv7hl` | SFOS 5.1+, 32-bit ARM |
-| `harbour-carhotspot-0.4.3-1.aarch64.rpm` | `SailfishOS-5.1.0.11-aarch64` | SFOS 5.1+, 64-bit ARM |
+| Asset | Flavour | Target | Runs on |
+|---|---|---|---|
+| `harbour-carhotspot-0.4.3-1-harbour.armv7hl.rpm` | Harbour | 5.1 armv7hl | SFOS 5.1+, 32-bit ARM |
+| `harbour-carhotspot-0.4.3-1-harbour.aarch64.rpm` | Harbour | 5.1 aarch64 | SFOS 5.1+, 64-bit ARM |
+| `harbour-carhotspot-0.4.3-1-openrepos.armv7hl.rpm` | OpenRepos | 5.1 armv7hl | SFOS 5.1, 32-bit |
+| `harbour-carhotspot-0.4.3-1-openrepos.aarch64.rpm` | OpenRepos | 5.1 aarch64 | SFOS 5.1, 64-bit |
+| `harbour-carhotspot-0.4.3-1sfos50-openrepos.armv7hl.rpm` | OpenRepos | 5.0 armv7hl | SFOS 5.0, 32-bit |
+| `harbour-carhotspot-0.4.3-1sfos50-openrepos.aarch64.rpm` | OpenRepos | 5.0 aarch64 | SFOS 5.0, 64-bit |
 
-OpenRepos (4 files, the flavour with the background service):
-
-| File | Target | Runs on |
-|---|---|---|
-| `harbour-carhotspot-0.4.3-1.armv7hl.rpm` | 5.1 armv7hl | SFOS 5.1, 32-bit |
-| `harbour-carhotspot-0.4.3-1.aarch64.rpm` | 5.1 aarch64 | SFOS 5.1, 64-bit |
-| `harbour-carhotspot-0.4.3-1sfos50.armv7hl.rpm` | 5.0 armv7hl | SFOS 5.0, 32-bit |
-| `harbour-carhotspot-0.4.3-1sfos50.aarch64.rpm` | 5.0 aarch64 | SFOS 5.0, 64-bit |
-
-The `1sfos50` release tag only keeps the file names distinct; each package is built against its own
-target sysroot. An `i486` build exists for the SDK emulator only and is never uploaded.
+The store uploads keep the plain `name-version-release.arch.rpm` names Harbour requires
+(`harbour-carhotspot-0.4.3-1.armv7hl.rpm`, `.aarch64.rpm`, and for OpenRepos also
+`harbour-carhotspot-0.4.3-1sfos50.*`); the content is identical, only the file name differs. The
+`1sfos50` release tag exists only to keep the four file names distinct, and each package is built
+against its own target sysroot. An `i486` build exists for the SDK emulator only and is never uploaded.
 
 ## Upgrading
 
