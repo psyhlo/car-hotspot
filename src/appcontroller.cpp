@@ -68,6 +68,21 @@ AppController::AppController(bool isDaemon, QObject *parent)
             this, &AppController::onDevicesChanged);
     connect(&m_bluetooth, &BluetoothManager::devicesChanged,
             this, &AppController::selectedDevicesChanged);
+    // Switching Bluetooth on is a new chance to reach the car: re-arm the paging budget.
+    // The first "powered" emission is only the initial state read at startup, not a switch,
+    // so it must not be reported as one.
+    connect(&m_bluetooth, &BluetoothManager::bluetoothPoweredChanged, this, [this](bool powered) {
+        if (powered) {
+            if (!m_bluetoothPowerBaseline) {
+                m_bluetoothPowerBaseline = true;
+                return;
+            }
+            resetAutoConnectBudget(true, tr("Bluetooth switched on"));
+        } else {
+            m_bluetoothPowerBaseline = false;
+        }
+        updatePollInterval();
+    });
     connect(&m_systemMonitor, &SystemMonitor::batteryChanged,
             this, &AppController::onBatteryChanged);
     connect(&m_systemMonitor, &SystemMonitor::roamingChanged,
@@ -76,9 +91,13 @@ AppController::AppController(bool isDaemon, QObject *parent)
         bool handlingAutomation = m_isDaemon || !m_isDaemonActive;
         if (!handlingAutomation)
             return;
-        // Waking up the display means the user is near the phone/car: stop backing off.
-        m_autoConnectBackoffMs = AUTO_CONNECT_BASE_MS;
-        m_lastAutoConnectAttempt = 0;
+        // A screen wake is not evidence that the car is near - charging, notifications and a
+        // glance at the clock all wake the display. Paging on every wake is what made the app
+        // page the absent car every 10-30s, so this is an opt-in advanced option (pageOnWake
+        // in the settings file, off by default). The state re-read below always runs.
+        if (m_pageOnWake) {
+            maybeRearmAutoConnect(tr("screen wake"));
+        }
         if (m_autoEnableBluetooth && !m_bluetooth.isBluetoothPowered()) {
             m_bluetooth.ensureBluetoothPowered();
         }
@@ -86,7 +105,7 @@ AppController::AppController(bool isDaemon, QObject *parent)
         m_hotspot.checkStatus();
         m_lastHotspotCheck = QDateTime::currentMSecsSinceEpoch();
         if (m_bluetooth.isBluetoothPowered() && !m_bluetooth.isTargetConnected()) {
-            m_bluetooth.connectTargetDevices();
+            attemptCarConnect();
         } else if (m_autoToggle && m_bluetooth.isTargetConnected() && !m_hotspot.isHotspotActive() && !m_manualOverrideOff) {
             onTargetConnectionChanged(true);
         }
@@ -134,7 +153,7 @@ AppController::AppController(bool isDaemon, QObject *parent)
                 }
                 m_bluetooth.refreshDevices();
                 if (m_bluetooth.isBluetoothPowered() && !m_bluetooth.isTargetConnected()) {
-                    m_bluetooth.connectTargetDevices();
+                    attemptCarConnect();
                 } else if (m_autoToggle && m_bluetooth.isTargetConnected() && !m_hotspot.isHotspotActive() && !m_manualOverrideOff) {
                     onTargetConnectionChanged(true);
                 }
@@ -253,10 +272,16 @@ void AppController::pollTick()
         m_bluetooth.ensureBluetoothPowered();
     }
 
-    // GetManagedObjects is a blocking round trip: run it in the UI process only while the
-    // page is visible, and in the service process on its normal cadence.
+    // Device and connection state arrives through BlueZ signals (PropertiesChanged for
+    // org.bluez.Device1.Connected, InterfacesAdded for a device that appears), which is also
+    // what wakes this process when the car connects by itself. The periodic full read is
+    // therefore only a safety net for a missed signal, a BlueZ restart, and the picker while
+    // the page is visible - it used to run on every tick, 3s around the clock.
     if (handlingAutomation || uiVisible) {
-        m_bluetooth.refreshDevices();
+        if (now - m_lastBluetoothHeartbeatMs >= BLUETOOTH_HEARTBEAT_MS) {
+            m_lastBluetoothHeartbeatMs = now;
+            m_bluetooth.refreshDevices();
+        }
     }
 
     // Tethering state arrives through net.connman.Technology.PropertyChanged, so ConnMan is
@@ -270,15 +295,12 @@ void AppController::pollTick()
 
     if (handlingAutomation && m_autoToggle && !inServiceHandoff()) {
         if (m_bluetooth.isBluetoothPowered() && !m_bluetooth.isTargetConnected()) {
-            // Phone-initiated paging of the car, with exponential back-off (15s -> 60s) while
-            // it is out of range. A car that connects on its own is reported by BlueZ signals
-            // and the display-wake handler resets the back-off, so a real drive is never delayed.
-            if (now - m_lastAutoConnectAttempt >= m_autoConnectBackoffMs) {
-                m_lastAutoConnectAttempt = now;
-                m_bluetooth.connectTargetDevices();
-                m_autoConnectBackoffMs = qMin(m_autoConnectBackoffMs * 2,
-                                              static_cast<qint64>(AUTO_CONNECT_BACKOFF_MAX_MS));
-            }
+            // Phone-initiated paging lives in attemptCarConnect(): a bounded number of
+            // attempts per power cycle, because an absent car must not be paged around the
+            // clock - the page occupies the combo controller, which the Android support
+            // stack also needs. A car that connects on its own is reported by BlueZ signals,
+            // so a real drive is never delayed.
+            attemptCarConnect();
         } else if (m_bluetooth.isTargetConnected() && !m_hotspot.isHotspotActive() && !m_manualOverrideOff) {
             bool timersIdle = (!m_disconnectDebounceTimer || !m_disconnectDebounceTimer->isActive()) &&
                               (!m_delayedStopTimer || !m_delayedStopTimer->isActive()) &&
@@ -311,6 +333,156 @@ void AppController::updatePollInterval()
     const int wanted = (busy || uiVisible) ? POLL_BUSY_MS : POLL_IDLE_MS;
     if (m_pollTimer->interval() != wanted) {
         m_pollTimer->setInterval(wanted);
+    }
+}
+
+void AppController::resetAutoConnectBudget(bool withLog, const QString &reason)
+{
+    m_autoConnectAttemptsLeft = AUTO_CONNECT_ATTEMPTS_PER_CYCLE;
+    m_autoConnectBackoffMs = AUTO_CONNECT_BASE_MS;
+    m_lastAutoConnectAttempt = 0;
+    m_autoConnectBudgetLogged = false;
+    m_autoConnectBudgetSpentMs = 0;
+    // Only a signal that the car is really present reaches here (Bluetooth power, a real
+    // connect/disconnect, a car selection), so the quiet-window ladder starts over.
+    m_autoConnectRearmMs = AUTO_CONNECT_REARM_MS;
+    m_autoConnectEmptyBursts = 0;
+
+    // Only the process that owns the automation writes to the shared diagnostics log, so a
+    // UI save does not duplicate the line the service would write.
+    if (withLog && (m_isDaemon || !m_isDaemonActive) && !reason.isEmpty()) {
+        appendLog(QString("[%1] Car paging re-armed (%2)")
+                  .arg(QDateTime::currentDateTime().toString("hh:mm:ss"), reason));
+    }
+
+    updatePollInterval();
+}
+
+void AppController::maybeRearmAutoConnect(const QString &reason)
+{
+    // A screen wake is a weak signal: it fires for charging, notifications and a glance at
+    // the clock. On this device it woke the budget every few seconds, so the car was paged
+    // every 10-30s instead of 3 times per 10 minutes - the opposite of what the budget is
+    // for, because a BR/EDR page holds the combo controller that the Android support stack
+    // shares. Only re-arm once the previous burst is old enough, and never skip the
+    // back-off that is already running.
+    if (m_autoConnectAttemptsLeft > 0) {
+        return;  // attempts are still available, nothing to re-arm
+    }
+
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    if (m_autoConnectBudgetSpentMs && now - m_autoConnectBudgetSpentMs < m_autoConnectRearmMs) {
+        return;
+    }
+
+    m_autoConnectAttemptsLeft = AUTO_CONNECT_ATTEMPTS_PER_CYCLE;
+    m_autoConnectBudgetLogged = false;
+    m_autoConnectBudgetSpentMs = 0;
+    m_autoConnectBackoffMs = AUTO_CONNECT_BASE_MS;
+
+    if (m_isDaemon || !m_isDaemonActive) {
+        appendLog(QString("[%1] Car paging re-armed (%2, %3 min since the last burst)")
+                  .arg(QDateTime::currentDateTime().toString("hh:mm:ss"),
+                       reason.isEmpty() ? tr("quiet timer") : reason)
+                  .arg(m_autoConnectRearmMs / 60000));
+    }
+}
+
+void AppController::attemptCarConnect()
+{
+    if (!m_autoToggle || inServiceHandoff()) {
+        return;
+    }
+    if (!m_bluetooth.isBluetoothPowered() || m_bluetooth.isTargetConnected()) {
+        return;
+    }
+
+    // Never add a BR/EDR page while the access point is up or coming up: one combo controller
+    // then has LE scanning, the page and the AP competing for the same firmware slots, which
+    // is exactly what makes other Bluetooth consumers (Android stacks, GLE watches) fail.
+    // The car is only paged again after the hotspot goes down and the grace period expires.
+    if (m_hotspot.isHotspotActive() || m_hotspot.startPending()) {
+        return;
+    }
+
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    const bool logging = (m_isDaemon || !m_isDaemonActive);
+    const QString carLabel = !connectedTargetName().isEmpty() ? connectedTargetName()
+                            : (!m_targetName.isEmpty() ? m_targetName : tr("Car"));
+
+    // Is the car even known to BlueZ? A classic device that is idle does not advertise, so
+    // "not in the list" means out of range - and then there is nothing to page. Saying so on
+    // the Diagnostics page is what lets a user answer "is this app touching my radio?".
+    bool targetKnown = false;
+    for (const QVariant &item : m_bluetooth.devices()) {
+        if (m_targetAddressesSet.contains(item.toMap().value("address").toString().trimmed().toUpper())) {
+            targetKnown = true;
+            break;
+        }
+    }
+    if (!targetKnown) {
+        if (logging && now - m_lastNoTargetLoggedMs >= 120000) {
+            m_lastNoTargetLoggedMs = now;
+            appendLog(QString("[%1] %2 is not reported by BlueZ - nothing to page, monitoring passively")
+                      .arg(QDateTime::currentDateTime().toString("hh:mm:ss"), carLabel));
+        }
+        return;
+    }
+
+    if (m_autoConnectAttemptsLeft <= 0) {
+        // Budget spent. The quiet window before the next burst grows with every burst that
+        // found no car: 30 min, then 1 h, then 2 h at most. Paging exists only for kits that
+        // never initiate - a car that is really near connects on its own and BlueZ signals us,
+        // which is what starts the hotspot - so an absent car must not keep costing the
+        // combo controller. Someone who never switches Bluetooth off is still covered: the
+        // window is a timer, not a power event.
+        if (m_autoConnectBudgetSpentMs && now - m_autoConnectBudgetSpentMs < m_autoConnectRearmMs) {
+            return;  // monitor passively for now
+        }
+        m_autoConnectAttemptsLeft = AUTO_CONNECT_ATTEMPTS_PER_CYCLE;
+        m_autoConnectBudgetLogged = false;
+        m_autoConnectBackoffMs = AUTO_CONNECT_BASE_MS;
+        m_lastAutoConnectAttempt = 0;
+    }
+
+    if (now - m_lastAutoConnectAttempt < m_autoConnectBackoffMs) {
+        return;
+    }
+    m_lastAutoConnectAttempt = now;
+    m_autoConnectBackoffMs = qMin(m_autoConnectBackoffMs * 2,
+                                  static_cast<qint64>(AUTO_CONNECT_BACKOFF_MAX_MS));
+
+    if (logging) {
+        appendLog(QString("[%1] Paging %2 (attempt %3/%4 this cycle, radio duty ~10s)")
+                  .arg(QDateTime::currentDateTime().toString("hh:mm:ss"), carLabel)
+                  .arg(AUTO_CONNECT_ATTEMPTS_PER_CYCLE - m_autoConnectAttemptsLeft + 1)
+                  .arg(AUTO_CONNECT_ATTEMPTS_PER_CYCLE));
+    }
+
+    // Consume the budget only for a page that was really sent - a target BlueZ has not
+    // reported yet must not burn the attempts of a car that is merely out of range.
+    if (m_bluetooth.connectTargetDevices()) {
+        m_autoConnectAttemptsLeft--;
+        if (m_autoConnectAttemptsLeft == 0) {
+            m_autoConnectBudgetSpentMs = QDateTime::currentMSecsSinceEpoch();
+            // This burst found no car: widen the quiet window (see the ladder above).
+            m_autoConnectEmptyBursts++;
+            if (m_autoConnectEmptyBursts <= 1) {
+                m_autoConnectRearmMs = AUTO_CONNECT_REARM_MS;
+            } else if (m_autoConnectEmptyBursts == 2) {
+                m_autoConnectRearmMs = AUTO_CONNECT_REARM_HOUR_MS;
+            } else {
+                m_autoConnectRearmMs = AUTO_CONNECT_REARM_MAX_MS;
+            }
+            if (!m_autoConnectBudgetLogged && logging) {
+                m_autoConnectBudgetLogged = true;
+                appendLog(QString("[%1] Car paging stopped after %2 attempts - waiting for BlueZ"
+                                  " to report the car, next manual attempt in %3 min")
+                          .arg(QDateTime::currentDateTime().toString("hh:mm:ss"))
+                          .arg(AUTO_CONNECT_ATTEMPTS_PER_CYCLE)
+                          .arg(m_autoConnectRearmMs / 60000));
+            }
+        }
     }
 }
 
@@ -367,6 +539,8 @@ void AppController::loadSettings()
     m_minBatteryLevel = m_settings.value("minBatteryLevel", 20).toInt();
     m_stopDelayMinutes = m_settings.value("stopDelayMinutes", 2).toInt();
     m_autoEnableBluetooth = m_settings.value("autoEnableBluetooth", false).toBool();
+    // Advanced option, deliberately without a toggle in the UI: page the car on a screen wake.
+    m_pageOnWake = m_settings.value("pageOnWake", false).toBool();
     m_enableCellularAuto = m_settings.value("enableCellularAuto", true).toBool();
     m_vibrateOnConnect = m_settings.value("vibrateOnConnect", true).toBool();
     // A manual "Hotspot OFF" must survive a process restart, otherwise the automation
@@ -374,6 +548,7 @@ void AppController::loadSettings()
     m_manualOverrideOff = m_settings.value("manualHotspotOverrideOff", false).toBool();
 
     m_bluetooth.setTargetDevices(m_targetAddresses);
+    m_lastSavedTargets = m_targetAddresses;
 }
 
 void AppController::saveSettings()
@@ -404,6 +579,16 @@ void AppController::saveSettings()
     // Cross-process notification to the service. Method calls are filtered by Sailjail,
     // signals are not; the service also reloads settings periodically as a safety net.
     notifySettingsChanged();
+
+    // Picking or clearing a car means the car is presumably in range: page straight away.
+    // Every other edit (toggles, sliders) only re-arms inside the rate limit - a slider drag
+    // saves repeatedly and would otherwise refill the paging budget every few seconds.
+    if (m_targetAddresses != m_lastSavedTargets) {
+        resetAutoConnectBudget(false);
+    } else {
+        maybeRearmAutoConnect(tr("a setting changed"));
+    }
+    m_lastSavedTargets = m_targetAddresses;
 }
 
 void AppController::notifySettingsChanged()
@@ -421,6 +606,14 @@ void AppController::onRemoteSettingsChanged()
     m_settings.sync();
     loadSettings();
     reloadSharedLog();
+    // Same rule as in saveSettings(): only an actual car selection deserves an immediate
+    // page, any other edit stays inside the rate limit.
+    if (m_targetAddresses != m_lastSavedTargets) {
+        resetAutoConnectBudget(false);
+    } else {
+        maybeRearmAutoConnect(tr("a setting changed"));
+    }
+    m_lastSavedTargets = m_targetAddresses;
 }
 
 void AppController::setAutoEnableBluetooth(bool enabled)
@@ -1212,7 +1405,7 @@ void AppController::onTargetConnectionChanged(bool connected)
     QString activeName = connectedTargetName();
     // A real connect/disconnect event proves the car is in range: stop backing off, and
     // let the watchdog run fast while the (dis)connection sequence is being handled.
-    m_autoConnectBackoffMs = AUTO_CONNECT_BASE_MS;
+    resetAutoConnectBudget(false);
     updatePollInterval();
     if (!activeName.isEmpty()) {
         m_lastConnectedCarLabel = activeName;

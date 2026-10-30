@@ -4,6 +4,8 @@
 #include <QtDBus/QDBusArgument>
 #include <QtDBus/QDBusMetaType>
 #include <QtDBus/QDBusVariant>
+#include <QtDBus/QDBusPendingCall>
+#include <QtDBus/QDBusPendingCallWatcher>
 #include <QDateTime>
 #include <QTimer>
 #include <QDebug>
@@ -46,7 +48,7 @@ BluetoothManager::BluetoothManager(QObject *parent)
         "org.freedesktop.DBus.Properties",
         "PropertiesChanged",
         this,
-        SLOT(onPropertiesChanged(QString, QVariantMap, QStringList))
+        SLOT(onDevicePropertiesChanged(QDBusMessage))
     );
 
     refreshDevices();
@@ -113,6 +115,8 @@ bool BluetoothManager::isBluetoothPowered()
         "org.bluez.Adapter1",
         QDBusConnection::systemBus()
     );
+    // A property read is quick, but on a wedged bluetoothd Qt would wait its full 25 s.
+    adapter.setTimeout(POWER_READ_TIMEOUT_MS);
     if (adapter.isValid()) {
         QVariant powered = adapter.property("Powered");
         if (powered.isValid()) {
@@ -128,6 +132,7 @@ bool BluetoothManager::isBluetoothPowered()
             "org.bluez.Adapter1",
             QDBusConnection::systemBus()
         );
+        adapter1.setTimeout(POWER_READ_TIMEOUT_MS);
         if (adapter1.isValid()) {
             QVariant powered = adapter1.property("Powered");
             if (powered.isValid()) {
@@ -144,6 +149,7 @@ bool BluetoothManager::isBluetoothPowered()
         "net.connman.Technology",
         QDBusConnection::systemBus()
     );
+    btTech.setTimeout(POWER_READ_TIMEOUT_MS);
     if (btTech.isValid()) {
         QDBusReply<QVariantMap> reply = btTech.call("GetProperties");
         if (reply.isValid() && reply.value().value("Powered", false).toBool()) {
@@ -180,8 +186,34 @@ void BluetoothManager::ensureBluetoothPowered()
     });
 }
 
+// GetManagedObjects is this app's only read path to BlueZ. It used to be a blocking call
+// with Qt's 25 s default timeout, which froze the caller's thread whenever bluetoothd was
+// busy or mid-restart, and it ran once per BlueZ signal - a (dis)connection emits dozens.
+// Reads are now asynchronous, capped at 3 s and coalesced into one request per burst,
+// because a single reply already describes the whole object tree.
 void BluetoothManager::refreshDevices()
 {
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+
+    if (m_refreshInFlight) {
+        m_refreshQueued = true;
+        return;
+    }
+
+    if (now - m_lastRefreshMs < REFRESH_MIN_MS) {
+        if (!m_refreshDeferred) {
+            m_refreshDeferred = true;
+            QTimer::singleShot(int(REFRESH_MIN_MS - (now - m_lastRefreshMs)), this, [this]() {
+                m_refreshDeferred = false;
+                refreshDevices();
+            });
+        }
+        return;
+    }
+
+    m_lastRefreshMs = now;
+    m_refreshInFlight = true;
+
     QDBusMessage msg = QDBusMessage::createMethodCall(
         "org.bluez",
         "/",
@@ -189,7 +221,40 @@ void BluetoothManager::refreshDevices()
         "GetManagedObjects"
     );
 
-    QDBusMessage reply = QDBusConnection::systemBus().call(msg);
+    QDBusPendingCall call = QDBusConnection::systemBus().asyncCall(msg, REFRESH_TIMEOUT_MS);
+    QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(call, this);
+    connect(watcher, &QDBusPendingCallWatcher::finished, this, &BluetoothManager::onRefreshFinished);
+}
+
+void BluetoothManager::onRefreshFinished(QDBusPendingCallWatcher *watcher)
+{
+    m_refreshInFlight = false;
+
+    if (watcher->isError()) {
+        // Timeouts during a bluetoothd restart or a deep-sleep wakeup are normal; report
+        // one at most every 10 s so a wedged adapter cannot flood the diagnostics log.
+        const qint64 now = QDateTime::currentMSecsSinceEpoch();
+        if (now - m_lastRefreshErrorMs >= 10000) {
+            m_lastRefreshErrorMs = now;
+            qWarning() << "BluetoothManager: GetManagedObjects failed:" << watcher->error().message();
+        }
+    } else {
+        parseManagedObjects(watcher->reply());
+    }
+
+    watcher->deleteLater();
+
+    // Something changed while the reply was on the wire - re-read once so the cache cannot
+    // stay stale (a device that appeared during the call must still become visible).
+    if (m_refreshQueued) {
+        m_refreshQueued = false;
+        m_lastRefreshMs = 0;
+        refreshDevices();
+    }
+}
+
+void BluetoothManager::parseManagedObjects(const QDBusMessage &reply)
+{
     if (reply.type() == QDBusMessage::ErrorMessage) {
         qWarning() << "BluetoothManager: GetManagedObjects call failed:" << reply.errorMessage();
         return;
@@ -245,6 +310,16 @@ void BluetoothManager::refreshDevices()
                 item["connected"] = props.value("Connected", false).toBool();
                 item["paired"] = props.value("Paired", false).toBool();
                 item["selected"] = m_targetAddressesSet.contains(addr);
+                item["icon"] = props.value("Icon", QString()).toString();
+                QStringList allowedModes;
+                const QVariant modesVariant = props.value("AllowedModes");
+                if (modesVariant.canConvert<QVariantList>()) {
+                    const QVariantList modes = modesVariant.toList();
+                    for (const QVariant &mode : modes) {
+                        allowedModes << mode.toString();
+                    }
+                }
+                item["allowedModes"] = allowedModes;
                 list.append(item);
             }
             arg.endMapEntry();
@@ -360,59 +435,101 @@ void BluetoothManager::restartBluetoothSubsystem()
     });
 }
 
-void BluetoothManager::connectTargetDevices()
+// A BLE-only peripheral answers LE connections only and serves a single central at a time.
+// Paging or connecting to one from this process takes it away from whoever already owns it,
+// and on Sailfish that owner is usually the Android support stack (com.android.bluetooth
+// drives its own HCI on the same combo controller) - which is precisely how a GLE watch
+// becomes undiscoverable from the Android app. Only classic-capable devices may be paged.
+bool BluetoothManager::isConnectableDevice(const QVariantMap &device) const
+{
+    const QStringList modes = device.value("allowedModes").toStringList();
+    if (modes.size() == 1 && modes.first().compare(QStringLiteral("le"), Qt::CaseInsensitive) == 0) {
+        return false;
+    }
+
+    // Deliberately narrow: classes that are never a car kit. BlueZ reports "unknown" for
+    // devices it cannot classify, so those stay connectable for compatibility.
+    const QString icon = device.value("icon").toString().toLower();
+    if (icon == QLatin1String("watch") || icon == QLatin1String("le-audio")
+            || icon == QLatin1String("gles")) {
+        return false;
+    }
+
+    return true;
+}
+
+void BluetoothManager::logSkippedLeDevice(const QString &address, const QString &name)
+{
+    if (m_loggedLeSkips.contains(address)) {
+        return;
+    }
+    m_loggedLeSkips.insert(address);
+    qDebug() << "BluetoothManager: Not connecting to" << address << name
+             << "- LE-only device, a BLE peripheral accepts one central at a time";
+}
+
+bool BluetoothManager::connectTargetDevices()
 {
     if (!isBluetoothPowered()) {
         qDebug() << "BluetoothManager: Cannot connect to target devices, Bluetooth is OFF";
-        return;
+        return false;
     }
 
     if (m_targetAddressesSet.isEmpty()) {
-        return;
+        return false;
     }
 
     if (m_isTargetConnected) {
         qDebug() << "BluetoothManager: Target device already connected";
         m_reconnectAttemptsLeft = 0;
-        return;
+        return false;
     }
 
     qint64 now = QDateTime::currentMSecsSinceEpoch();
-    if (now - m_lastConnectAttempt < 8000) {
-        return;
+    if (now - m_lastConnectAttempt < CONNECT_DEBOUNCE_MS) {
+        return false;
     }
-
-    refreshDevices();
-    if (m_isTargetConnected) {
-        m_reconnectAttemptsLeft = 0;
-        return;
-    }
-
     m_lastConnectAttempt = now;
 
+    // The device cache is kept current by the ObjectManager signals and the periodic
+    // refresh, so no blocking read is needed here any more.
     bool attempted = false;
     for (const QVariant &item : m_devices) {
         QVariantMap map = item.toMap();
         QString addr = map.value("address").toString().trimmed().toUpper();
-        if (m_targetAddressesSet.contains(addr)) {
-            QString path = map.value("path").toString();
-            if (!path.isEmpty()) {
-                qDebug() << "BluetoothManager: Initiating proactive connection to target car:" << addr << "path:" << path;
-                QDBusInterface dev(
-                    "org.bluez",
-                    path,
-                    "org.bluez.Device1",
-                    QDBusConnection::systemBus()
-                );
-                if (dev.isValid()) {
-                    dev.asyncCall("Connect");
-                    attempted = true;
-                }
-            }
+        if (!m_targetAddressesSet.contains(addr)) {
+            continue;
+        }
+        QString path = map.value("path").toString();
+        if (path.isEmpty()) {
+            continue;
+        }
+        if (!isConnectableDevice(map)) {
+            logSkippedLeDevice(addr, map.value("name").toString());
+            continue;
+        }
+
+        qDebug() << "BluetoothManager: Initiating proactive connection to target car:" << addr << "path:" << path;
+        QDBusInterface dev(
+            "org.bluez",
+            path,
+            "org.bluez.Device1",
+            QDBusConnection::systemBus()
+        );
+        if (dev.isValid()) {
+            dev.asyncCall("Connect");
+            attempted = true;
         }
     }
 
-    if (attempted && m_reconnectAttemptsLeft > 0) {
+    if (!attempted) {
+        // No cache entry for the target yet - the car has not been seen by BlueZ. Request a
+        // fresh read so a later tick can act on it instead of paging nothing forever.
+        refreshDevices();
+        return false;
+    }
+
+    if (m_reconnectAttemptsLeft > 0) {
         m_reconnectAttemptsLeft--;
         if (m_reconnectAttemptsLeft > 0) {
             // Retry once more after 10s if still not connected
@@ -423,15 +540,24 @@ void BluetoothManager::connectTargetDevices()
             });
         }
     }
+
+    return true;
 }
 
-void BluetoothManager::onPropertiesChanged(const QString &interface, const QVariantMap &changedProperties, const QStringList &invalidatedProperties)
+void BluetoothManager::onDevicePropertiesChanged(const QDBusMessage &message)
 {
-    Q_UNUSED(invalidatedProperties);
+    const QList<QVariant> args = message.arguments();
+    if (args.size() < 2) {
+        return;
+    }
+    const QString interface = args.at(0).toString();
+    const QVariantMap changedProperties = args.at(1).toMap();
+    const QStringList invalidatedProperties =
+        args.size() > 2 ? args.at(2).toStringList() : QStringList();
 
-    if (interface == "org.bluez.Adapter1") {
+    if (interface == QLatin1String("org.bluez.Adapter1")) {
         if (changedProperties.contains("Powered")) {
-            bool powered = changedProperties.value("Powered").toBool();
+            const bool powered = changedProperties.value("Powered").toBool();
             qDebug() << "BluetoothManager: Adapter1 Powered changed to:" << powered;
             emit bluetoothPoweredChanged(powered);
             refreshDevices();
@@ -445,12 +571,75 @@ void BluetoothManager::onPropertiesChanged(const QString &interface, const QVari
         return;
     }
 
-    if (interface != "org.bluez.Device1")
+    if (interface != QLatin1String("org.bluez.Device1")) {
         return;
-
-    if (changedProperties.contains("Connected")) {
-        refreshDevices();
     }
+
+    // The car connecting on its own shows up here, and this payload already carries the new
+    // Connected value, so apply it straight to the cache instead of asking BlueZ for the whole
+    // tree again. updateTargetStatus() is what starts the hotspot, so the automation now runs
+    // on the signal itself instead of on the next watchdog tick.
+    if (!invalidatedProperties.isEmpty()) {
+        // Properties the signal only invalidates have to be re-read, not guessed at.
+        refreshDevices();
+        return;
+    }
+
+    if (applyDeviceProperties(message.path(), changedProperties)) {
+        updateTargetStatus();
+        emit devicesChanged();
+        return;
+    }
+
+    // A device we have never seen, or a change we cannot map: one coalesced read covers it.
+    refreshDevices();
+}
+
+// Patch the cached device entry from a PropertiesChanged payload. Returns false when the
+// object path is not in the cache, which the caller treats as "read the tree once".
+bool BluetoothManager::applyDeviceProperties(const QString &path, const QVariantMap &changed)
+{
+    if (path.isEmpty() || changed.isEmpty()) {
+        return false;
+    }
+
+    for (int i = 0; i < m_devices.size(); ++i) {
+        QVariantMap map = m_devices.at(i).toMap();
+        if (map.value("path").toString() != path) {
+            continue;
+        }
+
+        if (changed.contains("Connected")) {
+            map["connected"] = changed.value("Connected").toBool();
+        }
+        if (changed.contains("Paired")) {
+            map["paired"] = changed.value("Paired").toBool();
+        }
+        if (changed.contains("Icon")) {
+            map["icon"] = changed.value("Icon").toString();
+        }
+        if (changed.contains("AllowedModes")) {
+            QStringList modes;
+            const QList<QVariant> raw = changed.value("AllowedModes").toList();
+            for (const QVariant &mode : raw) {
+                modes << mode.toString();
+            }
+            map["allowedModes"] = modes;
+        }
+        // The UI shows Alias when there is one, otherwise the address - mirror that here so a
+        // renamed device keeps the same label without another round trip.
+        if (changed.contains("Alias")) {
+            map["name"] = changed.value("Alias").toString();
+        } else if (changed.contains("Name")
+                   && map.value("name").toString() == map.value("address").toString()) {
+            map["name"] = changed.value("Name").toString();
+        }
+
+        m_devices[i] = map;
+        return true;
+    }
+
+    return false;
 }
 
 void BluetoothManager::onInterfacesAdded(const QDBusObjectPath &objectPath, const QMap<QString, QVariantMap> &interfacesAndProperties)

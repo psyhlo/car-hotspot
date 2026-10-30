@@ -177,6 +177,16 @@ private:
     bool checkSafetyConditions(QString &reason);
     void pollTick();
     void updatePollInterval();
+    // Phone-initiated paging, in one place: a bounded number of attempts per cycle, never
+    // while the access point is up or coming up. A cycle ends on a Bluetooth power change, a
+    // display wake, a real connect/disconnect or a change made in the app, and also on a
+    // 10-minute timer so that a radio which is never switched off still gets the car.
+    void attemptCarConnect();
+    void resetAutoConnectBudget(bool withLog, const QString &reason = QString());
+    // Rate-limited re-arm for low-confidence triggers (a screen wake, an unrelated setting
+    // change). Never skips the current back-off, so frequent triggers cannot become
+    // frequent paging.
+    void maybeRearmAutoConnect(const QString &reason = QString());
     bool eventFilter(QObject *obj, QEvent *event) override;
 
     // Watchdog cadence: fast only while something is actually in flight, so an idle
@@ -188,6 +198,19 @@ private:
     static const int HOTSPOT_CHECK_MS = 60000;
     static const int AUTO_CONNECT_BASE_MS = 15000;
     static const int AUTO_CONNECT_BACKOFF_MAX_MS = 60000;
+    // Paging is a last resort, not a monitoring strategy: a car kit that is switched on
+    // connects to the phone itself, and BlueZ then reports org.bluez.Device1.Connected over
+    // D-Bus, which wakes the service and starts the hotspot. Paging only exists for kits that
+    // never initiate, and every page holds the combo controller for ~10s that the Android
+    // support stack shares. So a burst is short and the window between bursts grows until the
+    // radio is left alone.
+    static const int AUTO_CONNECT_ATTEMPTS_PER_CYCLE = 2;
+    static const int AUTO_CONNECT_REARM_MS = 1800000;      // 30 min, first quiet window
+    static const int AUTO_CONNECT_REARM_HOUR_MS = 3600000; // 1 h, second
+    static const int AUTO_CONNECT_REARM_MAX_MS = 7200000;  // 2 h ceiling
+    // BlueZ state arrives through PropertiesChanged/InterfacesAdded; the periodic full read is
+    // a safety net, not the detection mechanism.
+    static const int BLUETOOTH_HEARTBEAT_MS = 60000;
 
     bool m_isDaemon = false;
 
@@ -207,11 +230,23 @@ private:
     qint64 m_lastManualRequestStamp = 0;
     qint64 m_lastSettingsReload = 0;
     qint64 m_autoConnectBackoffMs = AUTO_CONNECT_BASE_MS;
+    int m_autoConnectAttemptsLeft = AUTO_CONNECT_ATTEMPTS_PER_CYCLE;
+    bool m_autoConnectBudgetLogged = false;
+    qint64 m_autoConnectBudgetSpentMs = 0;
+    qint64 m_lastNoTargetLoggedMs = 0;
+    qint64 m_lastBluetoothHeartbeatMs = 0;
+    qint64 m_autoConnectRearmMs = AUTO_CONNECT_REARM_MS;
+    int m_autoConnectEmptyBursts = 0;
+    // Advanced option (settings file, no UI on purpose): page the car when the screen wakes.
+    // Off by default because a screen wake is not evidence that the car is near.
+    bool m_pageOnWake = false;
+    bool m_bluetoothPowerBaseline = false;
     qint64 m_serviceHandoffUntilMs = 0;
     bool m_manualOverrideOff = false;
 
     bool m_allowMultipleDevices = false;
     QStringList m_targetAddresses;
+    QStringList m_lastSavedTargets;
     QSet<QString> m_targetAddressesSet;
     QMap<QString, QString> m_targetNames;
     QString m_lastConnectedCarLabel;
