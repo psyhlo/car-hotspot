@@ -2,7 +2,7 @@
 Type=Application
 X-Nemo-Application-Type=silica-qt5
 Icon=harbour-carhotspot
-Exec=/usr/bin/harbour-carhotspot
+Exec=harbour-carhotspot
 Name=Car Hotspot
 Comment=Toggles the Wi-Fi hotspot when the car Bluetooth device connects
 Categories=Application;Network;
@@ -15,10 +15,12 @@ Name[ru]=Точка доступа авто
 Name[sv]=Mobil hotspot för bil
 Name[fi]=Auton yhteyspiste
 
-# ExecDBus is read from the X-Sailjail group by sailjaild; it lets a
-# notification tap start the application (in the sandbox) when it is closed.
+# Jolla Harbour rejects a custom ExecDBus entry, so none is declared here. A notification
+# tap still opens the application: the notification carries the "desktop-entry" hint,
+# lipstick activates the registered bus name harbour-carhotspot.harbour-carhotspot and the
+# exported openApp()/activate() slots raise the window. When the UI process is not running,
+# lipstick launches it through this desktop entry (applauncherd + the X-Sailjail profile).
 [X-Sailjail]
 OrganizationName=harbour-carhotspot
 ApplicationName=harbour-carhotspot
 Permissions=Bluetooth;Internet
-ExecDBus=/usr/bin/sailjail -p harbour-carhotspot.desktop -- /usr/bin/harbour-carhotspot

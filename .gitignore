@@ -10,11 +10,19 @@ RPMS/
 RPMS-openrepos/
 RPMS-sfos5.0/
 RPMS-sfos5.1/
+RPMS-store/
+.store-stash/
 BUILD/
 BUILDROOT/
 SOURCES/
 SPECS/
 SRPMS/
+# rpmbuild leftovers from the debuginfo/debugsource macros
+debugfiles.list
+debuglinks.list
+debugsourcefiles.list
+debugsources.list
+elfbins.list
 *.user*
 moc_*
 harbour-carhotspot

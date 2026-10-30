@@ -35,7 +35,7 @@ HEADERS += \
     src/dbusadapter.h \
     src/hotspotmanager.h \
     src/systemmonitor.h \
-    src/appcontroller.h
+    src/appcontroller.h \
     src/carhotspotsettings.h
 
 target.path = /usr/bin

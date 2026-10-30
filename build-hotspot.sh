@@ -191,35 +191,61 @@ case "$COMMAND" in
         ls -la RPMS/*.rpm 2>/dev/null || ls -la *.rpm 2>/dev/null || true
         ;;
     check|harbour-check)
-        # Validate every package in RPMS/ with a matching target: checking an
-        # aarch64 package with the armv7hl target produces a false rpmlint
-        # objdump-failed error. The armv7hl package is validated against the 5.0
-        # target when it is installed, because that is what build-all builds.
+        # Validate every package in RPMS/ with the target it was built against: checking
+        # an aarch64 package with the armv7hl target produces a false rpmlint
+        # objdump-failed error, and a package built for one OS release against another
+        # release's target trips spurious dependency findings. A Release carrying
+        # "sfos50" comes from the 5.0 target, everything else from the store target (5.1).
+        # A failing check exits non-zero on purpose - swallowing it here is how an
+        # un-submittable package ends up being called release-ready.
         FOUND=0
+        CHECKED=0
+        FAILED=0
         for RPM in RPMS/harbour-carhotspot-*.rpm; do
             [ -f "$RPM" ] || continue
             FOUND=1
-            ARCH="$(basename "$RPM" | grep -oE 'aarch64|armv7hl|i486' | head -n 1)"
-            if [ "$ARCH" = "armv7hl" ] && sfdk tools list 2>/dev/null | grep -q "SailfishOS-5.0.0.62-armv7hl"; then
-                TARGET="SailfishOS-5.0.0.62-armv7hl"
+            BASE="$(basename "$RPM")"
+            # An OpenRepos Release ("1or", "1sfos50or") is deliberately NOT Harbour-valid:
+            # it ships the systemd unit, the daemon Sailjail profile and the AppLaunch
+            # permission, plus the scriptlets Jolla forbids. Never judge those here.
+            if echo "$BASE" | grep -qE -- '-[0-9A-Za-z]*or\.[a-z0-9]+\.rpm$'; then
+                echo "⏭️  $BASE е OpenRepos вариант - Harbour проверката го пропуска."
+                continue
+            fi
+            CHECKED=$((CHECKED + 1))
+            ARCH="$(echo "$BASE" | grep -oE 'aarch64|armv7hl|i486' | head -n 1)"
+            if echo "$BASE" | grep -q "sfos50" && sfdk tools list 2>/dev/null | grep -q "SailfishOS-5.0.0.62-$ARCH"; then
+                TARGET="SailfishOS-5.0.0.62-$ARCH"
             else
                 TARGET="SailfishOS-5.1.0.11-$ARCH"
             fi
             echo "🔍 Jolla Harbour проверка на $RPM (таргет $TARGET)..."
-            sfdk $SFDK_OPTS -c target="$TARGET" -c device= check -- "$RPM" || true
+            if ! sfdk $SFDK_OPTS -c target="$TARGET" -c device= check -- "$RPM"; then
+                FAILED=$((FAILED + 1))
+                echo "❌ $RPM не минава проверката."
+            fi
         done
 
-        if [ "$FOUND" = "0" ]; then
-            echo "❌ Грешка: Няма RPM пакети в RPMS/. Пуснете 'build-all' първо."
+        if [ "$CHECKED" = "0" ]; then
+            if [ "$FOUND" = "0" ]; then
+                echo "❌ Грешка: Няма RPM пакети в RPMS/. Пуснете 'build-all' първо."
+            else
+                echo "❌ Грешка: В RPMS/ има само OpenRepos варианти. Пуснете 'build-all' за Harbour пакетите."
+            fi
             exit 1
         fi
+        if [ "$FAILED" != "0" ]; then
+            echo "❌ $FAILED пакет(а) не минават Harbour правилата - не се качват в магазина."
+            exit 1
+        fi
+        echo "✅ Всички пакети в RPMS/ минават Harbour проверката."
         ;;
     clean)
         echo "🧹 Изчистване на временни файлове..."
         sfdk qmake -- -r
         sfdk make clean || true
-        rm -rf RPMS/ RPMS-openrepos/ RPMS-emulator/ RPMS-sfos5.0/ RPMS-sfos5.1/
-        rm -f *.o moc_* harbour-carhotspot
+        rm -rf RPMS/ RPMS-openrepos/ RPMS-emulator/ RPMS-sfos5.0/ RPMS-sfos5.1/ RPMS-store/ .store-stash
+        rm -f *.o moc_* harbour-carhotspot debug*.list elfbins.list
         ;;
     targets)
         echo "🎯 Инсталирани build targets:"
@@ -251,6 +277,7 @@ case "$COMMAND" in
         # Both are built with the current store target (5.1). Harbour accepts only files
         # named name-version-release.arch.rpm, so no aliases go into RPMS/.
         echo "🔨 Компилиране за aarch64 (таргет 5.1)..."
+        set_release 1
         rm -f Makefile *.o moc_* harbour-carhotspot
         sfdk $SFDK_OPTS -c target=SailfishOS-5.1.0.11-aarch64 -c device= build || exit 1
 
@@ -260,11 +287,24 @@ case "$COMMAND" in
         mkdir -p RPMS-sfos5.1
         cp -f RPMS/harbour-carhotspot-*.armv7hl.rpm RPMS-sfos5.1/ 2>/dev/null || true
 
+        # Stash the two store files: sfdk removes packages from RPMS/ whose Release differs
+        # from the spec, so the Sailfish OS 5.0 build below (Release 1sfos50) would delete
+        # the plain-Release store packages. They are put back at the end of this block.
+        rm -rf .store-stash && mkdir -p .store-stash
+        cp -a RPMS/harbour-carhotspot-*.rpm .store-stash/ 2>/dev/null || true
+
         if sfdk tools list 2>/dev/null | grep -q "SailfishOS-5.0.0.62-armv7hl"; then
             echo "🔨 Компилиране за armv7hl с таргет 5.0 (glibc 2.30, за 4.x/5.0)..."
+            # Own Release tag, otherwise this build has the very same NVR as the 5.1
+            # armv7hl package while containing different code (linked against glibc 2.30),
+            # and rpm then reports "already installed" and cannot be upgraded past it.
+            set_release 1sfos50
             rm -f Makefile *.o moc_* harbour-carhotspot
             if sfdk $SFDK_OPTS -c target=SailfishOS-5.0.0.62-armv7hl -c device= build; then
                 mkdir -p RPMS-sfos5.0
+                # Drop older 5.0 artifacts: an obsolete same-as-store NVR sitting here is
+                # exactly the ambiguity the own Release is meant to remove.
+                rm -f RPMS-sfos5.0/*.rpm
                 for RPM in RPMS/harbour-carhotspot-*.armv7hl.rpm; do
                     [ -f "$RPM" ] || continue
                     BASE="$(basename "$RPM")"
@@ -274,18 +314,25 @@ case "$COMMAND" in
                     # that are not name-version-release.arch.rpm.
                     cp -a "$RPM" "RPMS-sfos5.0/$ALIAS"
                 done
-                # The 5.0 build reused the RPMS/ name - put the store-target build back.
-                cp -f RPMS-sfos5.1/harbour-carhotspot-*.armv7hl.rpm RPMS/ 2>/dev/null || true
             fi
+            set_release 1
         else
             echo "⚠️  Таргетът SailfishOS-5.0.0.62-armv7hl не е инсталиран -"
             echo "   armv7hl пакетът е само за Sailfish OS 5.1+. Инсталирай го с:"
             echo "   sfdk tools install SailfishOS-5.0.0.62-armv7hl"
         fi
 
-        # An emulator (i486) package must never end up next to the store packages.
-        rm -f RPMS/harbour-carhotspot-*.i486.rpm
-        rm -f Makefile *.o moc_* harbour-carhotspot
+        # An emulator (i486) package must never end up next to the store packages, and
+        # neither may the Sailfish OS 5.0 build (different Release, manual install only).
+        rm -f RPMS/harbour-carhotspot-*.i486.rpm RPMS/harbour-carhotspot-*sfos50*.rpm
+        # Put the two store packages back (sfdk removed them while building Release 1sfos50).
+        cp -a .store-stash/harbour-carhotspot-*.rpm RPMS/ 2>/dev/null || true
+        rm -rf .store-stash
+        # Keep a private copy so a later build-openrepos run can restore RPMS/ afterwards.
+        mkdir -p RPMS-store
+        rm -f RPMS-store/*.rpm
+        cp -a RPMS/harbour-carhotspot-*.rpm RPMS-store/ 2>/dev/null || true
+        rm -f Makefile *.o moc_* harbour-carhotspot debug*.list elfbins.list
         echo "✅ Готово! Двата файла за Harbour в RPMS/:"
         ls -lh RPMS/*.rpm 2>/dev/null || true
         echo "📦 Допълнителни (не се качват в Harbour):"
@@ -300,24 +347,31 @@ case "$COMMAND" in
         # background services -> upload these packages to OpenRepos only.
         #
         # Four upload files, one per OS release and architecture:
-        #   SailfishOS 5.1 32-bit (armv7hl)  Release 1
-        #   SailfishOS 5.1 64-bit (aarch64)  Release 1
-        #   SailfishOS 5.0 32-bit (armv7hl)  Release 1sfos50
-        #   SailfishOS 5.0 64-bit (aarch64)  Release 1sfos50
+        #   SailfishOS 5.1 32-bit (armv7hl)  Release 1or
+        #   SailfishOS 5.1 64-bit (aarch64)  Release 1or
+        #   SailfishOS 5.0 32-bit (armv7hl)  Release 1sfos50or
+        #   SailfishOS 5.0 64-bit (aarch64)  Release 1sfos50or
+        # The Release must sort ABOVE the Harbour flavour's plain "1": rpm decides whether
+        # an install is an upgrade from name-version-release only, and both flavours share
+        # name and version. With the same Release the full package would report "already
+        # installed" and a store->full swap would silently do nothing.
         # A package built against the older target (glibc 2.30) also installs on newer
         # releases, but OpenRepos lists compatibility per uploaded file, so build each pair
         # explicitly and keep the file names distinct.
         echo "🔨 Компилране на OpenRepos варианти (with_service=1) за 5.0/5.1 и 32/64 бит..."
         trap 'set_service_flavour 0; set_release 1' EXIT
         set_service_flavour 1
-        set_release 1
+        set_release 1or
         mkdir -p RPMS-openrepos
+        # Drop older OpenRepos artifacts: publishing several NVRs of the same version from
+        # one directory invites uploading the wrong (or an obsolete) file.
+        rm -f RPMS-openrepos/*.rpm
 
         for COMBO in \
-            "SailfishOS-5.1.0.11-aarch64 aarch64 1" \
-            "SailfishOS-5.1.0.11-armv7hl armv7hl 1" \
-            "SailfishOS-5.0.0.62-aarch64 aarch64 1sfos50" \
-            "SailfishOS-5.0.0.62-armv7hl armv7hl 1sfos50"; do
+            "SailfishOS-5.1.0.11-aarch64 aarch64 1or" \
+            "SailfishOS-5.1.0.11-armv7hl armv7hl 1or" \
+            "SailfishOS-5.0.0.62-aarch64 aarch64 1sfos50or" \
+            "SailfishOS-5.0.0.62-armv7hl armv7hl 1sfos50or"; do
             set -- $COMBO
             TARGET="$1"; ARCH="$2"; REL="$3"
 
@@ -339,10 +393,20 @@ case "$COMMAND" in
         set_service_flavour 0
         set_release 1
         trap - EXIT
-        rm -f Makefile *.o moc_* harbour-carhotspot
+        rm -f Makefile *.o moc_* harbour-carhotspot debug*.list elfbins.list
+        # sfdk deletes packages in RPMS/ whose Release differs from the spec, so the runs
+        # above removed the store packages. Put the saved copy back - RPMS/ stays usable for
+        # the Harbour upload without a second build-all.
+        rm -f RPMS/harbour-carhotspot-*.rpm
+        cp -a RPMS-store/harbour-carhotspot-*.rpm RPMS/ 2>/dev/null || true
         echo "✅ OpenRepos пакети (4 файла) в RPMS-openrepos/:"
         ls -lh RPMS-openrepos/*.rpm 2>/dev/null || true
-        echo "⚠️  RPMS/ е работната директория на sfdk. За Harbour пакетите: ./build-hotspot.sh build-all"
+        if ls RPMS-store/harbour-carhotspot-*.rpm >/dev/null 2>&1; then
+            echo "✅ Harbour пакетите са върнати в RPMS/ (копието е в RPMS-store/):"
+            ls -lh RPMS/*.rpm 2>/dev/null || true
+        else
+            echo "⚠️  RPMS/ е работната директория на sfdk. За Harbour пакетите: ./build-hotspot.sh build-all"
+        fi
         echo "   Инсталиране на телефона:  ./build-hotspot.sh deploy-openrepos"
         echo "   Инсталиране в емулатора:  ./build-hotspot.sh build-emulator && ./build-hotspot.sh deploy-emulator"
         

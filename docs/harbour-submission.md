@@ -1,4 +1,4 @@
-# Store listing texts - Car Hotspot 0.4.3
+# Store listing texts - Car Hotspot 0.4.6.1
 
 Field limits: Summary 200 chars (used: 163), Description 4000 chars (used: 2828).
 

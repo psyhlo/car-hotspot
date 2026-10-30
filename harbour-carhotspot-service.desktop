@@ -2,7 +2,7 @@
 Type=Application
 X-Nemo-Application-Type=silica-qt5
 Icon=harbour-carhotspot
-Exec=/usr/bin/harbour-carhotspot
+Exec=harbour-carhotspot
 Name=Car Hotspot
 Comment=Toggles the Wi-Fi hotspot when the car Bluetooth device connects
 Categories=Application;Network;
@@ -23,8 +23,12 @@ Name[fi]=Auton yhteyspiste
 # involved; the RPM ships the unit file, the application only asks systemd to
 # start/stop it. The Jolla Harbour flavour (harbour-carhotspot.desktop) has no
 # service at all and therefore does not declare this permission.
+#
+# The RPM spec renames this file to harbour-carhotspot.desktop, so the ExecDBus entry below
+# must name the profile as installed. A profile name that is not in the package makes
+# sailjail refuse to start the application, and a notification tap would silently do nothing.
 [X-Sailjail]
 OrganizationName=harbour-carhotspot
 ApplicationName=harbour-carhotspot
 Permissions=Bluetooth;Internet;AppLaunch
-ExecDBus=/usr/bin/sailjail -p harbour-carhotspot-service.desktop -- /usr/bin/harbour-carhotspot
+ExecDBus=/usr/bin/sailjail -p harbour-carhotspot.desktop -- /usr/bin/harbour-carhotspot

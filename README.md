@@ -44,21 +44,26 @@ button, and switching on *Run in background & Autostart* explains it instead of 
 
 | File | Target | For |
 |---|---|---|
-| `harbour-carhotspot-0.4.3-1.armv7hl.rpm` | `SailfishOS-5.1.0.11-armv7hl` | SFOS 5.1+, 32-bit ARM (Xperia X, XA2, F2C, …) |
-| `harbour-carhotspot-0.4.3-1.aarch64.rpm` | `SailfishOS-5.1.0.11-aarch64` | SFOS 5.1+, 64-bit ARM (Jolla Phone 2026) |
+| `harbour-carhotspot-0.4.6.1-1.armv7hl.rpm` | `SailfishOS-5.1.0.11-armv7hl` | SFOS 5.1+, 32-bit ARM (Xperia X, XA2, F2C, …) |
+| `harbour-carhotspot-0.4.6.1-1.aarch64.rpm` | `SailfishOS-5.1.0.11-aarch64` | SFOS 5.1+, 64-bit ARM (Jolla Phone 2026) |
 
 **OpenRepos upload files** (four, one per OS release and architecture, in `RPMS-openrepos/`):
 
 | File | Target | For |
 |---|---|---|
-| `harbour-carhotspot-0.4.3-1.armv7hl.rpm` | `SailfishOS-5.1.0.11-armv7hl` | SFOS 5.1, 32-bit |
-| `harbour-carhotspot-0.4.3-1.aarch64.rpm` | `SailfishOS-5.1.0.11-aarch64` | SFOS 5.1, 64-bit |
-| `harbour-carhotspot-0.4.3-1sfos50.armv7hl.rpm` | `SailfishOS-5.0.0.62-armv7hl` | SFOS 5.0, 32-bit |
-| `harbour-carhotspot-0.4.3-1sfos50.aarch64.rpm` | `SailfishOS-5.0.0.62-aarch64` | SFOS 5.0, 64-bit |
+| `harbour-carhotspot-0.4.6.1-1or.armv7hl.rpm` | `SailfishOS-5.1.0.11-armv7hl` | SFOS 5.1, 32-bit |
+| `harbour-carhotspot-0.4.6.1-1or.aarch64.rpm` | `SailfishOS-5.1.0.11-aarch64` | SFOS 5.1, 64-bit |
+| `harbour-carhotspot-0.4.6.1-1sfos50or.armv7hl.rpm` | `SailfishOS-5.0.0.62-armv7hl` | SFOS 5.0, 32-bit |
+| `harbour-carhotspot-0.4.6.1-1sfos50or.aarch64.rpm` | `SailfishOS-5.0.0.62-aarch64` | SFOS 5.0, 64-bit |
 
-The `1sfos50` release tag only keeps the four names distinct; each package is linked against its own
-target sysroot, so the 5.0 files cannot reference newer symbols. `i486` is the SDK emulator build —
-it lives in `RPMS-emulator/` and is never uploaded. Harbour accepts only
+Both flavours use the same package **name and version**, and rpm decides upgrade vs. downgrade from
+`name-version-release` alone. The `or` suffix therefore makes every OpenRepos package *newer* than
+the Harbour package, so moving from the store build to the full build is a plain upgrade and never a
+silent "already installed" no-op. Going the other way (full → store) is a downgrade and needs
+`rpm --oldpackage`. The `sfos50` part keeps the older-target builds from sharing an NVR with the 5.1
+build — otherwise the two different binaries would be indistinguishable to rpm. Each package is
+linked against its own target sysroot, so the 5.0 files cannot reference newer symbols. `i486` is the
+SDK emulator build — it lives in `RPMS-emulator/` and is never uploaded. Harbour accepts only
 `name-version-release.arch.rpm`, so `RPMS/` holds no aliases (the manual-install alias is in
 `RPMS-sfos5.0/`). Listing texts are in `docs/harbour-submission.md`, screenshots in
 `screenshots/harbour/1.png … 3.png` (1080×2378; device originals in `screenshots/raw/`).
@@ -69,11 +74,35 @@ Install from [OpenRepos](https://openrepos.net/content/psyhlo/car-hotspot) or St
 
 ```bash
 devel-su
-rpm -Uvh harbour-carhotspot-0.4.3-1.aarch64.rpm
+rpm -Uvh harbour-carhotspot-0.4.6.1-1.aarch64.rpm
 ```
 
 Then: open Car Hotspot → pick your car under *Paired / Detected Devices* → **Save** → enable
 *Auto-toggle Hotspot* and set the grace period. Diagnostics page: pull down on the main page.
+
+Upgrading from a store (Harbour) build to the OpenRepos build is a normal `rpm -Uvh` / Storeman
+upgrade — settings are shared, so nothing has to be configured again. Replacing the OpenRepos build
+with the store build is a downgrade: `rpm -Uvh --oldpackage`, and the background service stops for
+good because the store package ships no unit and no install scripts.
+
+## 📶 Bluetooth radio behaviour
+
+Car Hotspot does not poll Bluetooth. The car kit that is switched on connects to the phone by itself,
+BlueZ reports `org.bluez.Device1.Connected` over D-Bus, and that signal is what wakes the app and turns
+the hotspot on. Phone-initiated paging exists only for kits that never initiate, and it is bounded: a
+burst is two attempts (15 s then 30 s apart), and after a burst that finds no car the quiet window grows
+- 30 min, then 1 h, then 2 h. Picking a car, a Bluetooth power change or a real connect/disconnect
+brings it back to 30 min.
+
+Nothing is paged while the hotspot is up or coming up (a page, LE scanning and the access point all want
+the same combo controller), nothing is paged when *Auto Connect to Car* is off, and LE-only devices are
+never paged or connected at all - a BLE peripheral accepts one central at a time, so taking one from
+`com.android.bluetooth` is how a watch stops being discoverable from the Android app. The Diagnostics
+page says what the app did to the radio: `Paging CAR MA7 (attempt 1/2 this cycle, radio duty ~10s)`,
+`… is not reported by BlueZ - nothing to page, monitoring passively`, and when the last attempt was used.
+
+Advanced: `pageOnWake=true` in `carhotspot.ini` re-arms paging on a screen wake, still at most one burst
+per fifteen minutes. See [docs/release-v0.4.6.1.md](docs/release-v0.4.6.1.md).
 
 ## 🛠️ Building from source
 
@@ -84,7 +113,7 @@ targets; the 5.0 targets are optional but recommended for the older packages).
 ./build-hotspot.sh build-all          # Harbour flavour -> 2 upload files in RPMS/
 ./build-hotspot.sh build-openrepos    # OpenRepos flavour -> 4 upload files in RPMS-openrepos/
 ./build-hotspot.sh build-emulator     # i486 emulator build -> RPMS-emulator/
-./build-hotspot.sh check              # Harbour rules / rpmlint on RPMS/
+./build-hotspot.sh check              # Harbour rules / rpmlint on RPMS/ — exits non-zero on failure
 ./build-hotspot.sh deploy-openrepos   # install on the phone and enable the service
 ./build-hotspot.sh deploy-emulator    # install and start in the emulator
 ./build-hotspot.sh shots              # store screenshots -> screenshots/harbour/
@@ -95,6 +124,7 @@ targets; the 5.0 targets are optional but recommended for the older packages).
 | Directory | Target | Runs on |
 |---|---|---|
 | `RPMS/` | 5.1 targets | the two Harbour upload files |
+| `RPMS-store/` | 5.1 targets | private mirror of those two files, restored into `RPMS/` after an OpenRepos run |
 | `RPMS-openrepos/` | 5.0 + 5.1 targets | the four OpenRepos upload files |
 | `RPMS-sfos5.0/` | `SailfishOS-5.0.0.62-armv7hl` | SFOS 4.x / 5.0 (`GLIBC_2.4`) + install alias |
 | `RPMS-sfos5.1/` | `SailfishOS-5.1.0.11-armv7hl` | archive copy of the 32-bit store build |
@@ -134,7 +164,9 @@ so another sandboxed app cannot toggle the hotspot or restart Bluetooth. UI and 
 calls between apps; the settings file is the authoritative channel and the signal is the fast path.
 
 Settings live in `~/.config/harbour-carhotspot/harbour-carhotspot/carhotspot.ini` — the only config
-directory a sandbox can see and keep — and `%post` migrates the old `.conf` file.
+directory a sandbox can see and keep. The OpenRepos package migrates the pre-0.4.3 `.conf` file in
+`%post`; the store package ships **no scriptlets at all** (Jolla rejects them), so a store user coming
+from 0.4.2 or older has to pick the car once again.
 
 ## ✅ Verifying on a device
 
@@ -143,8 +175,10 @@ directory a sandbox can see and keep — and `%post` migrates the old `.conf` fi
    reports `Tethering=true`, a client gets an address, and Wi-Fi returns to its previous power state.
 3. Screen off / deep sleep: lock the phone, walk to the car, connect — the hotspot must come up and
    the grace-period shutdown must fire (timed `com.nokia.time` cookie, no `Run_Command`).
-4. Tapping a notification must bring the app to the foreground (`desktop-entry` hint plus `ExecDBus`
-   in the `X-Sailjail` group, which sailjaild reads).
+4. Tapping a notification must bring the app to the foreground (`desktop-entry` hint; lipstick then
+   activates the registered bus name). The OpenRepos flavour additionally declares
+   `ExecDBus=/usr/bin/sailjail -p harbour-carhotspot.desktop -- …`; Jolla rejects a custom `ExecDBus`
+   entry, so the store flavour has none and relies on the desktop entry alone.
 5. Tethering without touching the screen: `/usr/bin/harbour-carhotspot --selftest`.
 
 ## 🧰 If every `sfdk build` hangs

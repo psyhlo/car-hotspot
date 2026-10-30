@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Icon=harbour-carhotspot
-Exec=/usr/bin/harbour-carhotspot --daemon
+Exec=harbour-carhotspot --daemon
 Name=Car Hotspot Background Service
 Name[de]=Car Hotspot Hintergrunddienst
 Name[fi]=Car Hotspot - taustapalvelu
